@@ -1,25 +1,29 @@
 # accounts/migrations/0005_create_superuser.py
 
 from django.db import migrations
-import os # 匯入 os 模組來讀取環境變數
+import os
+from django.contrib.auth import get_user_model # <-- 引入 get_user_model
+
 
 def create_superuser(apps, schema_editor):
-    # 取得 Django 內建的 User 模型
-    User = apps.get_model('auth', 'User')
+    # 使用 get_user_model() 來取得活躍的使用者模型，這比 apps.get_model('auth', 'User') 更可靠
+    User = get_user_model()
 
-    # 從環境變數讀取管理員資訊，如果找不到就用預設值 (但線上環境一定要設定)
     DJANGO_SUPERUSER_USERNAME = os.environ.get('ADMIN_USER', 'admin')
-    DJANGO_SUPERUSER_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'some_default_password')
+    DJANGO_SUPERUSER_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'defaultpassword')
     DJANGO_SUPERUSER_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
 
-    # 檢查使用者是否已存在，不存在才建立
     if not User.objects.filter(username=DJANGO_SUPERUSER_USERNAME).exists():
-        User.objects.create_superuser(
+        # 改用 create_user，並手動設定 is_staff 和 is_superuser
+        user = User.objects.create_user(
             username=DJANGO_SUPERUSER_USERNAME,
             password=DJANGO_SUPERUSER_PASSWORD,
-            email=DJANGO_SUPERUSER_EMAIL
+            email=DJANGO_SUPERUSER_EMAIL,
         )
-        print(f"Superuser '{DJANGO_SUPERUSER_USERNAME}' created.")
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()  # <-- 儲存變更
+        print(f"Superuser '{DJANGO_SUPERUSER_USERNAME}' created with staff and superuser status.")
 
 class Migration(migrations.Migration):
 
@@ -30,5 +34,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.RunPython(create_superuser),
+        migrations.RunPython(create_superuser),
     ]
