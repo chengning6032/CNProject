@@ -1,0 +1,688 @@
+{% load static %}
+<!-- ====================================================== -->
+<!-- ====       附錄A：陣風反應因子計算細節 (純內容)       ==== -->
+<!-- ====================================================== -->
+
+<h2 class="chapter-title">附錄A 陣風反應因子計算</h2>
+
+<!-- X 風向 -->
+{% with details=appendix_data.x_wind_g_details %}
+    {% if details %}
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">A.1 X風向</h3>
+            <div class="summary-box">
+                <p>X方向建築類型為 **{{ chapter_4_data.x_wind.pos.rigidity }}建築**，故陣風反應因子為
+                    **{{ details.type }}**</p>
+                {% if details.type == 'G' %}
+                    <p>依據規範公式 (2.9):</p>
+                    <p class="math-formula">$$ G = 1.927 \frac{1 + 1.7 g_Q I_z(\bar{z}) Q}{1 + 1.7 g_v I_z(\bar{z})}
+                        $$</p>
+                    <table class="param-table calculation-detail-table math-formula">
+                        <!-- ... Gf 計算表格內容不變 ... -->
+                        <tbody>
+                        <tr>
+                            <th>等效結構高度</th>
+                            <td>$ \bar{z} = max\left(0.6h, z_{min} \right)
+                                =max\left( 0.6 \times {{ geo.calculated_h }}, {{ terrain_params.z_min }}\right)
+                                ={{ details.z_bar|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>紊流強度</th>
+                            <td>$I_z(\bar{z}) =
+                                c\left(\dfrac{10}{\bar{z}}\right)^{1/6}
+                                ={{ terrain_params.c }} \left(\dfrac{10}{0.6 \times {{ geo.calculated_h }}
+                                }\right)^{1/6}
+                                ={{ details.I_z|floatformat:3 }}$
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>紊流積分尺度</th>
+                            <td>$L_z(\bar{z}) =
+                                \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                ={{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                }{10}\right)^{ {{ terrain_params.epsilon_bar }} }
+                                ={{ details.L_z|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>背景反應因子</th>
+                            <td>
+                                $Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ geo.dim_y }}
+                                + {{ geo.calculated_h }} }{ {{ details.L_z|floatformat:3 }}
+                                }\right)^{0.63}}}
+                                ={{ details.Q|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>尖峰因子</th>
+                            <td>$g_{Q} = {{ details.gQ }}, g_{v}={{ details.gv }}$</td>
+                        </tr>
+                        <tr>
+                            <th class="final-result">陣風反應因子</th>
+                            <td class="final-result">
+                                $ G = 1.927 \dfrac{1 + 1.7 \times {{ details.gQ }}
+                                \times {{ details.I_z|floatformat:3 }} \times {{ details.Q|floatformat:3 }}}{1
+                                +
+                                1.7 \times {{ details.gv }} \times {{ details.I_z|floatformat:3 }}}
+                                ={{ details.final_value|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                {% elif details.type == 'Gf' %}
+                    <!-- ... Gf 計算表格內容不變 ... -->
+                    <p>依據規範公式 (2.13):</p>
+                    <p class="math-formula">$$ G_f = 1.927 \dfrac{1 + 1.7 I_z(\bar{z}) \sqrt{g_Q^2 Q^2 + g_R^2 R^2}}{1 +
+                        1.7
+                        g_v I_z(\bar{z})} $$</p>
+                    <table class="param-table calculation-detail-table">
+                        <tbody>
+                        <tr>
+                            <th>等效結構高度</th>
+                            <td>$ \bar{z} = max\left(0.6h, z_{min} \right)
+                                =max\left( 0.6 \times {{ geo.calculated_h }}, {{ terrain_params.z_min }}\right)
+                                ={{ details.z_bar|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>紊流強度</th>
+                            <td>$I_z(\bar{z}) =
+                                c\left(\dfrac{10}{\bar{z}}\right)^{1/6}
+                                ={{ terrain_params.c }} \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }}
+                                }\right)^{1/6} = {{ details.I_z|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>背景反應因子</th>
+                            <td>
+                                $Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ geo.dim_y }}
+                                + {{ geo.calculated_h }} }{ {{ details.L_z|floatformat:3 }}
+                                }\right)^{0.63}}} = {{ details.Q|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>紊流積分尺度</th>
+                            <td>$L_z(\bar{z}) =
+                                \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                ={{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                }{10}\right)^{ {{ terrain_params.epsilon_bar }} }
+                                ={{ details.L_z|floatformat:4 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>尖峰因子</th>
+                            <td>$ \begin{aligned}
+                                g_Q &= {{ details.gQ }}, g_V = {{ details.gv }}, \\
+                                g_R &=\sqrt{2\ln{3600f_{n}}} + \dfrac{0.577}{\sqrt{2\ln{3600f_{n}}}} \\
+                                &=\sqrt{2\ln{3600 \times {{ basic_params.fn_x }} }} +
+                                \dfrac{0.577}{\sqrt{2\ln{3600
+                                \times {{ basic_params.fn_x }}}}}={{ details.gR|floatformat:3 }}
+                                \end{aligned}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>平均風速</th>
+                            <td>
+                                $\bar{V_{\bar{z}}} = \bar{b} \left(\dfrac{\bar{z}}{10}\right)^{\alpha} V_{10}(C)
+                                = {{ terrain_params.b }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                }{10}\right)^{ {{ terrain_params.alpha }} } \times {{ v10c }}
+                                = {{ details.V_z_bar|floatformat:2 }} m/s$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>共振反應因子</th>
+                            <td>$\begin{aligned}
+                                R &= \sqrt{\dfrac{1}{\beta}R_{n}R_{h}R_{B}\left(0.53+0.47R_{L}\right)}\\
+                                N_{1} &= \dfrac{f_{n} L_{\bar{z}}}{\bar{V_{\bar{z}}}}
+                                =\dfrac{ {{ basic_params.fn_x }} \times {{ details.L_z|floatformat:4 }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.N1|floatformat:2 }}\\
+                                \eta_{h} &= \dfrac{4.6 f_{n} h }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_x }} \times {{ geo.calculated_h }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_h|floatformat:2 }}\\
+                                \eta_{B} &= \dfrac{4.6 f_{n} B }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_x }} \times {{ geo.dim_y }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_B|floatformat:2 }}\\
+                                \eta_{L} &= \dfrac{15.4 f_{n} L }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_x }} \times {{ geo.dim_x }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_L|floatformat:2 }}\\
+                                R_{n} &= \dfrac{7.47 N_{1}}{\left(1+10.3 N_{1}\right)^{5/3}} = \dfrac{7.47
+                                \times {{ details.N1|floatformat:2 }} }{\left(1+10.3
+                                \times {{ details.N1|floatformat:2 }}\right)^{5/3}}
+                                = {{ details.Rn|floatformat:3 }} \\
+                                R_{h} &=
+                                \dfrac{1}{\eta_{h}}-\dfrac{1}{2\eta_{h}^{2}}\left(1-e^{-2\eta_{h}}\right)
+                                = \dfrac{1}{ {{ details.eta_h|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_h|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_h|floatformat:2 }} }\right)
+                                = {{ details.Rh|floatformat:3 }} \\
+                                R_{B} &=
+                                \dfrac{1}{\eta_{B}}-\dfrac{1}{2\eta_{B}^{2}}\left(1-e^{-2\eta_{B}}\right)
+                                = \dfrac{1}{ {{ details.eta_B|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_B|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_B|floatformat:2 }} }\right)
+                                = {{ details.RB|floatformat:3 }} \\
+                                R_{L} &=
+                                \dfrac{1}{\eta_{L}}-\dfrac{1}{2\eta_{L}^{2}}\left(1-e^{-2\eta_{L}}\right)
+                                = \dfrac{1}{ {{ details.eta_L|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_L|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_L|floatformat:2 }} }\right)
+                                = {{ details.RL|floatformat:3 }} \\
+                                R &= \sqrt{\dfrac{1}{ {{ basic_params.damping_ratio|floatformat:2 }} }
+                                \times {{ details.Rn|floatformat:3 }} \times {{ details.Rh|floatformat:3 }}
+                                \times {{ details.RB|floatformat:3 }}\left(0.53+0.47
+                                \times {{ details.RL|floatformat:3 }}\right)}={{ details.R|floatformat:3 }}
+
+
+                                \end{aligned}$
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <th class="final-result">陣風反應因子</th>
+                            <td class="final-result">$ G_f = 1.927 \dfrac{1 + 1.7
+                                \times {{ details.I_z|floatformat:3 }} \sqrt{3.4^2
+                                \times {{ details.Q|floatformat:3 }}^2 + {{ details.gR|floatformat:3 }}^2
+                                \times {{ details.R|floatformat:3 }}^2}}{1 + 1.7 \times 3.4
+                                \times {{ details.I_z|floatformat:3 }}} ={{ details.final_value|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}
+
+<!-- Y 風向 -->
+{% with details=appendix_data.y_wind_g_details %}
+    {% if details %}
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">A.2 Y風向</h3>
+            <!-- ... Y 風向內容不變 ... -->
+            <div class="summary-box">
+                <p>Y方向建築類型為 **{{ chapter_4_data.y_wind.pos.rigidity }}建築**，故陣風反應因子為
+                    **{{ details.type }}**</p>
+
+                {% if details.type == 'G' %}
+                    <p>依據規範公式 (2.9):</p>
+                    <p class="math-formula">$ G = 1.927 \frac{1 + 1.7 g_Q I_z(\bar{z}) Q}{1 + 1.7 g_v
+                        I_z(\bar{z})} $</p>
+
+                    <table class="param-table calculation-detail-table">
+                        <tbody>
+                        <tr>
+                            <th>紊流強度</th>
+                            <td>$I_z(\bar{z}) =
+                                c\left(\dfrac{10}{\bar{z}}\right)^{1/6}
+                                ={{ terrain_params.c }} \left(\dfrac{10}{0.6 \times {{ geo.calculated_h }}
+                                }\right)^{1/6}
+                                ={{ details.I_z|floatformat:3 }}$
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>紊流積分尺度</th>
+                            <td>$L_z(\bar{z}) =
+                                \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                ={{ terrain_params.l_lambda }} \left(\dfrac{ 0.6
+                                \times {{ geo.calculated_h }}
+                                }{10}\right)^{ {{ terrain_params.epsilon_bar }} }
+                                ={{ details.L_z|floatformat:4 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>背景反應因子</th>
+                            <td>
+                                $Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ geo.dim_x }}
+                                + {{ geo.calculated_h }} }{ {{ details.L_z|floatformat:3 }}
+                                }\right)^{0.63}}}
+                                ={{ details.Q|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>尖峰因子</th>
+                            <td>$g_{Q} = {{ details.gQ }}, g_{v}={{ details.gv }}$</td>
+                        </tr>
+                        <tr>
+                            <th class="final-result">陣風反應因子</th>
+                            <td class="final-result">
+                                $ G = 1.927 \dfrac{1 + 1.7 \times {{ details.gQ }}
+                                \times {{ details.I_z|floatformat:3 }} \times {{ details.Q|floatformat:3 }}}{1
+                                +
+                                1.7 \times {{ details.gv }} \times {{ details.I_z|floatformat:3 }}}
+                                ={{ details.final_value|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                {% elif details.type == 'Gf' %}
+                    <p>依據規範公式 (2.13):</p>
+                    <p class="math-formula">$$ G_f = 1.927 \dfrac{1 + 1.7 I_z(\bar{z}) \sqrt{g_Q^2 Q^2 + g_R^2 R^2}}{1 +
+                        1.7
+                        g_v
+                        I_z(\bar{z})} $$</p>
+
+                    <table class="param-table calculation-detail-table">
+                        <tbody>
+                        <tr>
+                            <th>等效結構高度</th>
+                            <td>$ \bar{z} = max\left(0.6h, z_{min} \right)
+                                =max\left( 0.6 \times {{ geo.calculated_h }}, {{ terrain_params.z_min }}\right)
+                                ={{ details.z_bar|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>紊流強度</th>
+                            <td>$I_z(\bar{z}) =
+                                c\left(\dfrac{10}{\bar{z}}\right)^{1/6}
+                                ={{ terrain_params.c }} \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }}
+                                }\right)^{1/6}
+                                ={{ details.I_z|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>背景反應因子</th>
+                            <td>
+                                $Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ geo.dim_x }}
+                                + {{ geo.calculated_h }} }{ {{ details.L_z|floatformat:3 }}
+                                }\right)^{0.63}}}
+                                ={{ details.Q|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>紊流積分尺度</th>
+                            <td>$L_z(\bar{z}) =
+                                \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                ={{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                }{10}\right)^{ {{ terrain_params.epsilon_bar }} }
+                                ={{ details.L_z|floatformat:4 }}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>尖峰因子</th>
+                            <td>$ \begin{aligned}
+                                g_Q &= {{ details.gQ }}, g_V = {{ details.gv }}, \\
+                                g_R &=\sqrt{2\ln{3600f_{n}}} + \dfrac{0.577}{\sqrt{2\ln{3600f_{n}}}} \\
+                                &=\sqrt{2\ln{3600 \times {{ basic_params.fn_y }} }} +
+                                \dfrac{0.577}{\sqrt{2\ln{3600
+                                \times {{ basic_params.fn_y }}}}}={{ details.gR|floatformat:3 }}
+                                \end{aligned}$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>平均風速</th>
+                            <td>
+                                $\bar{V_{\bar{z}}} = \bar{b} \left(\dfrac{\bar{z}}{10}\right)^{\alpha} V_{10}(C)
+                                = {{ terrain_params.b }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                }{10}\right)^{ {{ terrain_params.alpha }} } \times {{ v10c }}
+                                = {{ details.V_z_bar|floatformat:2 }} m/s$
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>共振反應因子</th>
+                            <td>$\begin{aligned}
+                                R &= \sqrt{\dfrac{1}{\beta}R_{n}R_{h}R_{B}\left(0.53+0.47R_{L}\right)}\\
+                                N_{1} &= \dfrac{f_{n} L_{\bar{z}}}{\bar{V_{\bar{z}}}}
+                                =\dfrac{ {{ basic_params.fn_y }} \times {{ details.L_z|floatformat:4 }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.N1|floatformat:2 }}\\
+                                \eta_{h} &= \dfrac{4.6 f_{n} h }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_y }} \times {{ geo.calculated_h }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_h|floatformat:2 }}\\
+                                \eta_{B} &= \dfrac{4.6 f_{n} B }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_y }} \times {{ geo.dim_x }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_B|floatformat:2 }}\\
+                                \eta_{L} &= \dfrac{15.4 f_{n} L }{\bar{V_{\bar{z}}}}
+                                =\dfrac{ 4.6 \times {{ basic_params.fn_y }} \times {{ geo.dim_y }}
+                                }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_L|floatformat:2 }}\\
+                                R_{n} &= \dfrac{7.47 N_{1}}{\left(1+10.3 N_{1}\right)^{5/3}} = \dfrac{7.47
+                                \times {{ details.N1|floatformat:2 }} }{\left(1+10.3
+                                \times {{ details.N1|floatformat:2 }}\right)^{5/3}}
+                                = {{ details.Rn|floatformat:3 }} \\
+                                R_{h} &=
+                                \dfrac{1}{\eta_{h}}-\dfrac{1}{2\eta_{h}^{2}}\left(1-e^{-2\eta_{h}}\right)
+                                = \dfrac{1}{ {{ details.eta_h|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_h|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_h|floatformat:2 }} }\right)
+                                = {{ details.Rh|floatformat:3 }} \\
+                                R_{B} &=
+                                \dfrac{1}{\eta_{B}}-\dfrac{1}{2\eta_{B}^{2}}\left(1-e^{-2\eta_{B}}\right)
+                                = \dfrac{1}{ {{ details.eta_B|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_B|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_B|floatformat:2 }} }\right)
+                                = {{ details.RB|floatformat:3 }} \\
+                                R_{L} &=
+                                \dfrac{1}{\eta_{L}}-\dfrac{1}{2\eta_{L}^{2}}\left(1-e^{-2\eta_{L}}\right)
+                                = \dfrac{1}{ {{ details.eta_L|floatformat:2 }} }-\dfrac{1}{2
+                                \times {{ details.eta_L|floatformat:2 }}^{2}}\left(1-e^{-2
+                                \times {{ details.eta_L|floatformat:2 }} }\right)
+                                = {{ details.RL|floatformat:3 }} \\
+                                R &= \sqrt{\dfrac{1}{ {{ basic_params.damping_ratio|floatformat:2 }} }
+                                \times {{ details.Rn|floatformat:3 }} \times {{ details.Rh|floatformat:3 }}
+                                \times {{ details.RB|floatformat:3 }}\left(0.53+0.47
+                                \times {{ details.RL|floatformat:3 }}\right)}={{ details.R|floatformat:3 }}
+
+
+                                \end{aligned}$
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <th class="final-result">陣風反應因子</th>
+                            <td class="final-result">$ G_f = 1.927 \dfrac{1 + 1.7
+                                \times {{ details.I_z|floatformat:3 }} \sqrt{3.4^2
+                                \times {{ details.Q|floatformat:3 }}^2 + {{ details.gR|floatformat:3 }}^2
+                                \times {{ details.R|floatformat:3 }}^2}}{1 + 1.7 \times 3.4
+                                \times {{ details.I_z|floatformat:3 }}} ={{ details.final_value|floatformat:3 }}$
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}
+
+{% with details=appendix_data.main_wind_g_details %}
+    {% if details %}
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">
+                {% if building_type == 'solid-sign' or building_type == 'hollow-sign' %}
+                    A.1 實體標示物主體
+                {% else %}
+                    A.1 主風力方向
+                {% endif %}
+            </h3>
+            <div class="summary-box">
+                {% with main_params=ch4_data.main_wind.pos.main_params %}
+                    <p>建築類型為 **{{ main_params.rigidity }}建築**，故陣風反應因子為 **{{ details.type }}**</p>
+
+                    {% if details.type == 'G' %}
+                        <p>依據規範公式 (2.9):</p>
+                        <p class="math-formula">$$ G = 1.927 \frac{1 + 1.7 g_Q I_z(\bar{z}) Q}{1 + 1.7 g_v I_z(\bar{z})}
+                            $$</p>
+
+                        <table class="param-table calculation-detail-table math-formula">
+                            <tbody>
+                            <tr>
+                                <th>等效結構高度</th>
+                                <td>$ \bar{z} = max\left(0.6h, z_{min} \right) = max\left( 0.6
+                                    \times {{ geo.calculated_h|floatformat:2 }}, {{ terrain_params.z_min }}\right)
+                                    ={{ details.z_bar|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>紊流強度</th>
+                                <td>$I_z(\bar{z}) = c\left(\dfrac{10}{\bar{z}}\right)^{1/6} = {{ terrain_params.c }}
+                                    \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }} }\right)^{1/6}
+                                    ={{ details.I_z|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>紊流積分尺度</th>
+                                <td>$L_z(\bar{z}) = \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                    = {{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                    }{10}\right)^{ {{ terrain_params.epsilon_bar }} } ={{ details.L_z|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>背景反應因子</th>
+                                <td>$Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                    =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ main_params.B|floatformat:2 }}
+                                    + {{ geo.calculated_h|floatformat:2 }} }{ {{ details.L_z|floatformat:3 }}
+                                    }\right)^{0.63}}} ={{ details.Q|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>尖峰因子</th>
+                                <td>$g_{Q} = {{ details.gQ }}, g_{v}={{ details.gv }}$</td>
+                            </tr>
+                            <tr>
+                                <th class="final-result">陣風反應因子</th>
+                                <td class="final-result">$ G = 1.927 \dfrac{1 + 1.7 \times {{ details.gQ }}
+                                    \times {{ details.I_z|floatformat:3 }} \times {{ details.Q|floatformat:3 }}}{1 + 1.7
+                                    \times {{ details.gv }} \times {{ details.I_z|floatformat:3 }}}
+                                    ={{ details.final_value|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                    {% elif details.type == 'Gf' %}
+                        <p>依據規範公式 (2.13):</p>
+                        <p class="math-formula">$$ G_f = 1.927 \dfrac{1 + 1.7 I_z(\bar{z}) \sqrt{g_Q^2 Q^2 + g_R^2
+                            R^2}}{1 + 1.7 g_v I_z(\bar{z})} $$</p>
+                        <table class="param-table calculation-detail-table">
+                            <tbody>
+                            <tr>
+                                <th>等效結構高度</th>
+                                <td>$ \bar{z} = max\left(0.6h, z_{min} \right) = max\left( 0.6
+                                    \times {{ geo.calculated_h|floatformat:2 }}, {{ terrain_params.z_min }}\right)
+                                    ={{ details.z_bar|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>紊流強度</th>
+                                <td>$I_z(\bar{z}) = c\left(\dfrac{10}{\bar{z}}\right)^{1/6} = {{ terrain_params.c }}
+                                    \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }} }\right)^{1/6}
+                                    ={{ details.I_z|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>背景反應因子</th>
+                                <td>$Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}}
+                                    =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ main_params.B|floatformat:2 }}
+                                    + {{ geo.calculated_h|floatformat:2 }} }{ {{ details.L_z|floatformat:3 }}
+                                    }\right)^{0.63}}} ={{ details.Q|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>紊流積分尺度</th>
+                                <td>$L_z(\bar{z}) = \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}}
+                                    = {{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                    }{10}\right)^{ {{ terrain_params.epsilon_bar }} } ={{ details.L_z|floatformat:4 }}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>尖峰因子</th>
+                                <td>$ \begin{aligned}
+                                    g_Q &= {{ details.gQ }}, g_V = {{ details.gv }}, \\
+                                    g_R &=\sqrt{2\ln{3600f_{n}}} + \dfrac{0.577}{\sqrt{2\ln{3600f_{n}}}} \\
+                                    &=\sqrt{2\ln{3600 \times
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} }} +
+                                    \dfrac{0.577}{\sqrt{2\ln{3600 \times
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}
+                                        {{ basic_params.fn_y }}{% endif %}}}}={{ details.gR|floatformat:3 }}
+                                    \end{aligned}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>平均風速</th>
+                                <td>$\bar{V_{\bar{z}}} = \bar{b} \left(\dfrac{\bar{z}}{10}\right)^{\alpha} V_{10}(C)
+                                    = {{ terrain_params.b }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }}
+                                    }{10}\right)^{ {{ terrain_params.alpha }} } \times {{ v10c }}
+                                    = {{ details.V_z_bar|floatformat:2 }} m/s$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>共振反應因子</th>
+                                <td>$\begin{aligned}
+                                    R &= \sqrt{\dfrac{1}{\beta}R_{n}R_{h}R_{B}\left(0.53+0.47R_{L}\right)}\\
+                                    N_{1} &= \dfrac{f_{n} L_{\bar{z}}}{\bar{V_{\bar{z}}}} =\dfrac{
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %}
+                                    \times {{ details.L_z|floatformat:4 }} }{ {{ details.V_z_bar|floatformat:2 }} }
+                                    = {{ details.N1|floatformat:2 }}\\
+                                    \eta_{h} &= \dfrac{4.6 f_{n} h }{\bar{V_{\bar{z}}}} =\dfrac{ 4.6 \times
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %}
+                                    \times {{ geo.calculated_h|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} }
+                                    = {{ details.eta_h|floatformat:2 }}\\
+                                    \eta_{B} &= \dfrac{4.6 f_{n} B }{\bar{V_{\bar{z}}}} =\dfrac{ 4.6 \times
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %}
+                                    \times {{ main_params.B|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} }
+                                    = {{ details.eta_B|floatformat:2 }}\\
+                                    \eta_{L} &= \dfrac{15.4 f_{n} L }{\bar{V_{\bar{z}}}} =\dfrac{ 15.4 \times
+                                    {% if building_type == 'solid-sign' and chapter_3_data.sign.normal_direction == 'X' %}
+                                        {{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %}
+                                    \times {{ main_params.L|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} }
+                                    = {{ details.eta_L|floatformat:2 }}\\
+                                    R_{n} &= \dfrac{7.47 N_{1}}{\left(1+10.3 N_{1}\right)^{5/3}} = \dfrac{7.47
+                                    \times {{ details.N1|floatformat:2 }} }{\left(1+10.3
+                                    \times {{ details.N1|floatformat:2 }}\right)^{5/3}} = {{ details.Rn|floatformat:3 }}
+                                    \\
+                                    R_{h} &= \dfrac{1}{\eta_{h}}-\dfrac{1}{2\eta_{h}^{2}}\left(1-e^{-2\eta_{h}}\right) =
+                                    \dfrac{1}{ {{ details.eta_h|floatformat:2 }} }-\dfrac{1}{2
+                                    \times {{ details.eta_h|floatformat:2 }}^{2}}\left(1-e^{-2
+                                    \times {{ details.eta_h|floatformat:2 }} }\right) = {{ details.Rh|floatformat:3 }}
+                                    \\
+                                    R_{B} &= \dfrac{1}{\eta_{B}}-\dfrac{1}{2\eta_{B}^{2}}\left(1-e^{-2\eta_{B}}\right) =
+                                    \dfrac{1}{ {{ details.eta_B|floatformat:2 }} }-\dfrac{1}{2
+                                    \times {{ details.eta_B|floatformat:2 }}^{2}}\left(1-e^{-2
+                                    \times {{ details.eta_B|floatformat:2 }} }\right) = {{ details.RB|floatformat:3 }}
+                                    \\
+                                    R_{L} &= \dfrac{1}{\eta_{L}}-\dfrac{1}{2\eta_{L}^{2}}\left(1-e^{-2\eta_{L}}\right) =
+                                    \dfrac{1}{ {{ details.eta_L|floatformat:2 }} }-\dfrac{1}{2
+                                    \times {{ details.eta_L|floatformat:2 }}^{2}}\left(1-e^{-2
+                                    \times {{ details.eta_L|floatformat:2 }} }\right) = {{ details.RL|floatformat:3 }}
+                                    \\
+                                    R &= \sqrt{\dfrac{1}{ {{ basic_params.damping_ratio|floatformat:2 }} }
+                                    \times {{ details.Rn|floatformat:3 }} \times {{ details.Rh|floatformat:3 }}
+                                    \times {{ details.RB|floatformat:3 }}\left(0.53+0.47
+                                    \times {{ details.RL|floatformat:3 }}\right)}={{ details.R|floatformat:3 }}
+                                    \end{aligned}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="final-result">陣風反應因子</th>
+                                <td class="final-result">$ G_f = 1.927 \dfrac{1 + 1.7
+                                    \times {{ details.I_z|floatformat:3 }} \sqrt{ ({{ details.gQ }}
+                                    \times {{ details.Q|floatformat:3 }})^2 + ({{ details.gR|floatformat:3 }}
+                                    \times {{ details.R|floatformat:3 }})^2}}{1 + 1.7 \times {{ details.gv }}
+                                    \times {{ details.I_z|floatformat:3 }}} ={{ details.final_value|floatformat:3 }}$
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}
+{% with details=appendix_data.support_g_details %}
+    {% if details %}
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">A.2 支撐結構</h3>
+             <div class="summary-box">
+                {% with main_params=ch4_data.main_wind.pos.support_main_params %}
+                    <p>支撐結構類型為 **{{ main_params.rigidity }}建築**，故陣風反應因子為 **{{ details.type }}**</p>
+
+                    {% if details.type == 'G' %}
+                        <p>依據規範公式 (2.9):</p>
+                        <p class="math-formula">$$ G = 1.927 \frac{1 + 1.7 g_Q I_z(\bar{z}) Q}{1 + 1.7 g_v I_z(\bar{z})} $$</p>
+                        <table class="param-table calculation-detail-table math-formula">
+                            <tbody>
+                            <tr>
+                                <th>等效結構高度</th>
+                                <td>$ \bar{z} = max\left(0.6h, z_{min} \right) = max\left( 0.6 \times {{ chapter_3_data.support.h|floatformat:2 }}, {{ terrain_params.z_min }}\right) ={{ details.z_bar|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>紊流強度</th>
+                                <td>$I_z(\bar{z}) = c\left(\dfrac{10}{\bar{z}}\right)^{1/6} = {{ terrain_params.c }} \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }} }\right)^{1/6} ={{ details.I_z|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>紊流積分尺度</th>
+                                <td>$L_z(\bar{z}) = \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}} = {{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }} }{10}\right)^{ {{ terrain_params.epsilon_bar }} } ={{ details.L_z|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>背景反應因子</th>
+                                <td>$Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}} =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ main_params.B|floatformat:2 }} + {{ chapter_3_data.support.h|floatformat:2 }} }{ {{ details.L_z|floatformat:3 }} }\right)^{0.63}}} ={{ details.Q|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>尖峰因子</th>
+                                <td>$g_{Q} = {{ details.gQ }}, g_{v}={{ details.gv }}$</td>
+                            </tr>
+                            <tr>
+                                <th class="final-result">陣風反應因子</th>
+                                <td class="final-result">$ G = 1.927 \dfrac{1 + 1.7 \times {{ details.gQ }} \times {{ details.I_z|floatformat:3 }} \times {{ details.Q|floatformat:3 }}}{1 + 1.7 \times {{ details.gv }} \times {{ details.I_z|floatformat:3 }}} ={{ details.final_value|floatformat:3 }}$</td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                    {% elif details.type == 'Gf' %}
+                        <p>依據規範公式 (2.13):</p>
+                        <p class="math-formula">$$ G_f = 1.927 \dfrac{1 + 1.7 I_z(\bar{z}) \sqrt{g_Q^2 Q^2 + g_R^2 R^2}}{1 + 1.7 g_v I_z(\bar{z})} $$</p>
+                        <table class="param-table calculation-detail-table">
+                            <tbody>
+                            <tr>
+                                <th>等效結構高度</th>
+                                <td>$ \bar{z} = max\left(0.6h, z_{min} \right) = max\left( 0.6 \times {{ chapter_3_data.support.h|floatformat:2 }}, {{ terrain_params.z_min }}\right) ={{ details.z_bar|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>紊流強度</th>
+                                <td>$I_z(\bar{z}) = c\left(\dfrac{10}{\bar{z}}\right)^{1/6} = {{ terrain_params.c }} \left(\dfrac{10}{ {{ details.z_bar|floatformat:3 }} }\right)^{1/6} ={{ details.I_z|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>背景反應因子</th>
+                                <td>$Q=\sqrt{\dfrac{1}{1+0.63\left(\dfrac{B+h}{L_{\bar{z}}}\right)^{0.63}}} =\sqrt{\dfrac{1}{1+0.63\left(\dfrac{ {{ main_params.B|floatformat:2 }} + {{ chapter_3_data.support.h|floatformat:2 }} }{ {{ details.L_z|floatformat:3 }} }\right)^{0.63}}} ={{ details.Q|floatformat:3 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>紊流積分尺度</th>
+                                <td>$L_z(\bar{z}) = \lambda \left(\dfrac{\bar{z}}{10}\right)^{\bar{\epsilon}} = {{ terrain_params.l_lambda }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }} }{10}\right)^{ {{ terrain_params.epsilon_bar }} } ={{ details.L_z|floatformat:4 }}$</td>
+                            </tr>
+                            <tr>
+                                <th>尖峰因子</th>
+                                <td>$ \begin{aligned}
+                                    g_Q &= {{ details.gQ }}, g_V = {{ details.gv }}, \\
+                                    g_R &=\sqrt{2\ln{3600f_{n}}} + \dfrac{0.577}{\sqrt{2\ln{3600f_{n}}}} \\
+                                    &=\sqrt{2\ln{3600 \times {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} }} +
+                                    \dfrac{0.577}{\sqrt{2\ln{3600 \times {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %}}}}={{ details.gR|floatformat:3 }}
+                                    \end{aligned}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>平均風速</th>
+                                <td>$\bar{V_{\bar{z}}} = \bar{b} \left(\dfrac{\bar{z}}{10}\right)^{\alpha} V_{10}(C) = {{ terrain_params.b }} \left(\dfrac{ {{ details.z_bar|floatformat:3 }} }{10}\right)^{ {{ terrain_params.alpha }} } \times {{ v10c }} = {{ details.V_z_bar|floatformat:2 }} m/s$</td>
+                            </tr>
+                            <tr>
+                                <th>共振反應因子</th>
+                                <td>$\begin{aligned}
+                                    R &= \sqrt{\dfrac{1}{\beta}R_{n}R_{h}R_{B}\left(0.53+0.47R_{L}\right)}\\
+                                    N_{1} &= \dfrac{f_{n} L_{\bar{z}}}{\bar{V_{\bar{z}}}} =\dfrac{ {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} \times {{ details.L_z|floatformat:4 }} }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.N1|floatformat:2 }}\\
+                                    \eta_{h} &= \dfrac{4.6 f_{n} h }{\bar{V_{\bar{z}}}} =\dfrac{ 4.6 \times {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} \times {{ chapter_3_data.support.h|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_h|floatformat:2 }}\\
+                                    \eta_{B} &= \dfrac{4.6 f_{n} B }{\bar{V_{\bar{z}}}} =\dfrac{ 4.6 \times {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} \times {{ main_params.B|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_B|floatformat:2 }}\\
+                                    \eta_{L} &= \dfrac{15.4 f_{n} L }{\bar{V_{\bar{z}}}} =\dfrac{ 15.4 \times {% if chapter_3_data.sign.normal_direction == 'X' %}{{ basic_params.fn_x }}{% else %}{{ basic_params.fn_y }}{% endif %} \times {{ main_params.L|floatformat:2 }} }{ {{ details.V_z_bar|floatformat:2 }} } = {{ details.eta_L|floatformat:2 }}\\
+                                    R_{n} &= \dfrac{7.47 N_{1}}{\left(1+10.3 N_{1}\right)^{5/3}} = \dfrac{7.47 \times {{ details.N1|floatformat:2 }} }{\left(1+10.3 \times {{ details.N1|floatformat:2 }}\right)^{5/3}} = {{ details.Rn|floatformat:3 }} \\
+                                    R_{h} &= \dfrac{1}{\eta_{h}}-\dfrac{1}{2\eta_{h}^{2}}\left(1-e^{-2\eta_{h}}\right) = \dfrac{1}{ {{ details.eta_h|floatformat:2 }} }-\dfrac{1}{2 \times {{ details.eta_h|floatformat:2 }}^{2}}\left(1-e^{-2 \times {{ details.eta_h|floatformat:2 }} }\right) = {{ details.Rh|floatformat:3 }} \\
+                                    R_{B} &= \dfrac{1}{\eta_{B}}-\dfrac{1}{2\eta_{B}^{2}}\left(1-e^{-2\eta_{B}}\right) = \dfrac{1}{ {{ details.eta_B|floatformat:2 }} }-\dfrac{1}{2 \times {{ details.eta_B|floatformat:2 }}^{2}}\left(1-e^{-2 \times {{ details.eta_B|floatformat:2 }} }\right) = {{ details.RB|floatformat:3 }} \\
+                                    R_{L} &= \dfrac{1}{\eta_{L}}-\dfrac{1}{2\eta_{L}^{2}}\left(1-e^{-2\eta_{L}}\right) = \dfrac{1}{ {{ details.eta_L|floatformat:2 }} }-\dfrac{1}{2 \times {{ details.eta_L|floatformat:2 }}^{2}}\left(1-e^{-2 \times {{ details.eta_L|floatformat:2 }} }\right) = {{ details.RL|floatformat:3 }} \\
+                                    R &= \sqrt{\dfrac{1}{ {{ basic_params.damping_ratio|floatformat:2 }} } \times {{ details.Rn|floatformat:3 }} \times {{ details.Rh|floatformat:3 }} \times {{ details.RB|floatformat:3 }}\left(0.53+0.47 \times {{ details.RL|floatformat:3 }}\right)}={{ details.R|floatformat:3 }}
+                                    \end{aligned}$
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="final-result">陣風反應因子</th>
+                                <td class="final-result">$ G_f = 1.927 \dfrac{1 + 1.7 \times {{ details.I_z|floatformat:3 }} \sqrt{ ({{ details.gQ }} \times {{ details.Q|floatformat:3 }})^2 + ({{ details.gR|floatformat:3 }} \times {{ details.R|floatformat:3 }})^2}}{1 + 1.7 \times {{ details.gv }} \times {{ details.I_z|floatformat:3 }}} ={{ details.final_value|floatformat:3 }}$</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}

@@ -1,0 +1,49 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}訊息已成功送出 - 勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    .success-container {
+        text-align: center;
+        padding: 100px 40px;
+        min-height: 50vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .success-container i {
+        font-size: 5rem;
+        color: #28a745; /* 綠色 */
+    }
+    .success-container h1 {
+        font-size: 2.5rem;
+        color: #1d3557;
+        margin-top: 20px;
+    }
+    .success-container p {
+        font-size: 1.2rem;
+        color: #555;
+        max-width: 500px;
+        margin: 15px 0 30px 0;
+    }
+    .btn-back {
+        background-color: #0056b3; color: #fff; padding: 15px 35px; border-radius: 50px;
+        font-size: 1.1rem; font-weight: bold; text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-back:hover {
+        background-color: #1d3557;
+        transform: translateY(-3px);
+    }
+{% endblock %}
+
+{% block content %}
+    <div class="success-container">
+        <i class="ri-checkbox-circle-line"></i>
+        <h1>訊息已成功送出！</h1>
+        <p>感謝您的來信，我們已收到您的訊息，並將在 1-2 個工作日內盡快與您聯繫。</p>
+        <a href="{% url 'CZ_homepage' %}" class="btn-back">返回首頁</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block title %}登入 | OLI{% endblock %}
+
+{% block content %}
+    <div class="auth-card">
+        <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="auth-logo">
+        <h3>登入您的 OLI 帳號</h3>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">使用者名稱:</label>
+                {{ form.username }}
+            </div>
+            <div class="form-group">
+                <label for="id_password">密碼:</label>
+                {{ form.password }}
+                <i class="ri-eye-off-line password-toggle-icon" id="password-toggle"></i>
+            </div>
+            {% if form.errors %}
+                <p class="error-note">您的使用者名稱或密碼不正確，請再試一次。</p>
+            {% endif %}
+
+            <button type="submit" class="auth-btn">登入</button>
+            <div class="extra-links">
+                <a href="{% url 'forgot_username' %}">忘記帳號？</a>
+                <a href="{% url 'forgot_password' %}">忘記密碼？</a>
+            </div>
+        </form>
+        <div class="switch-auth">
+            <p>還沒有帳號嗎？ <a href="{% url 'signup' %}">立即註冊</a></p>
+        </div>
+        <a href="{% url 'homepage' %}" class="back-to-home">返回 OLI 首頁</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.getElementById('id_password');
+            const toggleIcon = document.getElementById('password-toggle');
+
+            toggleIcon.addEventListener('click', function () {
+                // 切換 input 的類型
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // 切換圖示的 class
+                this.classList.toggle('ri-eye-off-line');
+                this.classList.toggle('ri-eye-line');
+            });
+        });
+    </script>
+{% endblock %}

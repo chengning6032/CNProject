@@ -1,0 +1,46 @@
+/* static/css/base/_reset.css */
+
+/* 重置與基礎樣式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 基礎重置樣式 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* 禁用全局滾動條 - ⚠️ 注意: 這可能會導致主內容區如果超高無法滾動。 */
+    /* 建議只在需要精確控制滾動的容器上設置 overflow-y: auto; */
+    /* 如果你希望整個頁面在內容多時可以滾動，請移除或修改這裡的 overflow: hidden; */
+    overflow: hidden;
+    background-color: var(--bg-page); /* 使用新的頁面背景變數 */
+    color: var(--text-primary); /* 基礎文字顏色 */
+}
+
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+}
+
+input, button, textarea, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 移除列表默認樣式 */
+ul, ol {
+    list-style: none;
+}

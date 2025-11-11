@@ -1,0 +1,250 @@
+/* 表單樣式 */
+.form-group {
+    margin-bottom: var(--space-md);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-weight: 500;
+}
+
+/* 新增或修正 .form-row 樣式 */
+/* 雖然 HTML 中已有 .flex 和 .flex-wrap 類，但此處明確定義以確保優先級和一致性 */
+.form-row {
+    display: flex; /* 確保橫向排列 */
+    flex-wrap: wrap; /* 允許子元素換行 */
+    gap: var(--space-sm); /* 與 HTML 中的 gap-2 匹配，確保間距 */
+    margin-bottom: var(--space-md); /* 每行之間可選擇性地保留底部間距 */
+    /* 如果您曾為 .form-row 設定過 display: block;，請確保移除它 */
+}
+
+.form-control {
+    display: block;
+    width: 100%; /* 將這裡從 100% 修改為 80% */
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--bg-light);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control:focus {
+   color: var(--text-primary);
+    background-color: var(--bg-light);
+    border-color: var(--color-secondary); /* 焦點時的邊框顏色 */
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-secondary-rgb), 0.25); /* 焦點時的陰影效果 */
+}
+
+/* 禁用狀態的表單控制項樣式 */
+.form-control:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #ddd;
+}
+
+/* 禁用狀態的標籤 */
+.disabled-label {
+    color: var(--text-disabled);
+    cursor: not-allowed;
+}
+
+.form-text {
+    display: block;
+    margin-top: var(--space-xs);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    gap: var(--space-xs);
+    margin-right: var(--space-sm); /* 保持右邊距，如果 gap 失效 */
+}
+
+/* 確保行末的 form-check 沒有右邊距，避免多餘空間或佈局問題 */
+/* 這裡假設它們通常在一個 flex 容器內 */
+.form-check:last-child {
+    margin-right: 0;
+}
+
+.is-invalid {
+    border-color: var(--color-danger) !important; /* 強制應用錯誤顏色 */
+}
+
+.invalid-feedback {
+    display: block; /* 確保錯誤訊息顯示 */
+    color: var(--color-danger); /* 使用變數定義的錯誤紅色 */
+    font-size: var(--font-size-sm); /* 較小的字體大小 */
+    margin-top: 0.25rem; /* 與上方輸入框的間距 */
+    /* 添加一些內邊距和圓角，使其看起來像一個小標籤 */
+    padding-left: 0.25rem; /* 左側略微縮進，留給潛在的圖標空間 */
+    font-weight: 500; /* 略微加粗，更醒目 */
+    display: flex; /* 使用 flexbox 讓圖標和文字對齊 */
+    align-items: center;
+    gap: 0.25rem; /* 圖標和文字之間的間距 */
+}
+
+.invalid-feedback i.fas {
+    font-size: var(--font-size-sm); /* 圖標大小與文字一致 */
+    color: var(--color-danger);
+}
+
+.validation-message {
+    display: none;
+    margin-top: 1rem;
+}
+
+/* 輸入框錯誤狀態樣式 */
+.form-control.is-invalid {
+    border-color: var(--color-error);
+    background-color: var(--bg-error-light);
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-danger-rgb), 0.25)
+}
+
+.form-check-input {
+    margin-right: 0; /* 移除默認的 margin-right，讓 gap 生效 */
+}
+
+.form-check-label {
+    margin-bottom: 0; /* 移除 label 的默認 margin-bottom */
+    font-weight: normal;
+}
+
+.steel-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.steel-input-group .form-control {
+    flex: 1;
+    min-width: 80px; /* 防止過窄 */
+}
+
+.steel-input-group .unit {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    min-width: 30px;
+}
+
+.conditional-input {
+    transition: all 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+
+input[type="checkbox"]:checked ~ .conditional-input {
+    max-height: 200px;
+    opacity: 1;
+    padding-top: var(--space-sm);
+}
+
+/* 載重表格樣式調整 */
+.load-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.load-table th,
+.load-table td {
+    border: 1px solid var(--border-color);
+    /* 減少 padding 使標題和內容更近 */
+    padding: var(--space-xs); /* 較小的內邊距，例如 0.25rem (4px) */
+    text-align: center; /* 讓內容居中，視覺效果可能更好 */
+    vertical-align: middle;
+}
+
+.load-table th {
+    background-color: var(--bg-page);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; /* 防止標題換行 */
+    font-size: var(--font-size-sm); /* 可以考慮讓表格標題小一點 */
+}
+
+.load-table tbody tr:nth-child(even) {
+    background-color: var(--bg-light); /* 斑馬紋效果 */
+}
+
+.load-table .form-control {
+    width: 80%; /* 每個輸入框寬度調整為 80% */
+    max-width: 120px; /* 設定一個最大寬度，防止在寬螢幕下過大 */
+    margin: 0 auto; /* 讓輸入框在單元格內居中 */
+    padding: var(--space-xs) calc(var(--space-xs) * 1.5); /* 調整內邊距 */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    font-size: var(--font-size-sm); /* 輸入框字體可以小一點 */
+    text-align: center; /* 讓輸入框內容居中 */
+}
+
+/* 針對表格中的輸入框的特定樣式調整 */
+.load-table .form-control.is-invalid {
+    border-color: var(--color-danger);
+    background-color: var(--bg-error-light);
+}
+
+/* 移除按鈕的樣式 (X 符號) */
+.btn-icon {
+    display: flex; /* 使用 flexbox 讓內容居中 */
+    justify-content: center;
+    align-items: center;
+    width: 28px; /* 固定寬高 */
+    height: 28px; /* 固定寬高 */
+    padding: 0; /* 移除內邊距 */
+    font-size: 1.2rem; /* 增大 X 符號的大小 */
+    line-height: 1; /* 確保行高為 1，避免多餘空間 */
+    font-weight: bold; /* 讓 X 符號更粗 */
+    border-radius: 50%; /* 圓形按鈕 */
+    border: 1px solid var(--color-danger); /* 添加邊框 */
+    background-color: var(--color-danger);
+    color: var(--color-white);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-icon:hover {
+    background-color: darken(var(--color-danger), 10%); /* 懸停效果 */
+    border-color: darken(var(--color-danger), 10%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 輕微陰影 */
+}
+
+.btn-icon:active {
+    transform: translateY(1px); /* 點擊時下沉效果 */
+}
+
+/* 確保 remove-row 按鈕在表格單元格內居中 */
+.load-table td:last-child {
+    text-align: center;
+}
+
+/* ... (載重單位備註區塊樣式，保持不變) ... */
+.load-unit-notes {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px dashed var(--border-color);
+}
+
+.load-unit-notes small {
+    display: block;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.load-unit-notes strong {
+    color: var(--text-primary);
+}

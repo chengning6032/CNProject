@@ -1,0 +1,433 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLi-Wind Code TW</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap">
+    <link rel="stylesheet" href="{% static 'css/Wind_TW/style.css' %}">
+</head>
+<body>
+{% csrf_token %}
+
+<main class="main-content">
+    <div class="main-title-container">
+        <h1 class="main-title">耐風設計 - 封閉或部分封閉式建築物</h1>
+        <!-- 2. 在 h1 下方新增一個 p.sub-title 作為副標題 -->
+        <p class="sub-title">結構風力分析與設計</p>
+    </div>
+    <div class="main-layout-grid">
+        <!-- 地點與基本設計風速 Section -->
+        <div class="section-container">
+            <h3 class="section-title">地點與基本設計風速</h3>
+            {% if error_message %}
+                <div class="error-message">{{ error_message }}</div>
+            {% else %}
+                <div class="input-container">
+                    <div class="input-group">
+                        <label for="county-select">請選擇縣市:</label>
+                        <select id="county-select">
+                            <option value="">--- 請選擇 ---</option>
+                            {% for county in counties %}
+                                <option value="{{ county }}">{{ county }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="town-select">請選擇鄉鎮市區:</label>
+                        <select id="town-select" disabled>
+                            <option value="">(請先選擇縣市)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>基本設計風速 V10(C):</label>
+                        <span id="wind-speed-display" class="result-display">---</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 地形參數 Section -->
+        <div class="section-container">
+            <h3 class="section-title">地形參數</h3>
+            <div class="input-container">
+                <!-- 地況類別 -->
+                <div class="input-group">
+                    <label for="terrain-select">地況類別:</label>
+                    <select id="terrain-select">
+                        <option value="A" selected>地況 A</option>
+                        <option value="B">地況 B</option>
+                        <option value="C">地況 C</option>
+                    </select>
+                </div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <!-- X 方向地形 -->
+                <div class="input-group">
+                    <label for="topo-select-x">X向風之地形:</label>
+                    <select id="topo-select-x">
+                        <option value="not_considered" selected>未考量特殊地形</option>
+                        <option value="hill">山丘</option>
+                        <option value="ridge">山脊</option>
+                        <option value="escarpment">懸崖</option>
+                    </select>
+                </div>
+                <div id="topo-details-x" class="conditional-inputs" style="display: none;">
+                    <div class="input-group">
+                        <label for="topo-h-x">地形高度 H (m):</label>
+                        <input type="number" id="topo-h-x" value="60">
+                    </div>
+                    <div class="input-group">
+                        <label for="topo-lh-x">地形水平距離 Lh (m):</label>
+                        <input type="number" id="topo-lh-x" value="200">
+                    </div>
+                    <div class="input-group">
+                        <label for="topo-x-x">建築物與頂點水平距離 x (m):</label>
+                        <input type="number" id="topo-x-x" value="0">
+                    </div>
+                </div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <!-- Y 方向地形 -->
+                <div class="input-group">
+                    <label for="topo-select-y">Y向風之地形:</label>
+                    <select id="topo-select-y">
+                        <option value="not_considered" selected>未考量特殊地形</option>
+                        <option value="hill">山丘</option>
+                        <option value="ridge">山脊</option>
+                        <option value="escarpment">懸崖</option>
+                    </select>
+                </div>
+                <div id="topo-details-y" class="conditional-inputs" style="display: none;">
+                    <div class="input-group">
+                        <label for="topo-h-y">地形高度 H (m):</label>
+                        <input type="number" id="topo-h-y" value="60">
+                    </div>
+                    <div class="input-group">
+                        <label for="topo-lh-y">地形水平距離 Lh (m):</label>
+                        <input type="number" id="topo-lh-y" value="200">
+                    </div>
+                    <div class="input-group">
+                        <label for="topo-x-y">建築物與頂點水平距離 x (m):</label>
+                        <input type="number" id="topo-x-y" value="0">
+                    </div>
+                </div>
+            </div>
+            <a href="#" id="show-topo-modal-link" class="info-link">參數說明</a>
+        </div>
+
+        <!-- 建築物基本資料 Section -->
+        <div class="section-container">
+            <h3 class="section-title">建築物基本資料</h3>
+            <div class="input-container">
+                <div class="input-group">
+                    <label for="enclosure-status-select">建築物狀態:</label>
+                    <select id="enclosure-status-select">
+                        <option value="封閉式建築">封閉式建築</option>
+                        <option value="部分封閉式建築" selected>部分封閉式建築</option>
+                        <option value="開放式建築">開放式建築</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="importance-factor-select">用途係數 I:</label>
+                    <select id="importance-factor-select">
+                        <option value="1.1_1">第一類建築物 I=1.1</option>
+                        <option value="1.1_2">第二類建築物 I=1.1</option>
+                        <option value="1.1_3">第三類建築物 I=1.1</option>
+                        <option value="0.9">第四類建築物 I=0.9</option>
+                        <option value="1.0" selected>第五類建築物 I=1.0</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="damping-ratio-select">建築物阻尼比 β:</label>
+                    <select id="damping-ratio-select">
+                        <option value="0.01" selected>鋼結構 β=0.01</option>
+                        <option value="0.02">鋼筋混凝土結構 β=0.02</option>
+                        <option value="0.02_src">鋼骨鋼筋混凝土結構 β=0.02</option>
+                    </select>
+                </div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <div class="input-group">
+                    <label>基本自然頻率 fn:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="fn_mode" value="formula"> 經驗公式估算</label>
+                        <label><input type="radio" name="fn_mode" value="manual" checked> 自行輸入</label>
+                    </div>
+                </div>
+                <!-- 「說明」連結直接跟在 input-group 後面 -->
+                <a href="#" id="show-fn-modal-link" class="info-link">說明</a>
+                <div id="manual-fn-input-group" class="conditional-inputs" style="display: none;">
+                    <div class="input-group">
+                        <label for="fn-x-input">X向 fnx (Hz):</label>
+                        <input type="number" id="fn-x-input" value="1.33">
+                    </div>
+                    <div class="input-group">
+                        <label for="fn-y-input">Y向 fny (Hz):</label>
+                        <input type="number" id="fn-y-input" value="0.77">
+                    </div>
+                    <div class="input-group">
+                        <label for="fn-t-input">扭轉向 ft (Hz):</label>
+                        <input type="number" id="fn-t-input" value="1.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 建築物幾何資料 Section -->
+        <div class="section-container">
+            <h3 class="section-title">建築物幾何資料</h3>
+            <div class="input-container">
+                <div class="input-group">
+                    <label for="roof-shape-select">屋頂形狀:</label>
+                    <select id="roof-shape-select">
+                        <option value="flat">平屋頂</option>
+                        <option value="gable" selected>雙邊單斜式(山形)屋頂</option>
+                        <option value="shed">單邊單斜式屋頂</option>
+                        <option value="hip">雙斜(四坡水)屋頂</option>
+                        <option value="arched">拱形屋頂</option>
+                        <option value="sawtooth_uniform">鋸齒型屋頂 (一致)</option>
+                        <option value="sawtooth_irregular">不規則鋸齒型屋頂</option>
+                    </select>
+                </div>
+
+                <div id="overhang-options-group" style="display: none;">
+                    <div class="input-group">
+                        <label>是否有懸挑屋簷:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="has_overhang" value="true"> 是</label>
+                            <label><input type="radio" name="has_overhang" value="false" checked> 否</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="eave-height-group" style="display: none;">
+                    <div class="input-group">
+                        <label for="eave-height-input">簷高 (m):</label>
+                        <input type="number" id="eave-height-input" value="16">
+                    </div>
+                </div>
+                <div id="ridge-height-group" style="display: none;">
+                    <div class="input-group">
+                        <label for="ridge-height-input" id="ridge-height-label">屋脊高 (m):</label>
+                        <input type="number" id="ridge-height-input" value="25">
+                    </div>
+                </div>
+                <div id="arched-roof-options-group" style="display: none;">
+                    <div class="input-group">
+                        <label>起拱線位置:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="is_at_ground_level" value="true"> 從地面起拱</label>
+                            <label><input type="radio" name="is_at_ground_level" value="false" checked>
+                                位於架高結構上</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="building-height-options-group" style="display: none;">
+                    <div class="input-group">
+                        <label>建築物高度 h:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="building_height_mode" value="auto" checked>
+                                軟體自行判斷</label>
+                            <label><input type="radio" name="building_height_mode" value="manual"> 自行輸入</label>
+                        </div>
+                    </div>
+                    <!-- 「說明」連結直接跟在 input-group 後面 -->
+                    <a href="#" id="show-height-modal-link" class="info-link">說明</a>
+                </div>
+                <div id="manual-height-input-group" style="display: none;">
+                    <div class="input-group">
+                        <label for="manual-height-input">建築物高度 h (m):</label>
+                        <input type="number" id="manual-height-input" value="11">
+                    </div>
+                </div>
+                <div id="hip-roof-options-group" style="display: none;">
+                    <div class="input-group">
+                        <label>屋頂頂部形式:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="hip_top_type" value="ridge" checked> 單一屋脊</label>
+                            <label><input type="radio" name="hip_top_type" value="plane" disabled> 平面</label>
+                        </div>
+                    </div>
+                    <div id="hip-ridge-options-group" class="conditional-inputs" style="display: none;">
+                        <div class="input-group">
+                            <label id="ridge-direction-label-hip">屋脊方向:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="ridge_direction_hip" value="X" checked> X方向</label>
+                                <label><input type="radio" name="ridge_direction_hip" value="Y"> Y方向</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="hip-ridge-length-input">屋脊長度 (m):</label>
+                            <input type="number" id="hip-ridge-length-input" value="10">
+                        </div>
+                    </div>
+                    <div id="hip-top-plane-group" class="conditional-inputs" style="display: none;">
+                        <div class="input-group">
+                            <label for="hip-plane-x-input">屋頂平面X方向尺寸 (m):</label>
+                            <input type="number" id="hip-plane-x-input" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="hip-plane-y-input">屋頂平面Y方向尺寸 (m):</label>
+                            <input type="number" id="hip-plane-y-input" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div id="ridge-direction-group" style="display: none;">
+                    <div class="input-group">
+                        <label id="ridge-direction-label">屋脊方向:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ridge_direction" value="X" checked> X方向</label>
+                            <label><input type="radio" name="ridge_direction" value="Y"> Y方向</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="angle-display-group-single" style="display: none;">
+                    <div class="input-group">
+                        <label>屋頂與水平面夾角 θ:</label>
+                        <span id="angle-display-theta" class="result-display">---</span>
+                    </div>
+                </div>
+                <div id="angle-display-group-hip" style="display: none;">
+                    <div class="input-group">
+                        <label>屋頂與水平面夾角:</label>
+                        <span id="angle-display-hip" class="result-display">---</span>
+                    </div>
+                </div>
+                <!-- START: 核心修改 - 新增警告訊息顯示區塊 -->
+                <span id="geometry-angle-warning" class="applicability-notice"
+                      style="display: none; text-align: right; width: 100%; margin-top: 5px;"></span>
+                <!-- END: 核心修改 -->
+                <div id="span-count-group" style="display: none;">
+                    <div class="input-group">
+                        <label for="span-count-input">跨數 (>=1):</label>
+                        <input type="number" id="span-count-input" value="3" min="1" step="1">
+                    </div>
+                </div>
+                <div id="sawtooth-irregular-table-container" style="display: none;"></div>
+                <div id="sawtooth-validation-error" class="validation-error" style="display: none;"></div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <div id="building-dims-group">
+                    <div class="input-group">
+                        <label for="building-dim-x-input">建築物 X方向尺寸 (m):</label>
+                        <input type="number" id="building-dim-x-input" value="19.88">
+                    </div>
+                    <div class="input-group">
+                        <label for="building-dim-y-input">建築物 Y方向尺寸 (m):</label>
+                        <input type="number" id="building-dim-y-input" value="23.46">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-container">
+            <h3 class="section-title">建築幾何示意</h3>
+            <div id="building-schematic-container">
+                <img id="building-schematic-img" src="" alt="建築幾何示意圖">
+            </div>
+        </div>
+
+        <!-- 分析內容調整 Section -->
+        <div class="section-container">
+            <h3 class="section-title">分析內容設定</h3>
+            <div class="input-container">
+                <div class="input-group">
+                    <label for="segment-height-input">牆面分析分段高度 (m):</label>
+                    <input type="number" id="segment-height-input" value="2" min="1" max="5" step="1">
+                </div>
+                <div class="input-group">
+                    <label for="gable-detail-radio">山牆分段精細計算:</label>
+                    <div id="gable-detail-radio-group" class="radio-group">
+                        <label><input type="radio" name="simplify_gable" value="false" checked> 是</label>
+                        <label><input type="radio" name="simplify_gable" value="true"> 否 (視為單一面積)</label>
+                    </div>
+                </div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <div class="input-group">
+                    <label for="low-rise-radio">使用 2.13 節低矮建築計算法:</label>
+                    <div id="low-rise-radio-group" class="radio-group">
+                        <label><input type="radio" name="calculation_method" value="simplified_2_13"> 是</label>
+                        <label><input type="radio" name="calculation_method" value="general" checked> 否</label>
+                    </div>
+                </div>
+                <div id="low-rise-eligibility-notice" class="eligibility-notice">正在檢查適用條件...</div>
+                <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">
+                <h4 class="sub-section-title">依 ASCE 7-16 計算局部構材及外部披覆物之設計風壓</h4>
+
+                <!-- ** 核心修改 ②: 合併選項 ** -->
+                <div class="input-group">
+                    <label for="asce7-radio">牆面及屋頂風壓計算:</label>
+                    <div id="asce7-radio-group" class="radio-group">
+                        <label><input type="radio" name="use_asce7_c_and_c" value="true" checked> 是</label>
+                        <label><input type="radio" name="use_asce7_c_and_c" value="false"> 否</label>
+                    </div>
+                </div>
+                <!-- END: 核心修改 -->
+
+                <div class="option-comment">
+                    因國內耐風規範已多年未修正，此部分依據美國規範較為完整。<br>
+                    若無法選擇，表示建築物局部構材或部分披覆物型態未包含於ASCE 7-22規範中。
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 主要操作按鈕 -->
+<div class="action-buttons-container">
+    <button id="calculate-button" class="calculate-button">開始計算</button>
+</div>
+
+
+<!-- 說明用的 Modal (地形) -->
+<div id="topo-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <img src="{% static 'img/特殊地形.png' %}" alt="地形參數示意圖">
+        <p class="modal-caption">摘錄於規範表2.3(a)</p>
+    </div>
+</div>
+
+<!-- 說明用的 Modal (高度) -->
+<div id="height-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <p>這是說明的地方</p>
+    </div>
+</div>
+
+<!-- 說明用的 Modal (頻率) -->
+<div id="fn-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <p>這是經驗公式說明的地方</p>
+    </div>
+</div>
+
+<div id="results-modal" class="modal">
+    <div class="modal-content results-modal-content">
+        <div class="results-modal-actions">
+            <button id="report-button-modal" class="results-modal-btn" title="製作報告書">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5zM19 15H9v-1.25c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V15zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/>
+                </svg>
+            </button>
+            <button id="close-results-modal-btn" class="results-modal-btn" title="關閉">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+        <h3 class="section-title">計算結果</h3>
+        <div id="results-modal-body" class="results-content-wrapper">
+            <p class="placeholder-text">點擊「開始計算」按鈕以顯示結果...</p>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const windSpeedsData = JSON.parse('{{ wind_speeds_json|safe }}');
+</script>
+<script src="{% static 'js/Wind_TW/main.js' %}"></script>
+
+</body>
+</html>

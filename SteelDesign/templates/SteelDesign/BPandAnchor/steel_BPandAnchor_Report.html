@@ -1,0 +1,1036 @@
+<!-- templates/SteelDesign/BPandAnchor/BPandAnchor_Report.html (继承自 steel_BPandAnchor_report_base.html) -->
+{% extends "SteelDesign/BPandAnchor/steel_BPandAnchor_report_base.html" %}
+{% load static %}
+{% load unit_conversion_filters %}
+
+{% block page_title %}錨栓與基礎版設計報告書{% endblock %}
+
+{% block extra_head %}
+    <style>
+        @page {
+            size: A4; /* 紙張大小 */
+            margin: 0; /* 邊界與內容的距離 */
+        }
+
+        @page landscape {
+            size: A4 landscape;
+            margin: 0; /* 為橫向頁面設置邊距 */
+        }
+
+        body {
+            counter-reset: page appendix-page; /* 1. 一次性初始化所有計數器 */
+        }
+
+        .a4-page {
+            background: white;
+            width: 210mm;
+            height: 297mm;
+            padding-top: 10mm; /* 內容與紙張邊緣的距離 */
+            padding-bottom: 5mm; /* 內容與紙張邊緣的距離 */
+            padding-right: 15mm;
+            padding-left: 15mm;
+            margin: 0 auto 10px auto;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            position: relative; /* 關鍵：讓 ::after 偽元素可以相對於它定位 */
+        {#border: #721c24 10px solid;#} counter-increment: page; /* 2. 每個 a4-page 都增加主頁碼 */
+        }
+
+        /* 3. 為除了最後一個元素之外的所有頁面添加分頁符 */
+        .a4-page:not(:last-child) {
+            page-break-after: always;
+        }
+
+        /* --- 頁碼 --- */
+        .a4-page::after {
+            /* 4. 使用 ::after 偽元素生成頁碼 */
+            content: "p." counter(page);
+
+            /* 5. 使用絕對定位，精確控制位置 */
+            position: absolute;
+            bottom: 5mm; /* 距離紙張底部 0.5 公分 */
+            left: 0;
+            right: 0;
+            text-align: center;
+
+            /* 頁碼樣式 */
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .page-content {
+            padding-top: 0px;
+            margin-top: 5px;
+        {#border: #721c24 3px solid;#}
+        }
+
+        .appendix-page {
+            counter-increment: appendix-page; /* 7. 附錄頁增加附錄計數器 */
+        }
+
+        .appendix-page::after {
+            content: "A-" counter(appendix-page); /* 8. 覆蓋附錄頁的頁碼內容 */
+        }
+
+        /* --- 橫向頁面樣式 --- */
+        .a4-page-landscape {
+            width: 297mm;
+            height: 210mm;
+            page: landscape;
+            padding: 15mm;
+        }
+
+        /* ============================================= */
+        /* ====          其他報告書樣式 (維持不變)       ==== */
+        /* ============================================= */
+        /* 报告书特定样式 */
+        .report-section {
+            margin-bottom: 0px;
+        }
+
+        /* 減小公式段落之間的間距 */
+        .report-section p {
+            margin-bottom: 8px; /* 預設可能是 1rem (16px)，我們將其減小 */
+        }
+
+        .report-section img {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d3557;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .chapter-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #457b9d;
+            border-bottom: 2px solid #a8dadc;
+            padding-bottom: 8px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .report-subtitle, .chapter-title, h4 {
+            page-break-after: avoid; /* 打印时，避免在此元素后分页 */
+        }
+
+        .report-section, .report-subsection {
+            page-break-inside: avoid; /* 打印时，尽量避免在此元素内部分页 */
+        }
+
+        .param-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px 30px;
+        }
+
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px dotted #ccc;
+            font-size: 14px;
+        }
+
+        .param-item .label {
+            color: #343a40;
+        }
+
+        .param-item .value {
+            color: #000;
+            font-weight: 500;
+        }
+
+        .param-item .unit {
+            color: #6c757d;
+            margin-left: 5px;
+        }
+
+        .param-group-title {
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .norm-list {
+            list-style: none; /* 移除預設的數字編號 */
+            padding-left: 5px; /* 稍微減少左側內邊距 */
+            font-size: 14px;
+            line-height: 1.0; /* 增加行高，讓文字更易讀 */
+        }
+
+        .report-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 创建两个等宽的栏 */
+            gap: 0 40px; /* 栏间距为 40px */
+            align-items: start; /* 顶部对齐 */
+        }
+
+        .report-flex-container {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start; /* 確保子元素頂部對齊 */
+            gap: 25px; /* 元素間距 */
+            margin-bottom: 20px;
+        }
+
+        /* 圖片容器的樣式 */
+        .report-flex-container .figure-container {
+            flex-grow: 1;  /* 【1】允許放大以填滿多餘空間 */
+            flex-shrink: 1;/* 【2】允許縮小 */
+            flex-basis: 0;   /* 【3】初始寬度為 0，讓其寬度完全由內容（圖片）決定 */
+            min-width: 0;
+            text-align: center; /* 讓 figcaption 置中 */
+        }
+
+        /* 表格容器的樣式 */
+        .report-flex-container .table-container {
+            flex-grow: 0;  /* 【4】不允許放大 */
+            flex-shrink: 0;/* 【5】不允許縮小 */
+            /* 我們不再設定 flex-basis 或 width，讓其寬度自適應內容 */
+            max-height: 110mm;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-flex-container .figure-container img {
+            max-width: 99%;
+            height: auto;     /* 【6】高度自動，以保持原始比例 */
+            max-height: 100mm;
+            border: 1px solid #ccc;
+        }
+
+        .report-figure {
+            margin: 20px auto;
+            padding: 0;
+            text-align: center;
+            page-break-inside: avoid;
+            display: inline-block; /* <-- 新增此行 */
+            width: 100%; /* <-- 新增此行，以配合父容器的寬度 */
+        }
+
+        .report-figure img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 8px;
+        }
+
+        .report-figure figcaption {
+            font-size: 15px;
+            color: #555;
+        {#font-style: italic;#} text-align: center; /* 再次確認圖說文字本身是置中的 */
+        }
+
+        .norm-list li {
+            position: relative; /* 為了給 ::before 偽元素定位 */
+            padding-left: 28px; /* 為圖標留出空間 */
+            margin-bottom: 8px; /* 增加列表項之間的垂直間距 */
+        }
+
+        .norm-list li:last-child {
+            margin-bottom: 0; /* 移除最後一項的下邊距 */
+        }
+
+        .norm-list li::before {
+            content: "。"; /* 使用一個 Emoji 作為圖標，也可以替換為 SVG */
+            position: absolute; /* 絕對定位，相對於 li */
+            left: 0;
+            top: -1px; /* 微調圖標的垂直位置 */
+            font-size: 16px;
+            color: #457b9d; /* 使用與章節標題一致的主題色 */
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .summary-table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-table thead th span {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: #6c757d;
+        }
+
+        .summary-table tbody td {
+            color: #212529;
+        }
+
+        /* 用于高亮最不利工况的行 */
+        .summary-table .critical-row {
+            background-color: #fffbe6; /* 淡黄色高亮 */
+            font-weight: bold;
+        }
+
+        .table-caption {
+            font-size: 12px;
+            font-style: italic;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .report-subtitle {
+            font-size: 16px; /* 稍微缩小字体以增加对比 */
+            font-weight: bold;
+            color: #34495e; /* 使用一个更柔和的深蓝色 */
+            border-left: 5px solid #457b9d; /* 左侧添加强调色块 */
+            padding: 4px 0 4px 15px; /* 调整内边距 */
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+
+        mjx-container {
+            font-size: 0.85em;
+            /* text-align: left !important; /* 如果您希望块级公式也靠左对齐，可以取消这行注释 */
+        }
+
+        .check-details-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 5px solid #6c757d;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .check-details-box p {
+            margin: 0 0 10px 0;
+            line-height: 1.6;
+        }
+
+        .check-details-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .details-title {
+            font-weight: bold;
+            color: #495057;
+            display: inline-block;
+            min-width: 150px; /* 確保標題對齊 */
+        }
+
+        .details-content {
+            color: #212529;
+        }
+
+        .details-content.modified {
+            color: #c94a4a; /* 紅色，用於突顯已修正的 ca1 */
+            font-weight: 500;
+        }
+
+        .bolt-coords-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px 15px;
+            margin-top: 5px;
+            padding-left: 15px;
+        }
+
+        .bolt-coord-item {
+            font-family: Consolas, "Courier New", monospace;
+            color: #333;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* 在列印模式下應用頁碼 */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .a4-page {
+                box-shadow: none;
+                margin: 0;
+                border: none;
+            }
+
+            .chapter-title {
+            {#border:lightgreen 3px solid;#}
+            }
+
+            .page-content {
+                padding-top: 30px;
+                padding-right: 80px;
+                padding-left: 80px;
+                padding-bottom: 15px;
+            {#border:blue 3px solid;#}
+            }
+
+            .report-section {
+            {#border:red 2px solid;#}
+            }
+
+            .report-flex-container {
+                gap: 10px; /* 在列印時稍微縮小間距 */
+            }
+
+            .report-flex-container .figure-container {
+                /* 關鍵修正：使用 calc() 精確計算寬度 */
+                /* 意思是：50% 的父容器寬度，再減去間距的一半 (10px / 2 = 5px) */
+                flex-basis: calc(50% - 5px);
+                width: calc(50% - 5px);
+
+                /* 覆蓋掉瀏覽器模式下的 flex-grow 和 flex-shrink */
+                flex-grow: 0;
+                flex-shrink: 0;
+            }
+
+        }
+
+    </style>
+{% endblock %}
+
+
+{% block report_content %}
+    <div class="a4-page">
+        <div class="page-content">
+            <!-- ================== 第一页: 输入参数汇总 ================== -->
+
+            <div class="report-title">錨栓與基礎版設計檢核報告書</div>
+
+            <!-- 第一章：规范依据 -->
+            <div class="report-section">
+                <div class="chapter-title">第一章、規範依據</div>
+                <ol class="norm-list">
+                    <li>建築物混凝土結構設計規範 112年版 (台內營字第1120809921號)</li>
+                    <li>ACI 318-19, Building Code Requirements for Structural Concrete</li>
+                </ol>
+            </div>
+
+            <!-- 第二章：幾何參數 -->
+            <div class="report-section">
+                <div class="chapter-title">第二章、幾何參數</div>
+                <div class="report-main-grid">
+
+                    <!-- ===== 左栏：主要构件 ===== -->
+                    <div class="grid-column">
+
+                        <div class="param-group-title">基礎版 (Base Plate): {{ inputs.plate_params.shape }}</div>
+                        {% if inputs.plate_params.shape == 'rectangle' %}
+                            <div class="param-item"><span class="label">版長, N</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.plate_params.N|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.plate_params.N|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">版寬, B</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.plate_params.B|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.plate_params.B|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="param-item"><span class="label">外半徑, R</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.plate_params.outer_radius|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.plate_params.outer_radius|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="param-item"><span class="label">版厚, t<sub>p</sub></span>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.plate_params.tp_in|to_cm:2 }}</span>
+                                    <span class="unit">cm</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.plate_params.tp_in|floatformat:"-2" }}</span>
+                                    <span class="unit">in</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="param-group-title" style="margin-top: 20px;">鋼柱
+                            (Column): {{ inputs.column_params.type }}</div>
+                        {% if inputs.column_params.type == 'H-Shape' %}
+                            <div class="param-item"><span class="label">柱深, d</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.d|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.d|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">翼板寬, b<sub>f</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.bf|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.bf|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">翼板厚, t<sub>f</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.tf|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.tf|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">腹板厚, t<sub>w</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.tw|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.tw|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        {% elif inputs.column_params.type == 'Tube' %}
+                            <div class="param-item"><span class="label">管深, H</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.H|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.H|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">管寬, B</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.B|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.B|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">管壁厚, t</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.t|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.t|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% elif inputs.column_params.type == 'Pipe' %}
+                            <div class="param-item"><span class="label">外徑, D</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.D|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.D|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">管壁厚, t</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.column_params.t|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.column_params.t|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="param-group-title" style="margin-top: 20px;">混凝土墩柱 (Pedestal)</div>
+                        {% if inputs.pedestal_params.shape == 'rectangle' %}
+                            <div class="param-item"><span class="label">墩柱長, N<sub>ped</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.pedestal_params.N|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.pedestal_params.N|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">墩柱寬, B<sub>ped</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.pedestal_params.B|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.pedestal_params.B|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% elif inputs.pedestal_params.shape == 'circle' %}
+                            <div class="param-item"><span class="label">墩柱直徑, D<sub>ped</sub></span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.pedestal_params.D|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.pedestal_params.D|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="param-item"><span class="label">墩柱厚/高, h<sub>ped</sub></span>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.pedestal_params.h|to_cm:2 }}</span>
+                                    <span class="unit">cm</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.pedestal_params.h|floatformat:"-2" }}</span>
+                                    <span class="unit">in</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 右栏：錨栓 ===== -->
+                    <div class="grid-column">
+                        <div class="param-group-title">錨栓幾何參數及排列方式 (Anchor Bolt Geometry & Layout)</div>
+                        <div class="param-item"><span class="label">錨栓直徑, d<sub>a</sub></span>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.bolt_params.diameter|to_cm:3 }}</span>
+                                    <span class="unit">cm</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.bolt_params.diameter|floatformat:"-3" }}</span>
+                                    <span class="unit">in</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="param-item"><span class="label">有效埋深, h<sub>ef</sub></span>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.anchor_check_params.h_ef|to_cm:2 }}</span>
+                                    <span class="unit">cm</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.anchor_check_params.h_ef|floatformat:"-2" }}</span>
+                                    <span class="unit">in</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="param-item"><span class="label">佈局模式</span> <span
+                                class="value">{{ inputs.bolt_params.layout_mode }}</span></div>
+
+                        {% if inputs.bolt_params.layout_mode == 'grid' %}
+                            <div class="param-item"><span class="label">X向邊距</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.bolt_params.edge_dist_X|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.bolt_params.edge_dist_X|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">Y向邊距</span>
+                                <div>
+                                    {% if unit_system == 'mks' %}
+                                        <span class="value">{{ inputs.bolt_params.edge_dist_Y|to_cm:2 }}</span>
+                                        <span class="unit">cm</span>
+                                    {% else %}
+                                        <span class="value">{{ inputs.bolt_params.edge_dist_Y|floatformat:"-2" }}</span>
+                                        <span class="unit">in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">X向插入錨栓數</span><span
+                                    class="value">{{ inputs.bolt_params.num_inserted_X }}</span></div>
+                            <div class="param-item"><span class="label">Y向插入錨栓數</span><span
+                                    class="value">{{ inputs.bolt_params.num_inserted_Y }}</span></div>
+                        {% elif inputs.bolt_params.layout_mode == 'circular' %}
+                            <div class="param-item"><span class="label">錨栓總數</span><span
+                                    class="value">{{ inputs.bolt_params.count }}</span></div>
+                            <div class="param-item"><span class="label">佈置半徑</span>
+                                <div>
+                                    <div>
+                                        {% if unit_system == 'mks' %}
+                                            <span class="value">{{ inputs.bolt_params.radius|to_cm:2 }}</span>
+                                            <span class="unit">cm</span>
+                                        {% else %}
+                                            <span class="value">{{ inputs.bolt_params.radius|floatformat:"-2" }}</span>
+                                            <span class="unit">in</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="param-item"><span class="label">起始角度</span>
+                                <div><span class="value">{{ inputs.bolt_params.start_angle }}</span><span
+                                        class="unit">deg</span></div>
+                            </div>
+                        {% elif inputs.bolt_params.layout_mode == 'custom' %}
+                            <div class="param-item"><span class="label">錨栓總數</span><span
+                                    class="value">{{ inputs.bolt_params.coordinates|length }}</span></div>
+                            <!-- 可以在这里加一个循环来显示所有自订坐标 -->
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第三章：材料参数 -->
+            <div class="report-section">
+                <div class="chapter-title">第三章、材料參數</div>
+                <div class="param-grid">
+                    <div class="param-item"><span class="label">基礎版降伏強度, F<sub>y</sub></span>
+                        <div>
+                            {% if unit_system == 'mks' %}
+                                <span class="value">{{ inputs.plate_params.fy_ksi|to_kgf_cm2_from_ksi:2 }}</span>
+                                <span class="unit">kgf/cm²</span>
+                            {% else %}
+                                <span class="value">{{ inputs.plate_params.fy_ksi|floatformat:"-2" }}</span>
+                                <span class="unit">ksi</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="param-item"><span class="label">錨栓降伏強度, F<sub>ya</sub></span>
+                        <div>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.materials.bolt_fya_ksi|to_kgf_cm2_from_ksi:2 }}</span>
+                                    <span class="unit">kgf/cm²</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.materials.bolt_fya_ksi|floatformat:"-2" }}</span>
+                                    <span class="unit">ksi</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-item"><span class="label">錨栓極限強度, F<sub>uta</sub></span>
+                        <div>
+                            <div>
+                                {% if unit_system == 'mks' %}
+                                    <span class="value">{{ inputs.materials.bolt_futa_ksi|to_kgf_cm2_from_ksi:2 }}</span>
+                                    <span class="unit">kgf/cm²</span>
+                                {% else %}
+                                    <span class="value">{{ inputs.materials.bolt_futa_ksi|floatformat:"-2" }}</span>
+                                    <span class="unit">ksi</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-item"><span class="label">混凝土抗壓強度, f'<sub>c</sub></span>
+                        <div>
+                            {% if unit_system == 'mks' %}
+                                <span class="value">{{ inputs.materials.fc_psi|to_kgf_cm2_from_psi:2 }}</span>
+                                <span class="unit">kgf/cm²</span>
+                            {% else %}
+                                <span class="value">{{ inputs.materials.fc_psi|floatformat:"-0" }}</span>
+                                <span class="unit">psi</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    {#    第二章#}
+    <div class="a4-page">
+        <div class="page-content">
+            <div class="report-section">
+                <div class="chapter-title">第二章、幾何參數(續)</div>
+                <!-- [核心新增] 插入幾何關係示意圖 -->
+                {% if geometry_plot_base64 %}
+                    <div style="text-align: center; margin-top: 25px; page-break-inside: avoid;">
+                        <img src="data:image/png;base64,{{ geometry_plot_base64|safe }}" alt="幾何關係示意圖"
+                             style="max-width: 90%; border: 1px solid #ccc; padding: 5px; border-radius: 8px;">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================== 第二页: 載重与最不利结果 ================== -->
+    <div class="a4-page">
+        <div class="page-content">
+            <!-- 第四章：外力加载 -->
+            <div class="report-section">
+                <div class="chapter-title">第四章、外力加載</div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="{% static 'img/3D_loading.png' %}" alt="外力加載方向示意圖"
+                         style="max-height: 250px; width: auto; border: 1px solid #ddd; padding: 5px; border-radius: 8px;">
+                    <p class="table-caption" style="text-align: center; margin-top: 8px;">圖 4.1 外力加載方向示意圖</p>
+                </div>
+                <!-- [核心修改] 建立一個表格來顯示所有荷載組合 -->
+                <table class="summary-table" style="font-size: 12px; margin-top: 15px;">
+                    <thead>
+                    <tr>
+                        <th>組合 #</th>
+                        {% if unit_system == 'mks' %}
+                            <th>P<sub>u</sub><br><span>(tf)</span></th>
+                            <th>M<sub>ux</sub><br><span>(tf-m)</span></th>
+                            <th>M<sub>uy</sub><br><span>(tf-m)</span></th>
+                            <th>V<sub>ux</sub><br><span>(tf)</span></th>
+                            <th>V<sub>uy</sub><br><span>(tf)</span></th>
+                            <th>T<sub>z</sub><br><span>(tf-m)</span></th>
+                        {% else %}
+                            <th>P<sub>u</sub><br><span>(kips)</span></th>
+                            <th>M<sub>ux</sub><br><span>(kip-in)</span></th>
+                            <th>M<sub>uy</sub><br><span>(kip-in)</span></th>
+                            <th>V<sub>ux</sub><br><span>(kips)</span></th>
+                            <th>V<sub>uy</sub><br><span>(kips)</span></th>
+                            <th>T<sub>z</sub><br><span>(kip-in)</span></th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for load in loads %}
+                        <tr>
+                            <td>{{ load.id }}</td>
+                            {% if unit_system == 'mks' %}
+                                <td>{{ load.p_applied|to_tf:2 }}</td>
+                                <td>{{ load.mx_applied|to_tf_m:2 }}</td>
+                                <td>{{ load.my_applied|to_tf_m:2 }}</td>
+                                <td>{{ load.vx_applied|to_tf:2 }}</td>
+                                <td>{{ load.vy_applied|to_tf:2 }}</td>
+                                <td>{{ load.tz_applied|to_tf_m:2 }}</td>
+                            {% else %}
+                                <td>{{ load.p_applied|floatformat:"-2" }}</td>
+                                <td>{{ load.mx_applied|floatformat:"-2" }}</td>
+                                <td>{{ load.my_applied|floatformat:"-2" }}</td>
+                                <td>{{ load.vx_applied|floatformat:"-2" }}</td>
+                                <td>{{ load.vy_applied|floatformat:"-2" }}</td>
+                                <td>{{ load.tz_applied|floatformat:"-2" }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <p style="text-align: left; margin-top: 10px;">共 {{ loads|length }} 組載重進行檢核。</p>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 第五章：分析结果 -->
+    <div class="a4-page">
+        <div class="page-content">
+            <div class="report-section">
+                <div class="chapter-title">第五章、分析結果</div>
+
+                <!-- 【核心新增】显示所有載重组合的分析摘要总表 -->
+                <div class="report-subtitle">5.1 各載重組合之分析摘要</div>
+                <table class="summary-table">
+                    <thead>
+                    <tr>
+                        <th>載重組合<br><span>(Load Combo)</span></th>
+                        {% if unit_system == 'mks' %}
+                            <th>最大混凝土壓力<br><span>(kgf/cm²)</span></th>
+                            <th>受拉錨栓數<br><span>(No. of Tension Bolts)</span></th>
+                            <th>最大錨栓拉力<br><span>(tf)</span></th>
+                        {% else %}
+                            <th>最大混凝土壓力<br><span>(ksi)</span></th>
+                            <th>受拉錨栓數<br><span>(No. of Tension Bolts)</span></th>
+                            <th>最大錨栓拉力<br><span>(kips)</span></th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for summary in results.all_combos_summaries %}
+                        <tr {% if summary.combo_id == results.most_critical_combo_id %}class="critical-row"{% endif %}>
+                            <td># {{ summary.combo_id }}</td>
+                            {% if unit_system == 'mks' %}
+                                <td>{{ summary.max_pressure_ksi|to_kgf_cm2_from_ksi:2 }}</td>
+                                <td>{{ summary.num_tension_bolts }}</td>
+                                <td>{{ summary.max_tension_force_kips|to_tf:2 }}</td>
+                            {% else %}
+                                <td>{{ summary.max_pressure_ksi|floatformat:"-3" }}</td>
+                                <td>{{ summary.num_tension_bolts }}</td>
+                                <td>{{ summary.max_tension_force_kips|floatformat:"-2" }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <p class="table-caption">* 標示為 <span style="background-color: #fffbe6;">黃色</span>
+                    的列為產生最大 D/C Ratio 的最不利載重組合。</p>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- [核心重構] 引入基礎版檢核章節 -->
+    {% include "SteelDesign/BPandAnchor/_report_chapter_baseplate_checks.html" %}
+
+
+    <!-- [核心重構] 引入錨栓拉力檢核章節 -->
+    {% if results.has_any_tension %}
+        <!-- 如果有拉力，正常顯示拉力章節 -->
+        {% include "SteelDesign/BPandAnchor/_report_chapter_tension.html" %}
+    {% else %}
+        <!-- 如果沒有拉力，顯示提示訊息 -->
+        <div class="a4-page">
+            <div class="page-content">
+                <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                <div class="report-section">
+                    <div class="report-subtitle">6.3 拉力強度檢核</div>
+                    <p class="check-message" style="font-size: 16px; line-height: 1.8; font-style: normal;">
+                        遍歷各載重組合，錨栓均未受到拉力作用，故規範內容規定之最大受拉錨栓抗拉強度檢核、錨栓拔出強度檢核、混凝土拉破強度檢核、混凝土側向脹破強度檢核，均無須進行檢核。
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- [核心重構] 引入錨栓剪力檢核章節 -->
+    {% if results.has_any_shear %}
+        <!-- 如果有剪力，正常顯示剪力章節 -->
+        {% include "SteelDesign/BPandAnchor/_report_chapter_shear.html" %}
+    {% else %}
+        <!-- 如果沒有剪力，顯示提示訊息 -->
+        <div class="a4-page">
+            <div class="page-content">
+                <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                <div class="report-section">
+                    <!-- 根據是否有拉力，決定本節的編號 -->
+                    {% if results.has_any_tension %}
+                        <div class="report-subtitle">6.7 剪力強度檢核</div>
+                    {% else %}
+                        <div class="report-subtitle">6.4 剪力強度檢核</div>
+                    {% endif %}
+                    <p class="check-message" style="font-size: 16px; line-height: 1.8; font-style: normal;">
+                        遍歷各載重組合，錨栓均未受到剪力作用，故規範內容規定之錨栓鋼材抗剪強度檢核、錨栓之混凝土剪破強度檢核、錨栓之混凝土撬破強度檢核，均無須進行檢核。
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- [核心重構] 引入拉剪互制作用檢核章節 -->
+    <!-- 只有在同時有拉力和剪力時，才顯示此章節 -->
+    {% if results.has_any_tension and results.has_any_shear %}
+        {% include "SteelDesign/BPandAnchor/_report_chapter_interaction.html" %}
+    {% endif %}
+
+
+
+    <!-- ================== 附錄頁: D/C Ratio 總覽 (橫向) ================== -->
+    <!-- [核心修改] 使用新的 a4-page-landscape class -->
+    <div class="appendix-section">
+        <div class="a4-page a4-page-landscape appendix-page">
+            <div class="page-content">
+                <div class="chapter-title" style="padding: 5mm 20mm 0 20mm; margin-top: 0;">附錄 各載重組合檢核比值 (D/C
+                    Ratio)
+                    總覽
+                </div>
+                <div class="report-section" style="padding: 15px 20mm; margin-bottom: 0;">
+                    <div>
+                        <table class="summary-table" style="font-size: 12px; white-space: nowrap;">
+                            <thead>
+                            <tr>
+                                <th rowspan="2" style="vertical-align: middle;">組合 #</th>
+                                <th colspan="2">基礎版檢核</th>
+                                <th colspan="6">錨栓拉力檢核 (Tension)</th>
+                                <th colspan="6">錨栓剪力檢核 (Shear)</th>
+                                {#                            <th rowspan="2" style="vertical-align: middle;">拉剪<br>互制</th>#}
+                            </tr>
+                            <tr>
+                                <th>承壓<br>(Bearing)</th>
+                                <th>彎曲<br>(Bending)</th>
+                                <th>$N_{sa}$</th>
+                                <th>$N_{pn}$</th>
+                                <th>$N_{cb}$</th>
+                                <th>$N_{cbg}$</th>
+                                <th>$N_{sb}$</th>
+                                <th>$N_{sbg}$</th>
+                                <th>$V_{sa}$</th>
+                                <th>$V_{cb}$</th>
+                                <th>$V_{cbg,x}$</th>
+                                <th>$V_{cbg,y}$</th>
+                                <th>$V_{cp}$</th>
+                                <th>$V_{cpg}$</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in results.all_combos_dc_ratios %}
+                                <tr>
+                                    <td>{{ row.combo_id }}</td>
+                                    <td>{{ row.bearing|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.bending|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.nsa|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.npn|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.ncb|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.ncbg|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.nsb|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.nsbg|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vsa|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vcb|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vcbg_x|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vcbg_y|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vcp|floatformat:"-3"|default:"-" }}</td>
+                                    <td>{{ row.vcpg|floatformat:"-3"|default:"-" }}</td>
+                                    {#                                <td>{{ row.interaction|floatformat:"-3"|default:"-" }}</td>#}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}

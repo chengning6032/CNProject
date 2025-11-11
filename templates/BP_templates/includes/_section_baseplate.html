@@ -1,0 +1,96 @@
+<div class="content-section card">
+    <h3>3. 柱基板</h3>
+    <form method="post" id="baseplate-form">
+        {% csrf_token %}
+
+        <!-- 基板形狀選擇 -->
+        <div class="form-group">
+            <label for="baseplate_shape">形狀：</label>
+            <select class="form-control" id="baseplate_shape" name="baseplate_shape" required>
+                <option value="rectangular" selected>矩形</option>
+                <option value="circular" disabled>圓形 (開發中)</option>
+                <option value="hexagonal" disabled>六邊形 (開發中)</option>
+                <option value="octagonal" disabled>八邊形 (開發中)</option>
+            </select>
+        </div>
+
+        <!-- 基板尺寸 -->
+        <div class="form-group">
+            <label for="baseplate_x">X方向尺寸 (cm)：</label>
+            <input type="number" class="form-control" id="baseplate_x" name="baseplate_x" min="0"
+                   step="0.1"
+                   required>
+        </div>
+        <div class="form-group">
+            <label for="baseplate_y">Y方向尺寸 (cm)：</label>
+            <input type="number" class="form-control" id="baseplate_y" name="baseplate_y" min="0"
+                   step="0.1"
+                   required>
+        </div>
+        <div class="form-group">
+            <label for="baseplate_thickness">厚度 (cm)：</label>
+            <input type="number" class="form-control" id="baseplate_thickness"
+                   name="baseplate_thickness"
+                   min="0" step="0.1" required>
+        </div>
+
+        <!-- 降伏強度 -->
+        <div class="form-group">
+            <label for="baseplate_fy">降伏強度 F<sub>y</sub> (MPa)：</label>
+            <input type="number" class="form-control" id="baseplate_fy" name="baseplate_fy" min="0" step="1"
+                   value="250" required>
+        </div>
+
+        <!-- 銲接材料 -->
+        <div class="form-group">
+            <label for="weld_material">銲接材料：</label>
+            <select class="form-control" id="weld_material" name="weld_material" required>
+                <option value="FXX70" selected>FXX70</option>
+                <option value="FXX80">FXX80</option>
+                <option value="FXX90">FXX90</option>
+            </select>
+        </div>
+
+        <!-- 銲接部位 -->
+        <div class="form-group" id="weld-location-group">
+            <label style="margin-bottom: 0.5rem;">銲接部位：</label>
+            <div class="flex flex-wrap gap-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="weld_location" id="weld_all"
+                           value="all"
+                           checked>
+                    <label class="form-check-label"
+                           for="weld_all">全周(若為H型鋼，銲接位置不包含翼板與腹板連接圓弧處)</label>
+                </div>
+                <div class="form-check" id="weld-outer-option" style="display: none;">
+                    <input class="form-check-input" type="radio" name="weld_location" id="weld_outer"
+                           value="outer">
+                    <label class="form-check-label" for="weld_outer">僅外翼緣</label>
+                </div>
+                <div class="form-check" id="weld-both-option" style="display: none;">
+                    <input class="form-check-input" type="radio" name="weld_location" id="weld_both"
+                           value="both">
+                    <label class="form-check-label" for="weld_both">內外翼緣</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 銲接尺寸 -->
+        <div class="form-group">
+            <label for="weld_size">銲接尺寸 (mm)：</label>
+            <input type="number" class="form-control" id="weld_size" name="weld_size" min="0" step="1"
+                   required>
+        </div>
+
+        <!-- 止滑榫 -->
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="anti_slip" name="anti_slip">
+                <label class="form-check-label" for="anti_slip">止滑榫 (開發中)</label>
+            </div>
+            <div id="anti_slip_message" class="alert alert-info mt-2" style="display: none;">
+                開發中，敬請期待!!
+            </div>
+        </div>
+    </form>
+</div>

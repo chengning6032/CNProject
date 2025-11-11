@@ -1,0 +1,805 @@
+{% extends "base_auth.html" %}
+{% load static %}
+{% block title %}臺灣建築物耐震設計靜力分析係數計算器{% endblock %}
+
+{% block extra_styles %}
+    {# 我們將在這裡直接定義所有樣式，不再依賴外部 Bootstrap #}
+    <style>
+        /* ============================================= */
+        /* ====   耐震靜力分析計算器 全新樣式   ==== */
+        /* ============================================= */
+
+        /* 1. 全局與佈局 (借鑒 style.css)
+        --------------------------------------------- */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 【核心新增】麵包屑導航樣式 */
+        .breadcrumb-container {
+            width: 100%;
+            margin: 20px auto 15px auto;
+        }
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            list-style: none;
+            background-color: #e9ecef;
+            border-radius: 6px;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            display: inline-block;
+            padding: 0 0.75rem;
+            color: #6c757d;
+            content: "/";
+        }
+
+        .breadcrumb-item a {
+            color: #0056b3;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #1d3557;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        .main-title-container {
+            width: 100%;
+            margin: 20px auto 40px auto;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        .main-title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #1d3557;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .sub-title {
+            font-size: 16px;
+            font-weight: 400;
+            color: #6c757d;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* 2. 卡片化設計 (借鑒 section-container)
+        --------------------------------------------- */
+        .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            font-size: 22px;
+            font-weight: 700;
+            color: #457b9d;
+            margin-bottom: 25px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            width: 100%;
+        }
+
+        .card-body {
+            width: 100%;
+        }
+
+        /* 3. 表單元素美化
+        --------------------------------------------- */
+        .input-fieldset {
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .input-fieldset legend {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+            padding: 0 10px;
+            width: auto;
+            float: none;
+            margin-bottom: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 15px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-control, .form-select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            color: #444;
+            background-color: #fff;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+        }
+
+        .form-check-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .form-check label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        #faults-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .input-note {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* 4. 結果區域美化
+        --------------------------------------------- */
+        .results-placeholder {
+            text-align: center;
+            padding: 80px 20px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-table th, .result-table td {
+            border: 1px solid #e9ecef;
+            padding: 12px;
+        }
+
+        .result-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            width: 55%;
+            text-align: left;
+        }
+
+        .result-table td {
+            text-align: center;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .result-table .group-header {
+            background-color: #1d3557;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .result-table .sub-group-header {
+            background-color: #eaf2f6;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        code {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #0056b3;
+            background-color: #eaf2f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* 5. 按鈕風格統一
+        --------------------------------------------- */
+        .btn {
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #d62828;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn-success {
+            background-color: #2a9d8f;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-success:hover {
+            background-color: #264653;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(42, 157, 143, 0.3);
+        }
+
+        /* 響應式 */
+        @media (max-width: 1200px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="page-wrapper">
+        <nav class="breadcrumb-container" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'homepage' %}">OLI 首頁</a></li>
+                <li class="breadcrumb-item active" aria-current="page">耐震設計規範 - 靜力分析</li>
+            </ol>
+        </nav>
+        <div class="main-title-container">
+            <h1 class="main-title">臺灣建築物耐震設計靜力分析係數計算器</h1>
+            <p class="sub-title">Seismic Static Analysis Coefficients Calculator (TWN Code)</p>
+        </div>
+
+        <div class="calculator-grid">
+            <!-- 左側輸入欄 -->
+            <div class="card">
+                <div class="card-header">輸入參數</div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+                    <form id="seismic-form" method="post">
+                        {% csrf_token %}
+
+                        <!-- 1. 地點參數 -->
+                        <fieldset class="input-fieldset">
+                            <legend>1. 地點參數</legend>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="county-select" class="form-label">縣市</label>
+                                    <select id="county-select" name="county" class="form-select" required>
+                                        <option selected disabled value="">請選擇縣市</option>
+                                        {% for county in counties %}
+                                            <option value="{{ county }}"
+                                                    {% if submitted_data.county == county %}selected{% endif %}>{{ county }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="township-select" class="form-label">鄉鎮市區</label>
+                                    <select id="township-select" name="township" class="form-select" required disabled>
+                                        <option selected disabled value="">請先選擇縣市</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="village-wrapper" class="form-group" style="display: none; margin-top: 20px;">
+                                <label for="village-select" class="form-label">里</label>
+                                <select id="village-select" name="village" class="form-select" disabled>
+                                    <option selected disabled value="">請選擇里</option>
+                                </select>
+                            </div>
+                            <div id="faults-section" style="display: none; margin-top:20px;">
+                                <hr>
+                                <h6>鄰近斷層距離</h6>
+                                <div id="faults-inputs"></div>
+                            </div>
+                        </fieldset>
+
+                        <!-- 2. 結構參數 -->
+                        <fieldset class="input-fieldset">
+                            <legend>2. 結構參數</legend>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="hn" class="form-label">建築物高度 hn (公尺)</label>
+                                    <input type="number" step="0.1" class="form-control" id="hn" name="hn"
+                                           value="{{ submitted_data.hn }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="structure-type" class="form-label">結構系統</label>
+                                    <select id="structure-type" name="structure_type" class="form-select" required>
+                                        <option value="1"
+                                                {% if submitted_data.structure_type == '1' %}selected{% endif %}>鋼構造
+                                        </option>
+                                        <option value="2"
+                                                {% if submitted_data.structure_type == '2' or not submitted_data %}selected{% endif %}>
+                                            鋼筋混凝土造
+                                        </option>
+                                        <option value="3"
+                                                {% if submitted_data.structure_type == '3' %}selected{% endif %}>其他
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="Tx" class="form-label">X方向週期 Tx (秒)</label>
+                                    <input type="number" step="0.001" class="form-control" id="Tx" name="Tx"
+                                           value="{{ submitted_data.Tx }}">
+                                    <span class="input-note">留白則使用經驗週期</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="Ty" class="form-label">Y方向週期 Ty (秒)</label>
+                                    <input type="number" step="0.001" class="form-control" id="Ty" name="Ty"
+                                           value="{{ submitted_data.Ty }}">
+                                    <span class="input-note">留白則使用經驗週期</span>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- 3. 設計參數 -->
+                        <fieldset class="input-fieldset">
+                            <legend>3. 設計參數</legend>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="usage-factor" class="form-label">用途係數 I</label>
+                                    <select id="usage-factor" name="usage_factor" class="form-select" required>
+                                        <option value="1.5"
+                                                {% if submitted_data.usage_factor == '1.5' %}selected{% endif %}>第一、二類
+                                            (I=1.5)
+                                        </option>
+                                        <option value="1.25"
+                                                {% if submitted_data.usage_factor == '1.25' %}selected{% endif %}>第三類
+                                            (I=1.25)
+                                        </option>
+                                        <option value="1.0"
+                                                {% if submitted_data.usage_factor == '1.0' or not submitted_data %}selected{% endif %}>
+                                            第四類 (I=1.0)
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="alpha-y-wrapper">
+                                    <!-- JavaScript 将会动态填入此处 -->
+                                </div>
+                                <div class="form-group">
+                                    <label for="Rx" class="form-label">X方向韌性容量 Rx</label>
+                                    <input type="number" step="0.1" class="form-control" id="Rx" name="Rx"
+                                           value="{{ submitted_data.Rx }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="Ry" class="form-label">Y方向韌性容量 Ry</label>
+                                    <input type="number" step="0.1" class="form-control" id="Ry" name="Ry"
+                                           value="{{ submitted_data.Ry }}" required>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- 4. 垂直力计算模式 -->
+                        <fieldset class="input-fieldset">
+                            <legend>4. 垂直力計算模式</legend>
+                            <div class="form-check-group">
+                                <div class="form-check">
+                                    <label><input class="form-check-input" type="radio" name="vertical_mode"
+                                                  id="v_mode_1" value="1"
+                                                  {% if submitted_data.vertical_mode == '1' or not submitted_data %}checked{% endif %}>
+                                        標準模式 (X, Y方向獨立計算)</label>
+                                </div>
+                                <div class="form-check">
+                                    <label><input class="form-check-input" type="radio" name="vertical_mode"
+                                                  id="v_mode_2" value="2"
+                                                  {% if submitted_data.vertical_mode == '2' %}checked{% endif %}> 保守模式
+                                        (統一採用較不利向反應計算)</label>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <button type="submit" class="btn btn-primary">計算地震力係數</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 右側結果欄 -->
+            <div class="card">
+                <div class="card-header">計算結果</div>
+                <div class="card-body">
+                    {% if results %}
+                        <div id="results-section">
+                            <table class="result-table">
+                                <tbody>
+                                <tr class="group-header">
+                                    <td colspan="2">1. 水平地震力係數</td>
+                                </tr>
+                                <tr class="sub-group-header">
+                                    <td colspan="2">最小設計總橫力係數 C (2.2節)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 V = C * W</th>
+                                    <td><code>{{ results.C_VX|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 V = C * W</th>
+                                    <td><code>{{ results.C_VY|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="sub-group-header">
+                                    <td colspan="2">中小度地震降伏之設計地震力係數 C* (2.10.1節)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 V* = C* * W</th>
+                                    <td><code>{{ results.C_V_star_X|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 V* = C* * W</th>
+                                    <td><code>{{ results.C_V_star_Y|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="sub-group-header">
+                                    <td colspan="2">最大考量地震崩塌之設計地震力係數 CM (2.10.2節)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 VM = CM * W</th>
+                                    <td><code>{{ results.C_VMX|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 VM = CM * W</th>
+                                    <td><code>{{ results.C_VMY|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="group-header">
+                                    <td colspan="2">2. 垂直地震力係數 (2.18節)</td>
+                                </tr>
+                                <tr class="sub-group-header">
+                                    <td colspan="2">設計垂直地震力係數 Cz_D (梁、版適用)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 Vz = Cz_D * W</th>
+                                    <td><code>{{ results.C_VZX_D|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 Vz = Cz_D * W</th>
+                                    <td><code>{{ results.C_VZY_D|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="sub-group-header">
+                                    <td colspan="2">中小度垂直地震力係數 Cz* (梁、版適用)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 Vz* = Cz* * W</th>
+                                    <td><code>{{ results.C_V_star_ZX|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 Vz* = Cz* * W</th>
+                                    <td><code>{{ results.C_V_star_ZY|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="sub-group-header">
+                                    <td colspan="2">最大考量垂直地震力係數 Cz_M (梁、版適用)</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向 VzM = Cz_M * W</th>
+                                    <td><code>{{ results.C_VMZX|floatformat:4 }} * W</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向 VzM = Cz_M * W</th>
+                                    <td><code>{{ results.C_VMZY|floatformat:4 }} * W</code></td>
+                                </tr>
+
+                                <tr class="sub-group-header">
+                                    <td colspan="2">柱子專用之垂直力係數 C_column</td>
+                                </tr>
+                                <tr>
+                                    <th>柱自重 * C_column</th>
+                                    <td><code>{{ results.C_column|floatformat:4 }}</code></td>
+                                </tr>
+
+                                <tr class="group-header">
+                                    <td colspan="2">3. 設計建議</td>
+                                </tr>
+                                <tr>
+                                    <th>X方向建議設計係數 C_design,x = max(C, C*)</th>
+                                    <td><code>{{ results.C_design_X|floatformat:4 }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Y方向建議設計係數 C_design,y = max(C, C*)</th>
+                                    <td><code>{{ results.C_design_Y|floatformat:4 }}</code></td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <form id="report-form" action="{% url 'EqStaticAnalysis_TW:report' %}" method="post"
+                                  target="SeismicReportWindow">
+                                {% csrf_token %}
+                            </form>
+                            <button id="generate-report-btn" class="btn btn-success">產生詳細計算報告 (彈出新視窗)
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="results-placeholder">
+                            <p>請在左側輸入所有參數後，點擊「計算地震力係數」按鈕以顯示結果。</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ submitted_faults|json_script:"submitted-faults" }}
+    {% if results %}
+        {{ results|json_script:"results-data" }}
+    {% endif %}
+
+    <!-- JavaScript (與您提供的版本完全相同) -->
+    <script>
+        const countySelect = document.getElementById('county-select');
+        const townshipSelect = document.getElementById('township-select');
+        const villageWrapper = document.getElementById('village-wrapper');
+        const villageSelect = document.getElementById('village-select');
+        const faultsSection = document.getElementById('faults-section');
+        const faultsInputs = document.getElementById('faults-inputs');
+        const structureTypeSelect = document.getElementById('structure-type');
+        const alphaYWrapper = document.getElementById('alpha-y-wrapper');
+        const reportForm = document.getElementById('report-form');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+
+        function updateAlphaYOptions() {
+            const structureType = structureTypeSelect.value;
+            alphaYWrapper.innerHTML = '';
+            const submittedAlphaChoice = "{{ submitted_data.alpha_y_choice|default:'' }}";
+            const submittedAlphaManual = "{{ submitted_data.alpha_y_manual|default:'' }}";
+            let content = '';
+            if (structureType === '1') {
+                content = `
+                    <label for="alpha-y-choice" class="form-label fw-bold">鋼結構設計方法 (αy)</label>
+                    <select id="alpha-y-choice" name="alpha_y_choice" class="form-select" required>
+                        <option value="asd" ${submittedAlphaChoice === 'asd' ? 'selected' : ''}>容許應力設計法 (αy=1.2)</option>
+                        <option value="lrfd" ${submittedAlphaChoice === 'lrfd' ? 'selected' : ''}>極限強度設計法 (αy=1.0)</option>
+                    </select>
+                `;
+            } else if (structureType === '2') {
+                content = `
+                    <label for="alpha-y-choice" class="form-label fw-bold">RC極限強度設計法類型 (αy)</label>
+                    <select id="alpha-y-choice" name="alpha_y_choice" class="form-select" required>
+                        <option value="general" ${submittedAlphaChoice === 'general' || !submittedAlphaChoice ? 'selected' : ''}>一般情況 (αy=1.5)</option>
+                        <option value="factor_1" ${submittedAlphaChoice === 'factor_1' ? 'selected' : ''}>地震力載重因子為1.0 (αy=1.0)</option>
+                    </select>
+                `;
+            } else {
+                content = `
+                    <label for="alpha-y-manual" class="form-label fw-bold">起始降伏力放大倍數 αy</label>
+                    <input type="number" step="0.1" class="form-control" id="alpha-y-manual" name="alpha_y_manual" value="${submittedAlphaManual}" required placeholder="請自行分析決定並輸入">
+                `;
+            }
+            alphaYWrapper.innerHTML = content;
+        }
+
+        async function loadTownships(county) {
+            townshipSelect.innerHTML = '<option selected disabled value="">載入中...</option>';
+            townshipSelect.disabled = true;
+            villageWrapper.style.display = 'none';
+            villageSelect.disabled = true;
+
+            try {
+                const response = await fetch(`/OLi/eqTW/api/get_townships/${county}/`);
+                const data = await response.json();
+                townshipSelect.innerHTML = '<option selected disabled value="">請選擇鄉鎮市區</option>';
+                data.townships.forEach(township => townshipSelect.add(new Option(township, township)));
+                townshipSelect.disabled = false;
+                const selectedTownship = "{{ submitted_data.township|default:'' }}";
+                if (selectedTownship) {
+                    townshipSelect.value = selectedTownship;
+                    townshipSelect.dispatchEvent(new Event('change'));
+                }
+            } catch (error) {
+                console.error('Error fetching townships:', error);
+                townshipSelect.innerHTML = '<option selected disabled value="">載入失敗</option>';
+            }
+        }
+
+        async function loadVillages(county, township) {
+            villageWrapper.style.display = 'none';
+            villageSelect.innerHTML = '';
+            villageSelect.disabled = true;
+            const hiddenVillage = document.getElementById('hidden-village-input');
+            if (hiddenVillage) {
+                hiddenVillage.remove();
+            }
+
+            if (county === "新北市" || county === "臺北市") {
+                try {
+                    const response = await fetch(`/OLi/eqTW/api/get_villages/${county}/${township}/`);
+                    const data = await response.json();
+
+                    if (data.is_all_villages) {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.id = 'hidden-village-input';
+                        hiddenInput.name = 'village';
+                        hiddenInput.value = '全区所有里';
+                        document.getElementById('seismic-form').appendChild(hiddenInput);
+                    } else if (data.villages && data.villages.length > 0) {
+                        villageWrapper.style.display = 'block';
+                        villageSelect.innerHTML = '<option selected disabled value="">請選擇里</option>';
+                        data.villages.forEach(v => villageSelect.add(new Option(v, v)));
+                        villageSelect.disabled = false;
+
+                        const selectedVillage = "{{ submitted_data.village|default:'' }}";
+                        if (selectedVillage) {
+                            villageSelect.value = selectedVillage;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching villages:', error);
+                }
+            }
+        }
+
+        async function checkFaults(county, township) {
+            faultsSection.style.display = 'none';
+            faultsInputs.innerHTML = '';
+            try {
+                const response = await fetch(`/OLi/eqTW/api/check_faults/${county}/${township}/`);
+                const data = await response.json();
+                if (data.faults && data.faults.length > 0) {
+                    faultsSection.style.display = 'block';
+                    const submittedFaultsElement = document.getElementById('submitted-faults');
+                    let submittedFaults = {};
+                    if (submittedFaultsElement) {
+                        submittedFaults = JSON.parse(submittedFaultsElement.textContent);
+                    }
+                    data.faults.forEach(fault => {
+                        const submittedDistance = submittedFaults[fault] || '';
+                        const div = document.createElement('div');
+                        div.className = 'col-md-6';
+                        div.innerHTML = `
+                            <label for="fault-${fault}" class="form-label">至【${fault}】距離 (公里)</label>
+                            <input type="number" step="0.001" class="form-control" id="fault-${fault}" name="fault_distance_${fault}" required value="${submittedDistance}" placeholder="例如: 6.325">
+                        `;
+                        faultsInputs.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking faults:', error);
+            }
+        }
+
+        function createHiddenInput(name, value) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = name;
+            hiddenInput.value = value;
+            return hiddenInput;
+        }
+
+        countySelect.addEventListener('change', function () {
+            loadTownships(this.value);
+        });
+        townshipSelect.addEventListener('change', function () {
+            const county = countySelect.value;
+            const township = this.value;
+            if (county && township) {
+                loadVillages(county, township);
+                checkFaults(county, township);
+            }
+        });
+        structureTypeSelect.addEventListener('change', updateAlphaYOptions);
+
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                reportForm.innerHTML = ''; // 清空
+
+                // --- 【核心修正】: 完整地打包所有数据 ---
+
+                // 1. 加入 CSRF Token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                reportForm.appendChild(createHiddenInput('csrfmiddlewaretoken', csrfToken));
+
+                // 2. 将主表单的所有输入值打包
+                const mainForm = document.getElementById('seismic-form');
+                const mainFormData = new FormData(mainForm);
+                for (let [key, value] of mainFormData.entries()) {
+                    if (key !== 'csrfmiddlewaretoken') {
+                        reportForm.appendChild(createHiddenInput(key, value));
+                    }
+                }
+
+                // 3. 将所有计算结果打包
+                const resultsDataElement = document.getElementById('results-data');
+                if (resultsDataElement) {
+                    const resultsData = JSON.parse(resultsDataElement.textContent);
+                    for (const [key, value] of Object.entries(resultsData)) {
+                        // 特别处理 faults_data_for_report，将其打平
+                        if (key === 'faults_data_for_report' && Array.isArray(value)) {
+                            value.forEach((fault, index) => {
+                                reportForm.appendChild(createHiddenInput(`fault_${index}_name`, fault.name));
+                                reportForm.appendChild(createHiddenInput(`fault_${index}_distance`, fault.distance));
+                            });
+                        } else {
+                            reportForm.appendChild(createHiddenInput(key, value));
+                        }
+                    }
+                }
+                const width = 1024, height = 768;
+                const left = (window.screen.width - width) / 2;
+                const top = (window.screen.height - height) / 2;
+                const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+                window.open('', 'SeismicReportWindow', windowFeatures);
+                reportForm.submit();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateAlphaYOptions();
+            if (countySelect.value) {
+                loadTownships(countySelect.value);
+            }
+        });
+    </script>
+{% endblock %}

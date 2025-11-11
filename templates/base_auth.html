@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}OLI{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/accounts/accounts.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+{% block content %}
+
+{% endblock %}
+{% block extra_scripts %}
+
+{% endblock %}
+</body>
+</html>

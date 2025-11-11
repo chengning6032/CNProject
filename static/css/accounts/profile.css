@@ -1,0 +1,274 @@
+/* ============================================= */
+/* ====   OLI 會員資訊頁面 (profile.html) 樣式   ==== */
+/* ============================================= */
+
+/* 1. 主容器與麵包屑導航
+--------------------------------------------- */
+
+/* 頁面主容器 */
+.page-container {
+    width: 100%;
+    max-width: 900px; /* 給予一個舒適的閱讀寬度 */
+    margin: 20px auto 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* 麵包屑導航容器 (從 product_list.html 借鑒並微調) */
+.breadcrumb-container {
+    margin-bottom: 30px;
+}
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    list-style: none;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    display: inline-block;
+    padding: 0 0.75rem;
+    color: #6c757d;
+    content: "/";
+}
+
+.breadcrumb-item a {
+    color: #0056b3;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #1d3557;
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+    pointer-events: none;
+}
+
+/* 頁面主標題 */
+.page-container h2 {
+    font-size: 2rem;
+    color: #1d3557;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+
+/* 2. 會員資訊卡片
+--------------------------------------------- */
+.profile-info-card {
+    background-color: #fdfdff; /* 一個極淺的背景色，增加層次感 */
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 40px;
+    border: 1px solid #e9ecef;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start; /* 頂部對齊，以防內容換行 */
+    padding: 15px 0;
+    font-size: 1.1rem;
+}
+
+/* 確保項目之間有分隔線，但最後一項沒有 */
+.info-item + .info-item {
+    border-top: 1px solid #f0f2f5;
+}
+
+.info-label {
+    flex-shrink: 0;
+    width: 150px; /* 固定標籤寬度，讓內容對齊 */
+    font-weight: bold;
+    color: #495057;
+}
+
+.info-value {
+    color: #212529;
+}
+
+
+/* 3. 會員等級與購買列表樣式
+--------------------------------------------- */
+
+/* 會員等級標籤 */
+.membership-general,
+.membership-paid {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.membership-general {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.membership-paid {
+    background-color: #fff0c2; /* 淡金色背景 */
+    color: #795500;
+}
+
+.membership-admin {
+    background-color: #d4edda; /* 淡綠色 */
+    color: #155724; /* 深綠色 */
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+/* 購買模組列表 */
+.purchased-modules-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.purchased-module-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e9ecef;
+}
+
+.purchased-module-item:last-child {
+    margin-bottom: 0;
+}
+
+.module-name {
+    font-weight: bold;
+    color: #1d3557;
+}
+
+.module-dates {
+    font-size: 0.9em;
+    color: #6c757d;
+    background-color: #fff;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+/* 當沒有購買模組時的提示文字 */
+.no-modules {
+    color: #888;
+    font-style: italic;
+}
+
+
+/* 4. 操作按鈕
+--------------------------------------------- */
+.profile-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 30px;
+}
+
+.action-link {
+    padding: 12px 30px;
+    border-radius: 50px; /* 膠囊形狀 */
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+/* 主要按鈕 (前往購買) */
+.action-link.primary {
+    background-color: #0056b3;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 86, 179, 0.2);
+}
+
+.action-link.primary:hover {
+    background-color: #1d3557;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 86, 179, 0.3);
+}
+
+/* 次要按鈕 (返回首頁) */
+.action-link:not(.primary) {
+    background-color: #fff;
+    color: #6c757d;
+    border-color: #ced4da;
+}
+
+.action-link:not(.primary):hover {
+    background-color: #f8f9fa;
+    color: #212529;
+    border-color: #adb5bd;
+}
+
+.action-link.danger {
+    background-color: transparent;
+    color: #dc3545; /* Bootstrap 的危險紅色 */
+    border-color: #dc3545;
+    /* 確保 button 的預設樣式被覆蓋 */
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.action-link.danger:hover {
+    background-color: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+    transform: translateY(-3px); /* 保持一致的懸停效果 */
+}
+
+/* 5. 響應式設計
+--------------------------------------------- */
+@media (max-width: 768px) {
+    .page-container {
+        padding: 20px;
+    }
+
+    .info-item {
+        flex-direction: column; /* 垂直排列 */
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .info-label {
+        width: auto;
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #888;
+    }
+
+    .purchased-module-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .profile-actions {
+        flex-direction: column;
+        align-items: stretch; /* 讓按鈕填滿寬度 */
+        text-align: center;
+    }
+}

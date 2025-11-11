@@ -1,0 +1,27 @@
+/* static/css/components/_buttons.css - 追加內容 */
+
+.execution-button {
+    background-color: var(--color-primary); /* 使用你的主色 */
+    color: var(--color-white); /* 使用白色變數 */
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease; /* 添加 box-shadow 過渡 */
+    width: 100%; /* 按鈕佔滿父容器寬度 */
+    box-sizing: border-box;
+}
+
+.execution-button:hover {
+    background-color: var(--execution-hover-start); /* 使用變數 */
+    transform: translateY(-2px); /* 輕微上浮效果 */
+    box-shadow: var(--shadow-sm); /* 添加陰影 */
+}
+
+.execution-button:active {
+    background-color: var(--execution-hover-end); /* 使用變數 */
+    transform: translateY(0); /* 按下時恢復原位 */
+    box-shadow: none; /* 按下時移除陰影 */
+}

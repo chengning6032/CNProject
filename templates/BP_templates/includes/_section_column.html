@@ -1,0 +1,92 @@
+<div class="content-section card">
+    <h3>2. 柱</h3>
+    <form method="post" id="column-form">
+        {% csrf_token %}
+
+        <!-- 柱形狀選擇 -->
+        <div class="form-group">
+            <label for="column_shape">柱形狀：</label>
+            <select class="form-control" id="column_shape" name="column_shape" required>
+                <option value="H-beam" selected>H型鋼</option>
+                <option value="circular">圓形 (開發中)</option>
+                <option value="rectangular" disabled>矩形 (開發中)</option>
+            </select>
+        </div>
+
+        <!-- H型鋼專用輸入區 -->
+        <div id="h-beam-inputs">
+            <!-- 標準型號選擇 -->
+            <div class="form-group" id="h-beam-standard">
+                <label for="h_beam_spec">標準型號：</label>
+                <select class="form-control" id="h_beam_spec" name="h_beam_spec">
+                    <option value="" selected>-- 請選擇標準型號 --</option>
+                    <option value="H100x100x6x8">H100x100x6x8</option>
+                    <option value="H125x125x6.5x9">H125x125x6.5x9</option>
+                    <option value="H150x150x7x10">H150x150x7x10</option>
+                    <option value="H200x200x8x12">H200x200x8x12</option>
+                    <option value="H250x250x9x14">H250x250x9x14</option>
+                </select>
+            </div>
+
+            <!-- 自定義輸入選項 -->
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="custom_input" name="custom_input">
+                    <label class="form-check-label" for="custom_input">自行輸入尺寸</label>
+                </div>
+            </div>
+
+            <!-- 自定義輸入區 -->
+            <div id="h-beam-custom" class="form-row flex flex-wrap gap-2" style="display:none;">
+                <div class="form-group flex-1">
+                    <label for="h_beam_height">高度 H (mm)</label>
+                    <input type="number" class="form-control" id="h_beam_height" name="h_beam_height"
+                           min="0"
+                           step="1">
+                </div>
+                <div class="form-group flex-1">
+                    <label for="h_beam_width">寬度 B (mm)</label>
+                    <input type="number" class="form-control" id="h_beam_width" name="h_beam_width" min="0"
+                           step="1">
+                </div>
+                <div class="form-group flex-1">
+                    <label for="h_beam_flange_thickness">翼板厚度 t<sub>f</sub> (mm)</label>
+                    <input type="number" class="form-control" id="h_beam_flange_thickness"
+                           name="h_beam_flange_thickness" min="0" step="1">
+                </div>
+                <div class="form-group flex-1">
+                    <label for="h_beam_web_thickness">腹板厚度 t<sub>w</sub> (mm)</label>
+                    <input type="number" class="form-control" id="h_beam_web_thickness"
+                           name="h_beam_web_thickness" min="0" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- 材料性質 -->
+        <div class="form-group">
+            <label for="yield_strength">降伏強度 F<sub>y</sub> (MPa)：</label>
+            <input type="number" class="form-control" id="yield_strength" name="yield_strength" min="0"
+                   step="0.1" required>
+        </div>
+        <div class="form-group">
+            <label for="elastic_modulus">彈性模數 E<sub>s</sub> (MPa)：</label>
+            <input type="number" class="form-control" id="elastic_modulus" name="elastic_modulus"
+                   min="0"
+                   step="100" value="204000" required>
+            <small class="form-text text-muted">鋼材預設值: 204,000 MPa</small>
+        </div>
+        
+        <!-- 偏心距離 -->
+        <div class="form-group">
+            <label for="eccentricity_x">X方向偏心距離 e<sub>x</sub> (mm)：</label>
+            <input type="number" class="form-control" id="eccentricity_x" name="eccentricity_x" step="1"
+                   value="0" required>
+        </div>
+        <div class="form-group">
+            <label for="eccentricity_y">Y方向偏心距離 e<sub>y</sub> (mm)：</label>
+            <input type="number" class="form-control" id="eccentricity_y" name="eccentricity_y" step="1"
+                   value="0" required>
+        </div>
+
+    </form>
+</div>

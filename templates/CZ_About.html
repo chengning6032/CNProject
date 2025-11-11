@@ -1,0 +1,281 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}關於我們 - 勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    /* ... 通用樣式與頁首橫幅樣式不變 ... */
+    .section { padding: 80px 0; overflow-x: hidden; }
+    .container { max-width: 1100px; }
+    .page-header { background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("{% static 'images/about-us-banner.jpg' %}"); background-size: cover; background-position: center; padding: 80px 0; text-align: center; color: #fff; }
+    .page-header h1 { font-size: 2.8rem; }
+    .fade-in-up { opacity: 0; transform: translateY(40px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
+    .mission-card:nth-child(2), .partner-card:nth-child(2) { transition-delay: 0.1s; }
+    .mission-card:nth-child(3), .partner-card:nth-child(3) { transition-delay: 0.2s; }
+    .about-intro-section { padding-bottom: 40px; }
+    .about-intro-content { max-width: 800px; margin: 0 auto; text-align: center; }
+    .about-intro-content h2 { font-size: 2.5rem; color: #1d3557; margin-bottom: 20px; }
+    .about-intro-content p { font-size: 1.15rem; line-height: 1.9; color: #555; }
+    .impact-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 60px; text-align: center; }
+    .stat-item { background-color: #f8f9fa; padding: 30px 20px; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .stat-item .stat-number { font-size: 2.8rem; font-weight: 700; color: #0056b3; line-height: 1.2; }
+    .stat-item .stat-label { font-size: 1rem; color: #666; }
+    .mission { background-color: #f9f9f9; }
+    .mission .section-title { font-size: 2.5rem; color: #1d3557; }
+    .mission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+    .mission-card { background-color: #fff; padding: 40px 30px; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .mission-card:hover { transform: translateY(-10px); box-shadow: 0 8px 25px rgba(0, 86, 179, 0.1); }
+    .mission-card .icon-wrapper { margin: 0 auto 25px auto; width: 80px; height: 80px; background-color: #eaf2f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+    .mission-card .icon-wrapper svg { width: 50px; height: 50px; }
+    .mission-card h3 { font-size: 1.5rem; margin-bottom: 15px; color: #1d3557; }
+    .mission-card p { color: #666; line-height: 1.7; }
+    .founder-section { background-color: #fff; }
+    .founder-container {
+        display: flex;
+        align-items: center;
+        gap: 60px;
+    }
+.founder-photo {
+        flex-shrink: 0;
+        width: 200px;   /* 稍微加大圓框 */
+        height: 257px;  /* 稍微加大圓框 */
+        border-radius: 8%;
+        box-shadow: 0 10px 40px rgba(0, 86, 179, 0.2);
+
+        /* 使用背景圖片屬性 */
+        background-image: url("{% static 'img/headshot/founder-photo.png' %}");
+        background-size: contain;     /* 完整顯示圖片，不裁剪 */
+        background-position: center;  /* 圖片居中 */
+        background-repeat: no-repeat;
+        background-color: #e9ecef; /* 添加一個柔和的背景色，以防圖片透明 */
+    }
+    .founder-bio { flex-grow: 1; }
+    .founder-bio h2 { font-size: 2.5rem; color: #1d3557; margin-bottom: 10px; }
+    .founder-bio .title { color: #0056b3; font-size: 1.2rem; font-weight: bold; margin-bottom: 25px; }
+    .founder-bio p { color: #555; line-height: 1.8; margin-bottom: 20px; }
+
+    /* ===== 【核心修改】列表樣式，實現完美對齊 ===== */
+.bio-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .bio-list > li { /* 主列表項目 (學歷, 證照, 經歷) */
+        display: flex; /* 使用 Flexbox 佈局 */
+        align-items: flex-start; /* 讓圖示和右側內容塊頂部對齊 */
+        margin-bottom: 20px; /* 加大主項目間距 */
+    }
+
+    /* 主圖示樣式 */
+    .bio-list > li::before {
+        content: '\ec5c'; /* Remix Icon Check */
+        font-family: 'remixicon';
+        color: #457b9d;
+        font-size: 1.2em; /* 稍微加大圖示 */
+        margin-right: 12px; /* 圖示與文字的間距 */
+        margin-top: 4px; /* 關鍵：向下微調，使其與粗體標題的視覺中心對齊 */
+        flex-shrink: 0;
+    }
+
+    .bio-list > li > div {
+        flex-grow: 1; /* 讓右側內容區塊填滿剩餘空間 */
+    }
+
+    .bio-list .item-header {
+        display: flex; /* 讓標題和單行內容可以水平排列 */
+        align-items: center; /* 垂直居中 */
+    }
+
+    .bio-list strong {
+        font-size: 1.1em;
+        color: #333;
+    }
+
+    /* 單行內容的樣式 (例如學歷) */
+    .bio-list .single-item-content {
+        margin-left: 10px;
+        color: #555;
+    }
+
+    /* 多行內容 (子列表) 的樣式 */
+    .bio-list ul {
+        list-style: none;
+        padding-left: 5px;  /* 子列表的縮排 */
+        margin-top: 10px;
+    }
+
+    .bio-list ul li {
+        color: #555;
+        margin-bottom: 8px;
+        padding-left: 0; /* 確保沒有額外縮排 */
+    }
+
+    /* 【核心修正】徹底移除子列表項目的圖示 */
+    .bio-list ul li::before {
+        display: none;
+    }
+
+    /* 「合作夥伴網絡」區塊樣式 (已修正) */
+    .partners-section { background-color: #f9f9f9; }
+    .partners-section .section-title {
+        font-size: 2.5rem;
+        color: #1d3557;
+        margin-bottom: 20px; /* 【核心修正】減少標題下方間距 */
+    }
+    .partners-intro {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 60px auto; /* 【核心修正】移除負的上邊距 */
+        font-size: 1.1rem;
+        color: #555;
+    }
+    .partners-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+    .partner-card { background-color: #fff; padding: 30px; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center; }
+    .partner-card i { font-size: 3rem; color: #0056b3; margin-bottom: 20px; }
+    .partner-card h3 { font-size: 1.3rem; color: #333; }
+
+    /* 響應式調整 */
+    @media (max-width: 992px) { .founder-container { flex-direction: column; text-align: center; } .founder-photo { width: 250px; height: 250px; margin-bottom: 30px; } }
+    @media (max-width: 768px) { .impact-stats { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block content %}
+    <!-- ... 頁首橫幅, 故事, 數據, 理念區塊不變 ... -->
+    <header class="page-header"><h1>關於勤築</h1></header>
+    <section class="section about-intro-section">
+        <div class="container">
+            <div class="about-intro-content fade-in-up"><h2>我們的故事</h2><p>勤築工程實業有限公司自創立以來，始終秉持著「勤於專業，築就未來」的初衷。我們相信，每一個成功的專案都源於一份精準的藍圖與周詳的規劃。我們扮演的角色，是您最值得信賴的專業顧問，致力於將您的願景與需求，轉化為結構安全、兼具經濟效益與創新思維的可行性方案。</p></div>
+            <div class="impact-stats fade-in-up"><div class="stat-item"><div class="stat-number">10+</div><div class="stat-label">年產業經驗</div></div><div class="stat-item"><div class="stat-number">100+</div><div class="stat-label">規劃設計專案</div></div><div class="stat-item"><div class="stat-number">98%</div><div class="stat-label">客戶滿意度</div></div></div>
+        </div>
+    </section>
+    <section class="mission section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">經營理念</h2>
+            <div class="mission-grid">
+
+                <!-- 【核心修改】卡片 1：精細品質 -->
+                <div class="mission-card fade-in-up">
+                    <div class="icon-wrapper">
+                        <!-- 全新 放大鏡 SVG 圖示 -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path opacity="0.4" d="M18.9998 19L21.9998 22" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13.5 11.5H9.5" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11.5 13.5V9.5" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </div>
+                    <h3>精細品質</h3>
+                    <p>我們對每一個規劃細節都堅持最高標準，從結構計算到圖面繪製，確保交付給您的方案精準無誤、安全可靠。</p>
+                </div>
+
+                <!-- 【核心修改】卡片 2：誠信為本 -->
+                <div class="mission-card fade-in-up">
+                    <div class="icon-wrapper">
+                        <!-- 全新 盾牌+握手 SVG 圖示 -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.82 3.92L15.66 3.2C13.56 1.95 10.44 1.95 8.34 3.2L7.18 3.92C5.52 4.92 4.49 6.8 4.49 8.61V11.21C4.49 12.3 5.37 14.15 5.56 14.77L10.96 21.06C11.56 21.86 12.45 21.86 13.05 21.06L18.45 14.77C18.64 14.15 19.52 12.3 19.52 11.21V8.61C19.51 6.8 18.48 4.92 16.82 3.92Z" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path opacity="0.4" d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.5 12L9 10.5" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 13.5L13.5 12" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </div>
+                    <h3>誠信為本</h3>
+                    <p>我們以誠實、透明的態度對待所有客戶與合作夥伴，建立在互信基礎上的長遠合作關係，是我們最珍視的資產。</p>
+                </div>
+
+                <!-- 【核心修改】卡片 3：創新思維 -->
+                <div class="mission-card fade-in-up">
+                    <div class="icon-wrapper">
+                        <!-- 全新 SVG 圖示 -->
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.4" d="M16 19.06C16.48 19.02 16.94 19 17.42 19C19.98 19 22 16.99 22 14.42C22 11.85 19.98 9.84 17.42 9.84C16.94 9.84 16.48 9.82 16 9.78" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.07001 15.22C8.07001 16.99 9.50001 18.41 11.27 18.41C12.06 18.41 12.78 18.11 13.33 17.62" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.53 11.75C15.82 12.53 16 13.39 16 14.28C16 16.93 13.88 19.06 11.27 19.06C8.66001 19.06 6.54001 16.93 6.54001 14.28C6.54001 11.63 8.66001 9.5 11.27 9.5C11.82 9.5 12.35 9.60001 12.83 9.78001" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11.27 9.5V6.5" stroke="#0056b3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11.27 3.5C11.27 3.22 11.05 3 10.77 3C10.49 3 10.27 3.22 10.27 3.5V4.5C10.27 4.78 10.49 5 10.77 5C11.05 5 11.27 4.78 11.27 4.5V3.5Z" fill="#0056b3"></path><path d="M17.42 6.6499C17.42 6.3699 17.19 6.1499 16.91 6.1499C16.63 6.1499 16.41 6.3699 16.41 6.6499V7.6499C16.41 7.9299 16.63 8.1499 16.91 8.1499C17.19 8.1499 17.42 7.9299 17.42 7.6499V6.6499Z" fill="#0056b3" transform="rotate(60 17.42 6.6499)"></path><path d="M5.12 6.6499C5.12 6.3699 4.89 6.1499 4.61 6.1499C4.33 6.1499 4.11 6.3699 4.11 6.6499V7.6499C4.11 7.9299 4.33 8.1499 4.61 8.1499C4.89 8.1499 5.12 7.9299 5.12 7.6499V6.6499Z" fill="#0056b3" transform="rotate(-60 5.12 6.6499)"></path></svg>
+                    </div>
+                    <h3>創新思維</h3>
+                    <p>我們持續精進專業技術，並導入如 OLi 平台等創新工具，為您提供更高效、更具前瞻性的工程設計解決方案。</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 創辦人介紹 -->
+    <section class="founder-section section">
+        <div class="container">
+            <div class="founder-container fade-in-up">
+{#                <img src="{% static 'img/headshot/founder-photo.png' %}" alt="創辦人照片" class="founder-photo">#}
+                <div class="founder-photo"></div>
+                <div class="founder-bio">
+                    <h2>胡政甯</h2>
+                    <div class="title">技術總監 / 結構工程技師 / 土木工程技師</div>
+                    <!-- 【核心修改】全新文案 -->
+                    <p>創立勤築工程的核心使命，是為客戶的專案挑戰提供精準、務實的解決方案。
+                        也將多年的實務經驗與對技術創新的執著，傾注於開發 OLi 結構設計自動化平台，致力於將繁瑣的計算流程化繁為簡，讓工程設計回歸到解決問題的本質，為客戶創造最大的價值。</p>
+                    <ul class="bio-list">
+                        <!-- 單行項目：學歷 -->
+                        <li>
+                            <div>
+                                <div class="item-header">
+                                    <strong>學歷：</strong>
+                                </div>
+                                <ul>
+                                    <li>國立交通大學 土木工程學系 博士</li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- 多行項目：專業證照 -->
+                        <li>
+                            <div>
+                                <div class="item-header">
+                                    <strong>專業證照：</strong>
+                                </div>
+                                <ul>
+                                    <li>結構工程技師</li>
+                                    <li>土木工程技師</li>
+                                    <li>高考 結構工程科 榜首</li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- 多行項目：經歷 -->
+                        <li>
+                            <div>
+                                <div class="item-header">
+                                    <strong>經歷：</strong>
+                                </div>
+                                <ul>
+                                    <li>國立交通大學材料工程學系講師</li>
+                                    <li>桃園土木技師公會財務委員會副主任委員</li>
+                                    <li>桃園土木技師公會學術委員會副主任委員</li>
+                                    <li>公務人員</li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 合作夥伴網絡 -->
+    <section class="partners-section section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">專業合作夥伴網絡</h2>
+            <!-- 【核心修正】此處的排版問題已透過 CSS 修正 -->
+            <p class="partners-intro fade-in-up">
+                我們深信專業分工的力量。透過與各領域頂尖的夥伴緊密合作，我們能夠整合最全面的資源，為您的專案提供一站式、零斷點的專業規劃服務。
+            </p>
+{#            <div class="partners-grid">#}
+{#                <div class="partner-card fade-in-up"><i class="ri-building-line"></i><h3>建築師事務所</h3></div>#}
+{#                <div class="partner-card fade-in-up"><i class="ri-ruler-2-line"></i><h3>陳鴻才土木技師事務所</h3></div>#}
+{#                <div class="partner-card fade-in-up"><i class="ri-community-line"></i><h3>佳寓地政士事務所</h3></div>#}
+{#            </div>#}
+        </div>
+    </section>
+
+    <!-- ... JavaScript 滾動動畫不變 ... -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const animatedElements = document.querySelectorAll('.fade-in-up');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        animatedElements.forEach(el => { observer.observe(el); });
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,872 @@
+/* static/css/Wind_TW/style.css (修正後版本) */
+
+/* 全域樣式重設 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #333;
+    padding-top: 40px; /* 保持頂部間距 */
+    padding-bottom: 40px;
+    /* 移除 body 的 gap，改由 main 和 header 的 margin 控制 */
+}
+/* 1. 【新增】標題容器的樣式 */
+.main-title-container {
+    width: 100%;
+    max-width: 1400px; /* 與下方網格對齊 */
+    margin: 0 auto 40px auto; /* 上方無邊距，下方 40px 間距 */
+    padding-bottom: 20px; /* 內容與底線的距離 */
+    border-bottom: 1px solid #e0e0e0; /* 柔和的分隔線 */
+    text-align: left; /* 讓內部文字全部靠左對齊 */
+}
+
+/* 2. 【替換】主標題的樣式 */
+.main-title {
+    font-size: 34px;
+    font-weight: 700; /* 使用粗體，解決 "太細" 的問題 */
+    color: #1d3557; /* 使用更深的藍色，增加穩重感 */
+    letter-spacing: 2px;
+    margin: 0; /* 移除舊的邊距和邊框 */
+    padding: 0;
+    border: none;
+    text-align: left; /* 確保靠左 */
+    margin-bottom: 4px; /* 與副標題的微小間距 */
+}
+
+.sub-title {
+    font-size: 16px;
+    font-weight: 400; /* 正常字重 */
+    color: #6c757d; /* 使用柔和的灰色作為輔助色 */
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* 4. 【修改】main-content 的樣式 */
+.main-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+/* ===== END OF MODIFICATION ===== */
+
+/* 主佈局容器 */
+.main-layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    max-width: 1400px;
+    width: 95%;
+}
+
+/* 內容區塊容器 */
+.section-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.section-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* 區塊標題 */
+.section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #457b9d;
+    margin-bottom: 25px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+}
+
+/* 輸入欄位的外層容器 */
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 輸入欄位組之間的上下間距 */
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* 輸入欄位組 */
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.input-group label {
+    font-size: 16px;
+    color: #555;
+    flex-shrink: 0;
+    text-align: left;
+    min-width: 200px; /* 統一標籤寬度 */
+    padding-right: 10px;
+}
+
+/* ===== START OF MODIFICATION ===== */
+/* 核心修正：為所有輸入控制項設定【統一的寬度】 */
+.input-group input[type="number"],
+.input-group select {
+    height: 32px;
+    padding: 4px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #444;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+    /* 關鍵：設定固定的寬度 */
+    width: 200px;
+}
+/* ===== END OF MODIFICATION ===== */
+
+
+/* 針對不同類型的文字對齊 */
+.input-group input[type="number"] {
+    text-align: right;
+}
+
+.input-group select {
+    text-align: left;
+}
+
+/* 結果顯示區域的特殊樣式 */
+.input-group .result-display {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e63946;
+    text-align: right;
+    flex-grow: 1;
+}
+
+/* ===== START OF MODIFICATION ===== */
+/* 核心修正：為 Radio Group 也設定【與上方一致的寬度】 */
+.radio-group {
+    display: flex;
+    justify-content: flex-end; /* 讓內部的 "是/否" 選項靠右 */
+    align-items: center;
+    gap: 15px;
+
+    /* 關鍵：設定固定的寬度，使其與 select/input 對齊 */
+    width: 200px;
+}
+/* ===== END OF MODIFICATION ===== */
+
+.radio-group label {
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* 重設 label 寬度，避免影響內部排版 */
+    min-width: auto;
+    padding-right: 0;
+    flex-shrink: 0;
+}
+
+.radio-group input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* 錯誤訊息樣式 */
+.error-message {
+    color: #e63946;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #e63946;
+    border-radius: 8px;
+    background-color: #fde8e8;
+}
+
+.conditional-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    border-left: 2px solid #a8dadc;
+}
+
+.conditional-inputs .input-group label {
+    padding-left: 18px; /* 18px 內距 + 2px 邊框 = 20px 總位移 */
+}
+
+.control-stack {
+    display: flex;
+    flex-direction: column;  /* 讓內部的 input-group 和 info-link 垂直排列 */
+    align-items: flex-end;   /* 讓內部的所有項目都靠右對齊 */
+    width: 100%;
+}
+
+/* 確保 control-stack 內的 input-group 寬度正常 */
+.control-stack .input-group {
+    width: 100%;
+}
+
+/* 說明連結的樣式 */
+.info-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    /* 移除 width, text-align, padding-top */
+}
+
+/* 2. 【修改】這幾個舊的 ID 選擇器，移除它們各自的邊距設定，交由新的 class 統一管理 */
+#show-height-modal-link,
+#show-fn-modal-link {
+    /* 讓連結元素自己對齊到父容器(.input-container)的右側 */
+    align-self: flex-end;
+
+    /* 稍微向上移動，使其更靠近上方的 radio group */
+    margin-top: -10px;
+
+    /* 確保與右側邊緣有一些距離，與控制項的邊緣對齊 */
+    padding-right: 5px;
+}
+
+/* Modal 相關樣式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    animation-name: fadeIn;
+    animation-duration: 0.3s;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation-name: slideIn;
+    animation-duration: 0.3s;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.modal-caption {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+    font-weight: 500;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+}
+
+.close-button:hover, .close-button:focus {
+    color: #333;
+}
+
+#topo-modal .modal-content,
+#height-modal .modal-content,
+#fn-modal .modal-content {
+    padding: 20px;
+}
+#topo-modal .modal-content { max-width: 600px; }
+#height-modal .modal-content, #fn-modal .modal-content { max-width: 500px; }
+.modal-content img { width: 100%; height: auto; display: block; margin-bottom: 15px; }
+.modal-caption { font-size: 16px; color: #555; text-align: center; font-weight: 500; }
+
+
+.sawtooth-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.sawtooth-table th, .sawtooth-table td {
+    border: 1px solid #eee;
+    padding: 8px;
+    text-align: center;
+}
+
+.sawtooth-table th {
+    background-color: #f8f8f8;
+    font-weight: 500;
+}
+
+.sawtooth-table input[type="number"] {
+    width: 100%; /* 表格內的 input 要填滿儲存格 */
+}
+
+.validation-error {
+    color: #e63946;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: left;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fde8e8;
+    border-radius: 5px;
+    border-left: 4px solid #e63946;
+}
+
+.nested-group .input-group label {
+    min-width: 160px;
+}
+
+#building-dims-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#hip-roof-options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#building-height-options-group,
+.fn-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+
+#show-topo-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+#show-height-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+
+#show-fn-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: -15px;
+    margin-bottom: 5px;
+}
+
+.eligibility-notice {
+    font-size: 13px;
+    text-align: right;
+    width: 100%;
+    margin-top: -8px;
+    padding-right: 5px;
+    transition: color 0.3s ease;
+}
+
+.eligibility-notice.eligible {
+    color: #2a9d8f;
+}
+
+.eligibility-notice.not-eligible {
+    color: #999;
+}
+
+.results-content-wrapper {
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.results-content-wrapper .placeholder-text {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.results-content-wrapper .result-message {
+    font-weight: bold;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.results-content-wrapper .result-message.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.results-content-wrapper .result-message.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.option-comment {
+    font-size: 13px;
+    color: #888;
+    text-align: left;
+    width: 100%;
+    margin-top: -8px;
+    padding-left: 20px;
+    line-height: 1.5;
+}
+
+.sub-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    text-align: left;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #ccc;
+}
+
+.applicability-notice {
+    font-size: 13px;
+    color: #999;
+    text-align: right;
+    width: 100%;
+    font-style: italic;
+    line-height: 16px;
+}
+
+.action-buttons-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.calculate-button, .report-button {
+    border: none;
+    padding: 14px 30px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1.5px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.calculate-button {
+    background-color: #e63946;
+    color: white;
+}
+
+.calculate-button:hover {
+    background-color: #d62828;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.report-button {
+    background-color: #457b9d;
+    color: white;
+}
+
+.report-button:hover {
+    background-color: #1d3557;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.report-button:disabled {
+    background-color: #adb5bd;
+    color: #e9ecef;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.report-button:disabled:hover {
+    background-color: #adb5bd;
+    transform: none;
+    box-shadow: none;
+}
+
+@media print {
+    body > *:not(.report-modal-view) {
+        display: none !important;
+    }
+
+    body, .report-modal-view {
+        display: block !important;
+        visibility: visible !important;
+        background-color: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .report-modal-view .modal-content {
+        visibility: visible !important;
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .report-header {
+        display: none !important;
+    }
+
+    .report-body-content {
+        visibility: visible !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+}
+
+.results-modal-content {
+    width: 22cm;
+    max-width: 95%;
+    height: 90vh;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.results-modal-content .section-title {
+    padding: 20px 30px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.results-content-wrapper {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 0 30px 20px 30px;
+}
+
+.results-modal-actions {
+    position: absolute;
+    top: 15px;
+    right: 55px;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+}
+
+.results-modal-btn {
+    background: #e9ecef; border: 1px solid #dee2e6; cursor: pointer;
+    padding: 8px; width: 40px; height: 40px; color: #495057;
+    transition: all 0.2s ease; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.results-modal-btn:hover { color: #fff; background-color: #457b9d; border-color: #457b9d; transform: translateY(-2px); }
+.results-modal-btn svg { width: 100%; height: 100%; }
+.results-modal-btn.btn-report { background-color: #e63946; border-color: #e63946; color: white; }
+.results-modal-btn.btn-report:hover { background-color: #d62828; border-color: #d62828; }
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.results-table th, .results-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    text-align: right;
+}
+
+.results-table th {
+    background-color: #f8f9fa;
+    font-weight: 700;
+    text-align: center;
+}
+
+.results-table td:first-child, .results-table th:first-child {
+    text-align: left;
+}
+.input-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+.input-table th, .input-table td {
+    border: 1px solid #e0e0e0;
+    padding: 8px;
+    text-align: center;
+}
+.input-table th { background-color: #f8f8f8; }
+.input-table input { width: 95%; text-align: right; border: 1px solid #ccc; padding: 4px; border-radius: 4px;}
+.input-table input[type="text"] { text-align: left; }
+.input-table .delete-row-btn {
+    background: none; border: none; color: #e63946; cursor: pointer; font-size: 18px;
+}
+.add-row-button {
+    align-self: flex-start; margin-left: 20px; margin-top: 10px;
+    background-color: #457b9d; color: white; border: none; padding: 8px 15px;
+    border-radius: 5px; cursor: pointer; transition: background-color 0.2s;
+}
+.add-row-button:hover { background-color: #1d3557; }
+
+.modal-content.modal-explanation {
+    max-width: 800px; /* 讓 Modal 更寬以容納兩張卡片 */
+    padding: 30px 40px;
+}
+
+/* Modal 標題 */
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1d3557; /* 深藍色 */
+    margin: 0 0 15px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef; /* 柔和的底線 */
+    width: 100%;
+}
+
+.modal-title-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+/* Modal 介紹文字 */
+.modal-intro {
+    font-size: 16px;
+    color: #495057; /* 較深的灰色 */
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+/* 卡片容器 */
+.explanation-cards-container {
+    display: flex;
+    gap: 25px;
+    width: 100%;
+}
+
+/* 卡片統一樣式 */
+.explanation-card {
+    flex: 1; /* 讓兩張卡片平分寬度 */
+    background-color: #f8f9fa; /* 淺灰色背景 */
+    border: 1px solid #dee2e6; /* 邊框 */
+    border-radius: 8px; /* 圓角 */
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.explanation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 推薦卡片的特殊樣式 */
+.explanation-card.recommended {
+    border-top: 4px solid #457b9d; /* 藍色頂部邊框 */
+}
+
+/* 卡片標題區 */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.card-header h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #343a40;
+    margin: 0;
+}
+
+.card-icon {
+    width: 24px;
+    height: 24px;
+    color: #457b9d; /* 統一圖示顏色 */
+}
+
+/* 卡片內容區 */
+.card-body {
+    padding: 20px;
+    font-size: 15px;
+    color: #6c757d; /* 柔和的灰色 */
+    line-height: 1.6;
+    flex-grow: 1; /* 讓內容區填滿剩餘空間 */
+}
+
+.card-body p {
+    margin-bottom: 20px;
+}
+
+/* 小標籤樣式 */
+.card-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.card-badge.badge-good {
+    background-color: #d4edda; /* 淺綠 */
+    color: #155724;
+}
+.card-badge.badge-easy {
+    background-color: #cce5ff; /* 淺藍 */
+    color: #004085;
+}
+.card-badge.badge-pro {
+    background-color: #e2e3e5; /* 淺灰 */
+    color: #383d41;
+}
+.card-badge.badge-manual {
+    background-color: #fff3cd; /* 淺黃 */
+    color: #856404;
+}
+
+.calculate-button:disabled {
+    background-color: #adb5bd; /* 柔和的灰色 */
+    color: #e9ecef;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.calculate-button:disabled:hover {
+    background-color: #adb5bd; /* 禁用時 hover 效果不變 */
+}
+
+.tab-buttons {
+    display: flex;
+    width: 100%;
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 15px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* 讓 active 的底線與容器底線重合 */
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-button:hover {
+    color: #457b9d;
+}
+
+.tab-button.active {
+    color: #1d3557;
+    font-weight: 700;
+    border-bottom-color: #1d3557;
+}
+
+/* Tab 內容區塊 */
+.tab-content {
+    display: none; /* 預設隱藏 */
+    width: 100%;
+    animation: fadeIn 0.3s;
+}
+
+.tab-content.active {
+    display: block; /* 顯示 active 的內容 */
+}
+
+.input-instruction {
+    font-size: 14px;
+    color: #555;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideIn { from { transform: translateY(-30px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }

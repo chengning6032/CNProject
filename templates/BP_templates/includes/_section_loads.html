@@ -1,0 +1,67 @@
+<div class="content-section card">
+    <h3>1. 載重條件</h3>
+    {# 調整後的載重表格說明 #}
+    <p class="text-secondary mb-4">請輸入各載重組合的設計載重，系統將以此進行計算。</p>
+    
+    {# 確保 form 標籤正確包圍所有表單元素，並在 div.content-section 內部 #}
+    <form method="post" id="design-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="pressure_dist">柱底板壓力分佈形式：</label>
+            <select class="form-control" id="pressure_dist" name="pressure_dist" required>
+                <option value="triangular">三角形分佈</option>
+                <option value="uniform" disabled>均布矩形分佈 (開發中)</option>
+            </select>
+        </div>
+
+        <div class="table-responsive"> {# 可以添加一個響應式容器 #}
+            <table class="table load-table" id="load-table">
+                <thead>
+                    <tr>
+                        <th>載重組合名稱</th>
+                        <th>P<sub>u</sub></th>
+                        <th>M<sub>uXX</sub></th>
+                        <th>M<sub>uYY</sub></th>
+                        <th>V<sub>uX</sub></th>
+                        <th>V<sub>uY</sub></th>
+                        <th>T<sub>uZ</sub></th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="load-row">
+                        <td><input type="text" class="form-control load-name" name="load_name[]" value="組合1" required></td>
+                        <td><input type="number" class="form-control load-axial-force" name="axial_force[]" step="0.01" value="0" required></td>
+                        <td><input type="number" class="form-control load-moment-xx" name="moment_xx[]" step="0.01" value="0" required></td>
+                        <td><input type="number" class="form-control load-moment-yy" name="moment_yy[]" step="0.01" value="0" required></td>
+                        <td><input type="number" class="form-control load-shear-x" name="shear_x[]" step="0.01" value="0" required></td>
+                        <td><input type="number" class="form-control load-shear-y" name="shear_y[]" step="0.01" value="0" required></td>
+                        <td><input type="number" class="form-control load-torque-z" name="torque_z[]" step="0.01" value="0"></td>
+                
+                        <td>
+                            <button type="button" class="btn btn-danger btn-icon remove-row" title="移除此載重組合">
+                                <i class="fas fa-times"></i> {# 使用 Font Awesome 的叉號圖標 #}
+                            </button>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-primary mt-3" id="add-load-row">
+            <i class="fas fa-plus"></i> 新增載重組合
+        </button>
+
+        {# 統一的單位備註區 #}
+        <div class="load-unit-notes mt-4">
+            <small class="form-text text-muted">
+                <strong>單位說明：</strong><br>
+                軸力 P<sub>u</sub>：kN (正值為拉力，負值為壓力)<br>
+                彎矩 M<sub>uXX</sub>, M<sub>uYY</sub>：kN-m (依右手定則)<br>
+                剪力 V<sub>uX</sub>, V<sub>uY</sub>：kN (正值為柱正向)<br>
+                扭矩 T<sub>uZ</sub>：kN-m (依右手定則)
+            </small>
+        </div>
+    </form> {# 確保 form 標籤在此結束 #}
+</div>

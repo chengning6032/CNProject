@@ -1,0 +1,79 @@
+{% load unit_conversion_filters %}
+<!-- ================== 最终页: 拉剪互制作用 ================== -->
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+
+        <!-- 6.10 拉力與剪力互制作用 -->
+        <div class="report-section">
+                        {% if results.has_any_tension and results.has_any_shear %}
+                <div class="report-subtitle" style="margin-top: 0;">6.10 拉力與剪力互制作用檢核</div>
+            {% elif results.has_any_tension %}
+                <!-- 只有拉力，沒有剪力 -->
+                <div class="report-subtitle" style="margin-top: 0;">6.7 拉力與剪力互制作用檢核</div>
+            {% elif results.has_any_shear %}
+                <!-- 只有剪力，沒有拉力 -->
+                <div class="report-subtitle" style="margin-top: 0;">6.8 拉力與剪力互制作用檢核</div>
+            {% else %}
+                 <!-- 都沒有 -->
+                <div class="report-subtitle" style="margin-top: 0;">6.4 拉力與剪力互制作用檢核</div>
+            {% endif %}
+
+            {% with check_data=results.anchor_interaction %}
+                {% if check_data %}
+                    {% with check=check_data.details %}
+                        <p>此檢核由荷載組合 <b>#{{ check_data.combo_id }}</b> 控制。</p>
+
+                        <p>拉力控制 D/C Ratio:</p>
+                        $ \left(\dfrac{N_{ua}}{\phi N_n}\right)_{max}
+                        = max\left( \dfrac{N_{ua,g}}{\phi N_{cbg}},  \dfrac{N_{ua,g}}{\phi N_{sbg}}\right)
+                        = {{ check.ratio_N|floatformat:"-3" }} $
+
+                        <p>剪力控制 D/C Ratio:</p>
+                        $ \left(\dfrac{V_{ua}}{\phi V_n}\right)_{max}
+                        = max\left(
+                        \dfrac{V_{uag,x}}{\phi V_{cbg,x}},
+                        \dfrac{V_{uag,y}}{\phi V_{cbg,y}},
+                        \dfrac{V_{ua,g}}{\phi V_{cpg}}
+                        \right)
+                        = {{ check.ratio_V|floatformat:"-3" }} $
+
+                        <hr style="margin: 20px 0;">
+
+                        <!-- 【核心修正】根据 formula_type 显示不同内容 -->
+                        {% if check.formula_type == 'not_applicable' %}
+                            <p class="check-message"><i>{{ check.message }}</i></p>
+                            <p>檢核结果:
+                                {% if check.result == 'PASS' %}
+                                    <b style="color: #2a9d8f;">OK</b>
+                                {% else %}
+                                    <b style="color: #e63946;">NG (單獨檢核已不通過)</b>
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p>{{ check.message }}</p>
+                            <p>假設為韌性鋼材破壞，採用線性互制公式 (ACI Eq. 17.7-1):</p>
+                            <p>$ (\dfrac{N_{ua}}{\phi N_n}) + (\dfrac{V_{ua}}{\phi V_n}) \le 1.2 $</p>
+                            {% if check.dc_ratio >= 1.2 %}
+                                <p>$\Rightarrow {{ check.ratio_N|floatformat:"-3" }}
+                                    + {{ check.ratio_V|floatformat:"-3" }} =
+                                    {{ check.dc_ratio|floatformat:"-3" }} \ge {{ check.limit|floatformat:"-1" }}
+                                    \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% else %}
+                                <p>$\Rightarrow {{ check.ratio_N|floatformat:"-3" }}
+                                    + {{ check.ratio_V|floatformat:"-3" }} =
+                                    {{ check.dc_ratio|floatformat:"-3" }} \le {{ check.limit|floatformat:"-1" }}
+                                    \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% endif %}
+                        {% endif %}
+
+                    {% endwith %}
+                {% else %}
+                    <p class="check-message"><i>所有荷载组合均无需进行拉剪互制检核。</i></p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>

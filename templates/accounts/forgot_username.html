@@ -1,0 +1,44 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block title %}忘記帳號 | OLI{% endblock %}
+
+{% block content %}
+    <div class="auth-card">
+        <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="auth-logo">
+        <h3>找回您的帳號</h3>
+        <p style="font-size:14px; color:#666; margin-top:-15px; margin-bottom:25px;">
+            請輸入您註冊時的資料，我們將會把您的使用者名稱寄送到您的信箱。</p>
+
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <p class="message {{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_email">電子郵件:</label>
+                <input type="email" name="email" id="id_email" required>
+            </div>
+            <div class="form-group">
+                <label for="id_phone_number">聯絡電話:</label>
+                <input type="text" name="phone_number" id="id_phone_number" required>
+            </div>
+            <div class="form-group">
+                <label for="id_elementary_school">畢業國小:</label>
+                <input type="text" name="elementary_school" id="id_elementary_school" required>
+            </div>
+
+            <button type="submit" class="auth-btn">送出查詢</button>
+        </form>
+
+        <div class="switch-auth">
+            <p>想起帳號了？ <a href="{% url 'login' %}">返回登入</a></p>
+        </div>
+        <a href="{% url 'homepage' %}" class="back-to-home">返回 OLI 首頁</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!-- templates/steel_BPandAnchor_report_base.html (新的统一基底) -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block page_title %}计算报告书{% endblock %}</title>
+    <!-- 引用您项目的主 CSS 文件 -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script>
+        // 配置 MathJax
+        MathJax = {
+            tex: {
+                // 定义行内公式和块级公式的识别符号
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                // 启用 AMS 宏包，以支持更丰富的数学符号
+                tags: 'ams'
+            },
+            svg: {
+                // 使用全局字体缓存以提高渲染速度
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        /* ============================================= */
+        /* ====      报告书通用 A4 页面样式     ==== */
+        /* ============================================= */
+
+        body.report-body-view {
+            background-color: #525659;
+            padding: 30px 0;
+            margin: 0;
+        }
+
+        /* 报告书内容的主容器 */
+        .report-content-wrapper {
+            width: 210mm; /* A4 宽度 */
+            margin: 0 auto;
+        }
+
+        /* 模拟 A4 纸张的样式 */
+        .a4-page {
+            background: white;
+            width: 210mm;
+            height: 297mm;
+            display: flex;
+            flex-direction: column; /* 让页眉页脚和内容垂直排列 */
+
+            /* 【核心修改】使用 padding 来精确控制边距 */
+            padding: 20mm 20mm 20mm 20mm; /* 上 2cm, 右 1.5cm, 下 1.5cm, 左 1.5cm */
+
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            page-break-after: always;
+            position: relative;
+        }
+
+        .page-content {
+            flex-grow: 1; /* 让内容区占据剩余的所有空间 */
+            overflow-y: hidden; /* 隐藏溢出的内容 */
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .report-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+        }
+
+        .report-controls button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .report-controls button:hover {
+            background-color: #f1f3f5;
+            transform: translateY(-2px);
+        }
+
+        .report-controls button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* 打印时的特殊样式 */
+        @media print {
+            body.report-body-view {
+                background-color: white !important;
+                padding: 0 !important;
+            }
+
+            .report-controls {
+                display: none !important;
+            }
+
+            .report-content-wrapper {
+                width: auto !important;
+                margin: 0 !important;
+            }
+
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                height: auto;
+                /* 打印时的边距由 @page 控制 */
+                padding: 0 !important;
+            }
+
+            .page-content {
+                overflow: visible !important;
+                padding: 20mm 20mm 20mm 20mm; /* 在打印时为内容添加边距 */
+            }
+
+            /* 定义打印页边距 */
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="report-body-view">
+
+<div class="report-controls">
+    <button id="print-report-btn" title="列印或另存為 PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+            <path d="M0 0h24v24H0V0z" fill="none"/>
+            <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM16 18H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM18 3H6v4h12V3z"/>
+        </svg>
+    </button>
+</div>
+
+<div class="report-content-wrapper">
+    {% block report_content %}
+        <!-- 子模板将在这里填充所有 A4 页面 -->
+    {% endblock %}
+</div>
+
+<script>
+    document.getElementById('print-report-btn').addEventListener('click', () => {
+        window.print();
+    });
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

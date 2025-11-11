@@ -1,0 +1,201 @@
+/* static/css/base/_utilities.css - 追加內容 */
+
+/* 新增的工具類 */
+.bg-light-disabled { /* 調整命名，與現有 bg-light 區分 */
+    background-color: #e9ecef; /* 禁用時的淺灰色背景 */
+    cursor: not-allowed;
+}
+
+/* 禁用狀態的標籤樣式 (從 forms 移過來，因為更通用) */
+.disabled-label {
+    color: var(--text-disabled); /* 使用新的禁用文字變數 */
+    pointer-events: none; /* 防止點擊事件 */
+}
+
+/* 滾動容器 (如果用於側邊欄或主區域內部，確保能滾動) */
+/* 這裡的 padding-right 需要慎重考慮，它可能導致內容縮小 */
+/* 如果側邊欄和 main-area 已經設置了 overflow-y: auto; 且沒有這個 padding-right，通常瀏覽器會自動處理滾動條 */
+/* 只有在滾動條會遮蓋內容時才需要 */
+.scroll-container {
+    padding-right: 10px; /* 為滾動條預留空間，防止內容被遮擋 */
+}
+
+/* 工具提示 (Tooltip) */
+/*.tooltip {*/
+/*    position: absolute;*/
+/*    background-color: var(--color-dark); !* 使用你現有的深色變數 *!*/
+/*    color: var(--color-white); !* 使用白色變數 *!*/
+/*    padding: 8px 12px;*/
+/*    border-radius: var(--border-radius);*/
+/*    font-size: var(--font-size-sm);*/
+/*    z-index: 1100; !* 高於表單元素，低於通知 *!*/
+/*    opacity: 0;*/
+/*    transition: opacity 0.2s ease, transform 0.2s ease;*/
+/*    pointer-events: none; !* 確保不會阻礙下方點擊 *!*/
+/*    transform: translateY(5px);*/
+/*}*/
+.tooltip {
+    max-width: 300px;
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+    background: var(--color-dark);
+    color: var(--color-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    pointer-events: none;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 載入動畫 */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1500;
+    font-size: var(--font-size-lg);
+    color: var(--color-primary);
+    transition: opacity 0.3s ease;
+}
+
+#loading-overlay.fade-out-loader {
+    opacity: 0;
+    pointer-events: none; /* 讓用戶可以點擊下層內容 */
+}
+
+.loader {
+    border: 8px solid var(--border-color); /* 使用通用邊框顏色 */
+    border-top: 8px solid var(--color-primary); /* 使用主色 */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--space-md);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 通知訊息 (由 DesignSystem.showNotification 生成) */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--color-info); /* 使用信息藍色 */
+    color: var(--color-white);
+    padding: 15px 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    z-index: 2000;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    opacity: 1;
+    transform: translateY(0);
+    max-width: 300px;
+    word-wrap: break-word; /* 確保長訊息換行 */
+}
+
+.notification.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+.notification-info {
+    background-color: var(--color-info);
+}
+
+.notification-success {
+    background-color: var(--color-success);
+}
+
+.notification-error {
+    background-color: var(--color-danger);
+}
+
+/* 使用危險色 */
+
+/* 驗證訊息 (獨立於表單組件外，用於按鈕點擊後的總體提示) */
+/* 驗證訊息樣式 */
+.validation-message {
+    margin-top: var(--space-md);
+    display: none; /* 初始隱藏 */
+}
+
+.validation-message.show {
+    display: block; /* 顯示時使用 */
+}
+
+.validation-message .alert {
+    padding: var(--space-md);
+    border-radius: var(--border-radius);
+    /* 美化點 1: 將背景色改為通用淺色 (通常為白色)，讓錯誤提示更柔和 */
+    background-color: var(--bg-light); /* 通常為白色或非常淺的背景色 */
+    /* 美化點 2: 添加一個淺色邊框，使其更像一個組件 */
+    border: 1px solid var(--border-color); /* 添加一個淺色邊框 */
+    border-left: 4px solid var(--color-error); /* 保持左側強調色，用紅色醒目提示 */
+    color: var(--text-primary);
+    /* 美化點 3: 添加一個輕微陰影，使其更具深度 */
+    box-shadow: var(--shadow-sm); /* 使用預定義的小陰影變數 */
+    transition: all 0.3s ease; /* 添加過渡效果，使顯示/隱藏更平滑 */
+}
+
+.validation-message .alert-title {
+    font-weight: 600; /* 美化點 4: 稍微加粗，比 bold 更清晰，且更具現代感 */
+    color: var(--color-error); /* 標題文字使用錯誤提示的紅色 */
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs); /* 圖標與文字間距 */
+}
+
+.validation-message .alert-title svg,
+.validation-message .alert-title i { /* 美化點 5: 確保 Font Awesome i 標籤也應用此樣式，稍微增大圖標 */
+    width: 20px; /* 稍微增大圖標尺寸 */
+    height: 20px;
+    fill: currentColor; /* 確保 SVG 圖標顏色繼承文字顏色 */
+    color: var(--color-error); /* 確保圖標顏色為紅色 */
+}
+
+.validation-message .missing-fields {
+    margin-top: var(--space-sm);
+    padding-left: var(--space-lg); /* 美化點 6: 為列表項添加左側內邊距，使其看起來像一個真正的列表 */
+    list-style: disc; /* 美化點 7: 使用圓點列表標記 */
+    color: var(--text-secondary); /* 列表文字使用次要文字色，與標題區分開 */
+}
+
+.validation-message .missing-fields li {
+    margin-bottom: var(--space-xs);
+    line-height: 1.4; /* 美化點 8: 調整行高，提高列表項的可讀性 */
+}
+
+.validation-message .missing-fields li:last-child {
+    margin-bottom: 0;
+}

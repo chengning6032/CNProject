@@ -1,0 +1,81 @@
+/* static/css/base/_variables.css */
+
+:root {
+    /* 布局尺寸 */
+    --navbar-height: 60px;
+    --sidebar-width: 280px;
+    --main-width: 55%;
+    --right-sidebar-width: 25%;
+
+    /* 顏色變數 - 優先使用現有命名，並補充缺失的 */
+    --color-primary: #2c3e50; /* 你的主色 */
+    --color-secondary: #3498db; /* 你的次要色 */
+    --color-secondary-rgb: 52, 152, 219;
+    --color-accent: #e74c3c;
+    --color-light: #f8f9fa; /* 通用淺色，對應我之前的 light-bg-color */
+    --color-dark: #1a252f;
+    --color-gray: #95a5a6;
+
+    --color-success: #28a745; /* 新增：成功綠色 */
+    --color-danger: #dc3545; /* 新增：錯誤紅色，與你現有的 color-error 相同 */
+    --color-danger-rgb: 220, 53, 69; /* 新增：錯誤色的 RGB 值 */
+    --color-info: #17a2b8; /* 新增：信息藍色 */
+    --color-white: #ffffff; /* 新增：白色 */
+
+    /* 背景顏色 */
+    --bg-light: #ffffff; /* 對應我之前的 white-color，作為通用卡片背景 */
+    --bg-page: #f8f9fa; /* 新增：頁面背景色，對應我之前的 light-bg-color */
+    --bg-sidebar-left: #F5E6B3;
+    --bg-sidebar-right: #FFC0CB;
+
+    /* 顏色 */
+    --navbar-bg: #2c3e50;
+    --sidebar-bg: #F5E6B3;
+    --main-bg: #f8f9fa; /* 主內容區背景 */
+    --right-sidebar-bg: #FFC0CB;
+    --border-color: #ddd; /* 通用邊框顏色 */
+
+    /* 文字顏色 */
+    --text-primary: #2c3e50; /* 你的主文字色，對應我之前的 text-color-dark */
+    --text-secondary: #7f8c8d; /* 你的次要文字色，對應我之前的 text-color-medium */
+    --text-light: #ecf0f1; /* 通常用於深色背景上的淺色文字 */
+    --text-disabled: #a0a0a0; /* 新增：禁用文字顏色 */
+
+    /* 邊框 */
+    --border-radius: 5px;
+
+    /* 陰影 */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08); /* 新增：輕微陰影，用於側邊欄/卡片 */
+    --shadow-medium: 0 6px 16px rgba(0, 0, 0, 0.1); /* 新增：中等陰影，用於通知 */
+
+    /* 間距 */
+    --space-xs: 0.25rem; /* 4px */
+    --space-sm: 0.5rem; /* 8px */
+    --space-md: 1rem; /* 16px */
+    --space-lg: 1.5rem; /* 24px */
+    --space-xl: 2rem; /* 32px */
+    --space-xxl: 2.5rem; /* 40px, 新增用於卡片間距 */
+
+
+    /* 字體 */
+    --font-sans: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; /* 更改為更現代的字體堆棧 */
+    --font-size-base: 1rem;
+    --font-size-sm: 0.875rem;
+    --font-size-lg: 1.25rem;
+
+    /* 錯誤狀態顏色 */
+    --color-error: #dc3545; /* 標準的紅色 */
+    --bg-error-light: #fff8f8; /* 淺紅色背景 */
+    --border-error: #ffdddd; /* 紅色邊框 */
+
+    /* 執行按鈕懸停顏色 */
+    --execution-hover-start: #2980b9;
+    --execution-hover-end: #1a252f;
+
+    /* 執行按鈕陰影顏色 */
+    --shadow-execution-sm: 0 2px 8px rgba(41, 128, 185, 0.2);
+    --shadow-execution-hover: 0 4px 12px rgba(41, 128, 185, 0.3);
+}

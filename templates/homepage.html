@@ -1,0 +1,747 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>OLI | Optimal Lean Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+    <style>
+        /* ... 大部分 CSS 樣式保持不變 ... */
+        body {
+            background-color: #f4f7f9;
+            font-family: '微軟正黑體', 'Microsoft JhengHei', Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        a {
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        /* ===== 頂部導覽列 (已修改) ===== */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* 確保所有直接子元素都垂直居中 */
+            padding: 0 40px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-img {
+            height: 40px; /* 調整 Logo 高度 */
+        }
+
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 100%;
+            position: relative; /* 【1】讓偽元素可以相對於它定位 */
+        }
+
+
+        /* 【核心新增】為 a 和 span 標籤定義一個共用的 class */
+        .main-nav-link {
+            padding: 8px 16px;
+            color: #555;
+            font-weight: 500;
+            border-radius: 6px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s ease; /* 只保留顏色的過渡 */
+            z-index: 1; /* 確保連結在底線之上 */
+        }
+
+        .main-nav-link:hover {
+            color: #0056b3;
+        }
+
+        /* 當前頁面高亮效果 */
+        .main-nav-link.active {
+            color: #0056b3;
+            font-weight: bold;
+        }
+
+        .main-nav-link.active::after {
+            display: none;
+        }
+
+        .main-nav::after {
+            content: '';
+            position: absolute;
+            bottom: 20px; /* 調整底線的垂直位置 */
+            height: 3px;
+            background-color: #0056b3;
+            border-radius: 2px;
+            transition: left 0.3s ease-in-out, width 0.3s ease-in-out; /* 動畫效果 */
+        }
+
+        .nav-link-requires-auth {
+            cursor: pointer;
+        }
+
+        /* 移除了舊的 .company-link 樣式 */
+        .user-auth-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-auth-section .welcome-msg {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .user-auth-section .welcome-msg strong {
+            color: #1d3557;
+        }
+
+        .user-auth-section .logout-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            font-size: 1em;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+        }
+
+        .user-auth-section .logout-btn:hover {
+            color: #e63946; /* 紅色 */
+        }
+
+        /* 針對未登入狀態的按鈕 */
+        .user-auth-section .login-btn {
+            color: #555;
+            padding: 8px 18px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background-color: #fff;
+        }
+
+        .user-auth-section .login-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #ccc;
+        }
+
+        .user-auth-section .signup-btn {
+            background-color: #1d3557;
+            color: white;
+            border-radius: 20px;
+            padding: 9px 20px; /* 增加一點 padding */
+            border: none;
+        }
+
+        .user-auth-section .signup-btn:hover {
+            background-color: #000;
+        }
+
+        /* ===== 【核心新增】後台管理按鈕樣式 ===== */
+        .user-auth-section .admin-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background-color: #fffbe6; /* 淡黃色背景 */
+            color: #721c24; /* 深紅色文字 */
+            border: 1px solid #ffeeba; /* 淡黃色邊框 */
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .user-auth-section .admin-btn i {
+            font-size: 1.1em;
+        }
+
+        .user-auth-section .admin-btn:hover {
+            background-color: #ffeeba;
+            border-color: #ffc107;
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ... .main-container 到 .changelog-list 的樣式保持不變 ... */
+        .main-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .left-panel {
+            flex: 1;
+            max-width: 320px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+        }
+
+        .tool-group {
+            margin-bottom: 25px;
+        }
+
+        .tool-group-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1d3557;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 15px;
+        }
+
+        .tool-group a {
+            display: block;
+            color: #333;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 1em;
+            border-left: 4px solid transparent;
+        }
+
+        .tool-group a:hover, .tool-group a.active {
+            background-color: #eaf2f6;
+            color: #1d3557;
+            border-left: 4px solid #457b9d;
+            transform: translateX(5px);
+        }
+
+        .tool-group a.disabled-link {
+            color: #aaa;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .tool-group a.disabled-link:hover, .tool-group a.disabled-link.active {
+            background-color: transparent;
+            color: #aaa;
+            border-left: 4px solid transparent;
+            transform: none;
+        }
+
+        .tool-group a.disabled-link::after {
+            content: 'Coming Soon';
+            display: inline-block;
+            background-color: #fca311;
+            color: #fff;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .right-panel {
+            flex: 2;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            position: relative;
+        }
+
+        .description-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #description-title {
+            font-size: 2em;
+            color: #1d3557;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        #description-text {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .right-panel::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -10px;
+            width: 20px;
+            height: 60px;
+            background-color: #457b9d;
+            border-radius: 5px;
+        }
+
+        .description-meta {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item i {
+            font-size: 1.2em;
+            color: #457b9d;
+        }
+
+        .changelog-container {
+            margin-top: 25px;
+        }
+
+        .changelog-container details {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .changelog-container summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+            transition: background-color 0.2s;
+            list-style: none;
+        }
+
+        .changelog-container summary:hover {
+            background-color: #e9ecef;
+        }
+
+        .changelog-container summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .changelog-container summary i {
+            font-size: 1.2em;
+            color: #457b9d;
+        }
+
+        .changelog-container details summary::after {
+            content: '\ea6a';
+            font-family: 'remixicon';
+            margin-left: auto;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .changelog-container details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .changelog-list {
+            padding: 15px 20px 20px 40px;
+            background-color: #fff;
+            list-style: none;
+            margin: 0;
+        }
+
+        .changelog-list li {
+            position: relative;
+            padding-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .changelog-list li::before {
+            content: '\ec5c';
+            font-family: 'remixicon';
+            position: absolute;
+            left: -25px;
+            top: 2px;
+            color: #28a745;
+        }
+
+
+        /*
+         * ===== START OF NEW CSS =====
+         * 新增的「返回公司主頁」區塊樣式
+        */
+        .back-to-company-section {
+            text-align: center;
+            margin-top: 40px; /* 與上方內容的間距 */
+        }
+
+        .back-to-company-btn {
+            display: inline-flex; /* 使用 inline-flex 讓圖示和文字對齊 */
+            align-items: center;
+            gap: 10px;
+            padding: 15px 35px;
+            background-image: linear-gradient(to right, #457b9d 0%, #1d3557 100%);
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(69, 123, 157, 0.3);
+            background-size: 200% auto;
+            transition: all 0.4s ease;
+        }
+
+        .back-to-company-btn i {
+            font-size: 1.3em;
+            transition: transform 0.3s ease;
+        }
+
+        .back-to-company-btn:hover {
+            background-position: right center; /* 讓漸層背景移動 */
+            box-shadow: 0 6px 20px rgba(29, 53, 87, 0.4);
+            transform: translateY(-3px); /* 輕微上浮 */
+        }
+
+        .back-to-company-btn:hover i {
+            transform: translateX(-5px); /* 圖示向左移動 */
+        }
+
+
+        /* ===== END OF NEW CSS ===== */
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #aaa;
+            background-color: #ffffff;
+            margin-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .nav-link-requires-auth {
+            cursor: pointer; /* 讓它看起來像可點擊的 */
+        }
+
+        .tool-link-disabled {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- ===== 頂部導覽列 (已修改) ===== -->
+<header class="top-header">
+    <a href="{% url 'homepage' %}" class="logo-container">
+        <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="logo-img">
+    </a>
+
+    <!-- 中間導覽 -->
+    <nav class="main-nav">
+        <!-- 【核心修改】為所有 a 和 span 標籤加上 'main-nav-link' class -->
+        <a href="{% url 'homepage' %}"
+           class="main-nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}">工具總覽</a>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}"
+               class="main-nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">會員中心</a>
+            <a href="{% url 'products:list' %}"
+               class="main-nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">購買/續訂</a>
+        {% else %}
+            <span class="main-nav-link nav-link-requires-auth">會員中心</span>
+            <span class="main-nav-link nav-link-requires-auth">購買/續訂</span>
+        {% endif %}
+    </nav>
+
+    <!-- 已移除返回公司的連結 -->
+
+    <div class="user-auth-section">
+        {% if user.is_authenticated %}
+            <span class="welcome-msg">
+                歡迎, <strong>{{ user.username }}</strong>
+                {% if user.is_superuser %}
+                    <a href="{% url 'admin:index' %}" class="admin-btn" title="後台管理">
+                    <i class="ri-settings-3-line"></i>
+                    <span>後台管理</span>
+                </a>
+                {% endif %}
+            </span>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn" title="登出">
+                    <i class="ri-logout-box-r-line"></i>
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="login-btn">登入</a>
+            <a href="{% url 'signup' %}" class="signup-btn">註冊</a>
+        {% endif %}
+    </div>
+</header>
+
+<div class="container">
+    <div class="main-container" id="main-container">
+        <!-- ... 左側和右側欄位內容保持不變 ... -->
+        <aside class="left-panel">
+            <div class="tool-group">
+                <div class="tool-group-title">耐震設計規範</div>
+
+                <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
+                   class="tool-link"
+                   data-title="建築物耐震設計 | 靜力分析"
+                   data-description="依據內政部營建署最新發布的「建築物耐震設計規範及解說」，提供靜態分析法所需的各項參數計算。本工具能協助工程師快速、準確地完成初步設計與檢核，確保結構安全符合法規要求。"
+                   data-version="v0.0.0" data-updated="20XX-XX-XX">靜力分析</a>
+
+            </div>
+            <div class="tool-group">
+                <div class="tool-group-title">耐風設計規範</div>
+
+                <a class="tool-link disabled-link" data-title="耐風設計 | 封閉式建築"
+                   data-description="針對封閉式或部分封閉式建築，依據「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，涵蓋各種地形、陣風反應因子等複雜參數，提供設計風力評估。"
+                   data-version="v0.0.0" data-updated="20XX-XX-XX">封閉或部分封閉式建築</a>
+
+
+                <a class="tool-link disabled-link" data-title="耐風設計 | 開放式建築"
+                   data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具依據我國「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，以應對台灣多變的氣候挑戰。"
+                   data-version="v0.0.0" data-updated="20XX-XX-XX">開放式建築</a>
+
+            </div>
+            <div class="tool-group">
+                <div class="tool-group-title">結構設計</div>
+
+                <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
+                   data-title="結構設計 | 基礎版與錨栓"
+                   data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
+                   data-version="v1.2.5" data-updated="2025-10-28">鋼柱基礎版及錨栓設計檢核</a>
+                
+
+            </div>
+        </aside>
+        <main class="right-panel">
+            <div class="description-content" id="description-content">
+                <h2 id="description-title">歡迎使用 OLi 平台</h2>
+                <div class="description-meta" id="description-meta" style="display: none;">
+                    <div class="meta-item"><i class="ri-price-tag-3-line"></i><span id="meta-version"></span></div>
+                    <div class="meta-item"><i class="ri-calendar-2-line"></i><span>最後更新: <span
+                            id="meta-updated"></span></span></div>
+                </div>
+                <p id="description-text">OLI (Optimal Lean Interface)
+                    是一個專為結構工程師打造的線上輔助設計平台。<br><br>請將滑鼠移至左方的工具連結上，這裡將會顯示該工具的詳細說明與介紹。我們的目標是提供一個簡潔、高效且符合最新設計規範的計算環境，協助您應對日常工作中的各種挑戰。
+                </p>
+                <div class="changelog-container" id="changelog-container" style="display: none;">
+                    <details>
+                        <summary id="changelog-summary"><i class="ri-history-line"></i><span>版本更新日誌</span>
+                        </summary>
+                        <ul class="changelog-list" id="changelog-list"></ul>
+                    </details>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== 【核心新增】返回公司主頁的區塊 ===== -->
+    <div class="back-to-company-section">
+        <a href="{% url 'CZ_homepage' %}" class="back-to-company-btn">
+            <i class="ri-arrow-left-line"></i>
+            <span>返回 勤築工程實業 主頁</span>
+        </a>
+    </div>
+
+</div>
+
+<!-- ... 頁尾內容不變 ... -->
+<footer class="footer">&copy; {% now "Y" %} OLi | Optimal Lean Interface. All Rights Reserved.</footer>
+
+<!-- ... JavaScript 內容保持不變 ... -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toolLinks = document.querySelectorAll('.tool-link');
+        const descriptionContent = document.getElementById('description-content');
+        const descriptionTitle = document.getElementById('description-title');
+        const descriptionText = document.getElementById('description-text');
+        const metaContainer = document.getElementById('description-meta');
+        const metaVersion = document.getElementById('meta-version');
+        const metaUpdated = document.getElementById('meta-updated');
+        const changelogContainer = document.getElementById('changelog-container');
+        const changelogSummary = document.getElementById('changelog-summary').querySelector('span');
+        const changelogList = document.getElementById('changelog-list');
+        const defaultTitle = descriptionTitle.innerHTML;
+        const defaultText = descriptionText.innerHTML;
+
+
+        toolLinks.forEach(link => {
+            link.addEventListener('mouseover', function () {
+                toolLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                const title = this.dataset.title;
+                const description = this.dataset.description;
+                const version = this.dataset.version;
+                const updated = this.dataset.updated;
+                const changelog = this.dataset.changelog;
+                descriptionContent.style.opacity = 0;
+                setTimeout(() => {
+                    descriptionTitle.innerHTML = title;
+                    descriptionText.innerHTML = description.replace(/\n/g, '<br>');
+                    if (version && updated) {
+                        metaVersion.textContent = `版本 ${version}`;
+                        metaUpdated.textContent = updated;
+                        metaContainer.style.display = 'flex';
+                    } else {
+                        metaContainer.style.display = 'none';
+                    }
+                    if (changelog) {
+                        changelogSummary.textContent = `版本 ${version} 更新日誌`;
+                        changelogList.innerHTML = '';
+                        const changes = changelog.split('|');
+                        changes.forEach(change => {
+                            if (change.trim() !== '') {
+                                const li = document.createElement('li');
+                                li.textContent = change.trim();
+                                changelogList.appendChild(li);
+                            }
+                        });
+                        changelogContainer.style.display = 'block';
+                    } else {
+                        changelogContainer.style.display = 'none';
+                    }
+                    descriptionContent.style.opacity = 1;
+                }, 150);
+            });
+        });
+
+        const authRequiredLinks = document.querySelectorAll('.nav-link-requires-auth');
+
+        authRequiredLinks.forEach(link => {
+            link.addEventListener('click', function (event) {
+                event.preventDefault(); // 阻止任何預設行為
+
+                // 彈出一個更友好的確認框
+                if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
+                    // 如果使用者點擊 "確定"，跳轉到登入頁面
+                    window.location.href = "{% url 'login' %}";
+                }
+                // 如果使用者點擊 "取消"，則什麼都不做
+            });
+        });
+
+        const disabledToolLinks = document.querySelectorAll('.tool-link-disabled');
+
+        disabledToolLinks.forEach(link => {
+            link.addEventListener('click', function (event) {
+                event.preventDefault(); // 阻止任何預設行為
+
+                // 彈出與 header 中連結相同的提示框
+                if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
+                    // 如果使用者點擊 "確定"，跳轉到登入頁面
+                    window.location.href = "{% url 'login' %}";
+                }
+                // 如果使用者點擊 "取消"，則什麼都不做
+            });
+        });
+
+
+        const mainContainer = document.getElementById('main-container');
+        mainContainer.addEventListener('mouseleave', function () {
+            toolLinks.forEach(l => l.classList.remove('active'));
+            descriptionContent.style.opacity = 0;
+            setTimeout(() => {
+                descriptionTitle.innerHTML = defaultTitle;
+                descriptionText.innerHTML = defaultText;
+                metaContainer.style.display = 'none';
+                changelogContainer.style.display = 'none';
+                descriptionContent.style.opacity = 1;
+            }, 150);
+        });
+
+        // ==========================================================
+        // ==== START: 【核心新增】滑動底線的 JavaScript 邏輯 ====
+        // ==========================================================
+        const mainNav = document.querySelector('.main-nav');
+        const navLinks = mainNav.querySelectorAll('.main-nav-link');
+        const activeLink = mainNav.querySelector('.main-nav-link.active');
+        const underline = mainNav.style; // 我們直接操作 .main-nav::after 的樣式
+
+        function moveUnderline(target) {
+            if (!target) return;
+
+            // 計算目標連結相對於 main-nav 容器的位置
+            const targetLeft = target.offsetLeft;
+            const targetWidth = target.offsetWidth;
+
+            // 透過 CSS 變數或直接操作 style 來移動偽元素
+            mainNav.style.setProperty('--underline-left', `${targetLeft}px`);
+            mainNav.style.setProperty('--underline-width', `${targetWidth}px`);
+        }
+
+        // 1. 頁面載入時，將底線定位到 active 連結
+        if (activeLink) {
+            // 為了確保字體等渲染完畢，延遲一小段時間再定位
+            setTimeout(() => {
+                const targetLeft = activeLink.offsetLeft;
+                const targetWidth = activeLink.offsetWidth;
+
+                // 直接設定偽元素的樣式
+                mainNav.style.setProperty('--underline-left-initial', `${targetLeft}px`);
+                mainNav.style.setProperty('--underline-width-initial', `${targetWidth}px`);
+
+                // 動態創建 style 標籤來應用初始位置
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    .main-nav::after {
+                        left: ${targetLeft}px;
+                        width: ${targetWidth}px;
+                    }
+                `;
+                document.head.appendChild(style);
+            }, 50);
+        }
+
+        // 2. 為每個連結添加滑鼠移入事件
+        navLinks.forEach(link => {
+            link.addEventListener('mouseenter', () => {
+                moveUnderline(link);
+            });
+        });
+
+        // 3. 為整個導覽區添加滑鼠移出事件，讓底線回到 active 位置
+        mainNav.addEventListener('mouseleave', () => {
+            moveUnderline(activeLink);
+        });
+
+
+    });
+</script>
+<style>
+    .main-nav::after {
+        left: var(--underline-left, 0);
+        width: var(--underline-width, 0);
+    }
+</style>
+
+</body>
+</html>

@@ -1,0 +1,300 @@
+/* layouts/_flex.css */
+/* 簡潔美觀的 Flexbox 工具類 */
+
+/* 基礎 Flex 容器 */
+.flex {
+    display: flex;
+}
+
+.flex-inline {
+    display: inline-flex;
+}
+
+/* 方向控制 */
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-row-reverse {
+    flex-direction: row-reverse;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-col-reverse {
+    flex-direction: column-reverse;
+}
+
+/* 換行控制 */
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.flex-nowrap {
+    flex-wrap: nowrap;
+}
+
+.flex-wrap-reverse {
+    flex-wrap: wrap-reverse;
+}
+
+/* 主軸對齊 */
+.justify-start {
+    justify-content: flex-start;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-around {
+    justify-content: space-around;
+}
+
+.justify-evenly {
+    justify-content: space-evenly;
+}
+
+/* 交叉軸對齊 */
+.items-start {
+    align-items: flex-start;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.items-baseline {
+    align-items: baseline;
+}
+
+.items-stretch {
+    align-items: stretch;
+}
+
+/* 多行對齊 */
+.content-start {
+    align-content: flex-start;
+}
+
+.content-end {
+    align-content: flex-end;
+}
+
+.content-center {
+    align-content: center;
+}
+
+.content-between {
+    align-content: space-between;
+}
+
+.content-around {
+    align-content: space-around;
+}
+
+.content-stretch {
+    align-content: stretch;
+}
+
+/* 子元素對齊 */
+.self-auto {
+    align-self: auto;
+}
+
+.self-start {
+    align-self: flex-start;
+}
+
+.self-end {
+    align-self: flex-end;
+}
+
+.self-center {
+    align-self: center;
+}
+
+.self-stretch {
+    align-self: stretch;
+}
+
+.self-baseline {
+    align-self: baseline;
+}
+
+/* 子元素伸縮 */
+.flex-1 {
+    flex: 1 1 0%;
+}
+
+.flex-auto {
+    flex: 1 1 auto;
+}
+
+.flex-initial {
+    flex: 0 1 auto;
+}
+
+.flex-none {
+    flex: none;
+}
+
+/* 子元素順序 */
+.order-first {
+    order: -9999;
+}
+
+.order-last {
+    order: 9999;
+}
+
+.order-none {
+    order: 0;
+}
+
+/* 常用組合類 */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-between-center {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap; /* 允許換行 */
+    /* 負邊距用來抵消子元素的 padding，以確保內容對齊網格 */
+    margin-left: calc(var(--space-md) * -0.5); /* 補償 col 的 padding */
+    margin-right: calc(var(--space-md) * -0.5);
+}
+
+.form-row > .col,
+.form-row > [class*="col-"] {
+    /* 左右內邊距來創造間距 */
+    padding-left: calc(var(--space-md) * 0.5);
+    padding-right: calc(var(--space-md) * 0.5);
+    flex-grow: 1; /* 允許項目生長 */
+    flex-basis: 0; /* 基礎尺寸為 0 */
+    max-width: 100%; /* 確保不會超出 */
+}
+
+/* 例如，如果你想讓一行顯示兩個表單組件，可以使用 col-6 */
+.form-row > .col-6 {
+    flex: 0 0 50%; /* 佔 50% 寬度 */
+    max-width: 50%;
+}
+
+/* 如果你還有其他 col-4, col-3 等，可以照此模式添加 */
+.form-row > .col-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+.form-row > .col-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+}
+
+/* 響應式設計 */
+@media (min-width: 640px) {
+    .sm-flex {
+        display: flex;
+    }
+
+    .sm-flex-row {
+        flex-direction: row;
+    }
+
+    .sm-flex-col {
+        flex-direction: column;
+    }
+}
+
+
+@media (min-width: 768px) {
+    .md-flex {
+        display: flex;
+    }
+
+    .md-flex-row {
+        flex-direction: row;
+    }
+
+    .md-flex-col {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 992px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+
+    .main-content {
+        flex-direction: column;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .lg-flex {
+        display: flex;
+    }
+
+    .lg-flex-row {
+        flex-direction: row;
+    }
+
+    .lg-flex-col {
+        flex-direction: column;
+    }
+}
+
+@media (min-width: 1280px) {
+    .xl-flex {
+        display: flex;
+    }
+
+    .xl-flex-row {
+        flex-direction: row;
+    }
+
+    .xl-flex-col {
+        flex-direction: column;
+    }
+}

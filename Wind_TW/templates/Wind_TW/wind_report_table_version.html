@@ -1,0 +1,409 @@
+{% extends "Wind_TW/wind_report_base.html" %}
+{% load static %}
+
+{% block page_title %}封閉式結構風力計算報告書{% endblock %}
+{% block report_main_title %}封閉式結構風力計算報告書{% endblock %}
+
+{% block standards_list %}
+    <li>ASCE/SEI 7-22, "Minimum Design Loads and Associated Criteria for Buildings and Other Structures"</li>
+{% endblock %}
+
+{% block report_content %}
+    <!-- ====================================================== -->
+    <!-- ====       第三章 (從這裡開始，每一個章節一個新頁面)     ==== -->
+    <!-- ====================================================== -->
+    <div class="report-page">
+        <h2 class="chapter-title">第三章 建築物基本參數</h2>
+        <table class="param-table">
+            <tbody>
+            <tr>
+                <th>建築物X方向尺寸</th>
+                <td>{{ geometry_params.dim_x }} m</td>
+            </tr>
+            <tr>
+                <th>建築物Y方向尺寸</th>
+                <td>{{ geometry_params.dim_y }} m</td>
+            </tr>
+            <tr>
+                <th>屋頂型態</th>
+                <td>{{ geometry_params.roof_shape_zh }}</td>
+            </tr>
+            <tr>
+                <th>屋簷高度</th>
+                <td>{{ geometry_params.eave_height }} m</td>
+            </tr>
+            <tr>
+                <th>屋脊(拱頂)高度</th>
+                <td>{{ geometry_params.ridge_height }} m</td>
+            </tr>
+            <tr>
+                <th>屋頂平均高度 h</th>
+                <td>{{ geometry_params.calculated_h|floatformat:2 }} m</td>
+            </tr>
+            <tr>
+                <th>屋脊(拱頂軸線)方向</th>
+                <td>{{ geometry_params.ridge_direction }}</td>
+            </tr>
+            <tr>
+                <th>屋頂與水平面夾角 θ</th>
+                <td>
+                    {% if geometry_params.roof_shape_en == 'hip' %}
+                        θ<sub>x</sub> = {{ geometry_params.theta_x|floatformat:2 }}° / θ<sub>y</sub> =
+                        {{ geometry_params.theta_y|floatformat:2 }}°
+                    {% else %}
+                        {{ geometry_params.theta|floatformat:2 }}°
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>屋脊長度</th>
+                <td>
+                    {% if geometry_params.roof_shape_en == 'hip' %}
+                        {{ geometry_params.ridge_length }}
+                    {% else %}
+                        不適用
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>建築物狀態</th>
+                <td>{{ basic_params.enclosure_status }}</td>
+            </tr>
+            <tr>
+                <th>用途係數 I</th>
+                <td>{{ basic_params.importance_factor }}</td>
+            </tr>
+            <tr>
+                <th>建築物阻尼比 β</th>
+                <td>{{ basic_params.damping_ratio }}</td>
+            </tr>
+            <tr>
+                <th>自然頻率</th>
+                <td>
+                    f<sub>nx</sub> = {{ basic_params.fn_x }} Hz /
+                    f<sub>ny</sub> = {{ basic_params.fn_y }} Hz /
+                    f<sub>t</sub> = {{ basic_params.ft }} Hz
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        {% if building_image_path %}
+            <div class="building-image-container">
+                <img src="{% static building_image_path %}" alt="建築物外觀示意圖">
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- ====            第四章 (新頁面)                     ==== -->
+    <!-- ====================================================== -->
+    <div class="report-page">
+        <h2 class="chapter-title">第四章 風壓分析參數</h2>
+        <table class="param-table">
+            <tbody>
+            <tr>
+                <th>內風壓係數 GC<sub>pi</sub></th>
+                <td>{{ chapter_4_data.gcpi|join:", " }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- X 風向表格 -->
+        <table class="param-table">
+            <thead>
+            <tr>
+                <th class="header-row" colspan="{% if chapter_4_data.x_wind.has_neg_case %}4{% else %}3{% endif %}">
+                    X風向
+                </th>
+            </tr>
+            <tr>
+                <th>參數項目</th>
+                <th>{{ chapter_4_data.x_wind.pos_header }}</th>
+                {% if chapter_4_data.x_wind.has_neg_case %}
+                    <th>{{ chapter_4_data.x_wind.neg_header }}</th>
+                {% endif %}
+                <th>橫風向 (±Y向)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>建築物類型</td>
+                <td>{{ chapter_4_data.x_wind.pos.rigidity }}</td>
+                {% if chapter_4_data.x_wind.has_neg_case %}
+                    <td>{{ chapter_4_data.x_wind.neg.rigidity }}</td>{% endif %}
+                <td>{{ chapter_4_data.y_wind.pos.rigidity }}</td>
+            </tr>
+            <tr>
+                <td>垂直/平行於風向建築物尺寸</td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">
+                    B = {{ chapter_4_data.x_wind.pos.B|floatformat:2 }} m, L
+                    = {{ chapter_4_data.x_wind.pos.L|floatformat:2 }} m
+                </td>
+                <td>B = {{ chapter_4_data.y_wind.pos.B|floatformat:2 }} m, L
+                    = {{ chapter_4_data.y_wind.pos.L|floatformat:2 }} m
+                </td>
+            </tr>
+            <tr>
+                <td>陣風反應因子 G/Gf</td>
+                <td>{{ chapter_4_data.x_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+                {% if chapter_4_data.x_wind.has_neg_case %}
+                    <td>{{ chapter_4_data.x_wind.neg.G_factor.final_value|floatformat:3 }}</td>{% endif %}
+                <td>{{ chapter_4_data.y_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>L/B</td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.L_B|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.L_B|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>h/L</td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.h_L|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.h_L|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>h/B</td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.h_B|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.h_B|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>牆面迎風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.Cp_windward|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.Cp_windward|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>牆面背風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.Cp_leeward|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.Cp_leeward|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>牆面側風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.x_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.x_wind.pos.Cp_side|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.y_wind.pos.Cp_side|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>屋頂 C<sub>p</sub></td>
+                <td>{% for key, value in chapter_4_data.x_wind.pos.roof_cp.items %}{{ key }}:
+                    {{ value|floatformat:2 }}
+                    <br>{% endfor %}</td>
+                {% if chapter_4_data.x_wind.has_neg_case %}
+                    <td>{% for key, value in chapter_4_data.x_wind.neg.roof_cp.items %}{{ key }}:
+                        {{ value|floatformat:2 }}<br>{% endfor %}</td>{% endif %}
+                <td>{% for key, value in chapter_4_data.y_wind.pos.roof_cp.items %}{{ key }}:
+                    {{ value|floatformat:2 }}
+                    <br>{% endfor %}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Y 風向表格 -->
+        <table class="param-table">
+            <thead>
+            <tr>
+                <th class="header-row" colspan="{% if chapter_4_data.y_wind.has_neg_case %}4{% else %}3{% endif %}">
+                    Y風向
+                </th>
+            </tr>
+            <tr>
+                <th>參數項目</th>
+                <th>{{ chapter_4_data.y_wind.pos_header }}</th>
+                {% if chapter_4_data.y_wind.has_neg_case %}
+                    <th>{{ chapter_4_data.y_wind.neg_header }}</th>
+                {% endif %}
+                <th>橫風向 (±X向)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>建築物類型</td>
+                <td>{{ chapter_4_data.y_wind.pos.rigidity }}</td>
+                {% if chapter_4_data.y_wind.has_neg_case %}
+                    <td>{{ chapter_4_data.y_wind.neg.rigidity }}</td>{% endif %}
+                <td>{{ chapter_4_data.x_wind.pos.rigidity }}</td>
+            </tr>
+            <tr>
+                <td>垂直/平行於風向建築物尺寸</td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">
+                    B = {{ chapter_4_data.y_wind.pos.B|floatformat:2 }} m, L
+                    = {{ chapter_4_data.y_wind.pos.L|floatformat:2 }} m
+                </td>
+                <td>B = {{ chapter_4_data.x_wind.pos.B|floatformat:2 }} m, L
+                    = {{ chapter_4_data.x_wind.pos.L|floatformat:2 }} m
+                </td>
+            </tr>
+            <tr>
+                <td>陣風反應因子 G/Gf</td>
+                <td>{{ chapter_4_data.y_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+                {% if chapter_4_data.y_wind.has_neg_case %}
+                    <td>{{ chapter_4_data.y_wind.neg.G_factor.final_value|floatformat:3 }}</td>{% endif %}
+                <td>{{ chapter_4_data.x_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>L/B</td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.L_B|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.L_B|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>h/L</td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.h_L|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.h_L|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>h/B</td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.h_B|floatformat:3 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.h_B|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>牆面迎風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.Cp_windward|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.Cp_windward|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>牆面背風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.Cp_leeward|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.Cp_leeward|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>牆面側風面 C<sub>p</sub></td>
+                <td colspan="{% if chapter_4_data.y_wind.has_neg_case %}2{% else %}1{% endif %}">{{ chapter_4_data.y_wind.pos.Cp_side|floatformat:2 }}</td>
+                <td>{{ chapter_4_data.x_wind.pos.Cp_side|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>屋頂 C<sub>p</sub></td>
+                <td>{% for key, value in chapter_4_data.y_wind.pos.roof_cp.items %}{{ key }}:
+                    {{ value|floatformat:2 }}
+                    <br>{% endfor %}</td>
+                {% if chapter_4_data.y_wind.has_neg_case %}
+                    <td>{% for key, value in chapter_4_data.y_wind.neg.roof_cp.items %}{{ key }}:
+                        {{ value|floatformat:2 }}<br>{% endfor %}</td>{% endif %}
+                <td>{% for key, value in chapter_4_data.x_wind.pos.roof_cp.items %}{{ key }}:
+                    {{ value|floatformat:2 }}
+                    <br>{% endfor %}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- ====            第五章 (新頁面)                     ==== -->
+    <!-- ====================================================== -->
+    <div class="report-page">
+        <h2 class="chapter-title">第五章 主結構體設計風壓計算</h2>
+        {% for case_name, case_data in chapter_5_data.items %}
+            {% if case_data %}
+                <div class="report-content-block {% if not forloop.first %}print-page-break{% endif %}">
+                    <h3 class="sub-chapter-title">
+                        {% if case_name == 'plus_x' %}5.1 順風向為 +X 風向
+                        {% elif case_name == 'minus_x' %}5.2 順風向為 -X 風向
+                        {% elif case_name == 'plus_y' %}5.3 順風向為 +Y 風向
+                        {% elif case_name == 'minus_y' %}5.4 順風向為 -Y 風向
+                        {% endif %}
+                    </h3>
+                    {% if case_data.image_for_case %}
+                        <div class="report-schematic-image">
+                            <img src="{% static case_data.image_for_case %}" alt="風向與結構示意圖">
+                        </div>
+                    {% endif %}
+                    {% for table_group in case_data.tables %}
+                        <div class="{% if not forloop.first %}print-page-break{% endif %}">
+                            <div class="report-block-header">
+                                <h4 class="table-specific-title">內風壓係數 (GC<sub>pi</sub>)
+                                    = {{ table_group.gcpi|floatformat:3 }} 時，各牆面及屋頂之設計風壓</h4>
+                                <div class="summary-box">
+                                    <!-- ... (此處 summary-box 內容不變) ... -->
+                                </div>
+                            </div>
+                            <table class="data-table">
+                                <!-- ... (此處 pressure_table 內容不變) ... -->
+                            </table>
+                            <div class="report-content-block">
+                                <div class="report-block-header">
+                                    <h4 class="table-specific-title">內風壓係數 (GC<sub>pi</sub>)
+                                        = {{ table_group.gcpi|floatformat:3 }} 時，順風向引致之各向風力</h4>
+                                    <div class="summary-box" style="margin-top: 20px;">
+                                        <!-- ... (此處 summary-box 內容不變) ... -->
+                                    </div>
+                                </div>
+                                <table class="data-table">
+                                    <!-- ... (此處 force_table 內容不變) ... -->
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- ====            第六章 (新頁面)                     ==== -->
+    <!-- ====================================================== -->
+    {% if show_chapter_6 %}
+        <div class="report-page">
+            <h2 class="chapter-title">第六章 局部構材及外部被覆物之設計風壓</h2>
+            {% if chapter_6_data and chapter_6_data.q_h %}
+                <div class="summary-box">
+                    <!-- ... (此處 summary-box 內容不變) ... -->
+                </div>
+
+                <h3 class="sub-chapter-title">6.1 外牆設計風壓</h3>
+                <div class="cc-schematic-image">
+                    <img src="{% static 'img/Wall_C&C_h_gt_18.png' %}" alt="牆面風壓分布示意圖">
+                    <p class="image-caption-small">牆面風壓分布圖</p>
+                </div>
+
+                {% if chapter_6_data.is_low_rise_for_cc %}
+                    <table class="data-table">
+                        <!-- ... (此處 wall_tables (低矮) 內容不變) ... -->
+                    </table>
+                {% else %}
+                    <div class="report-content-block">
+                        <h3 class="sub-chapter-title">外牆設計風壓 (正風壓 p⁺，kgf/m²)</h3>
+                        <table class="data-table">
+                            <!-- ... (此處 wall_tables (高層-正壓) 內容不變) ... -->
+                        </table>
+                    </div>
+                    <div class="report-content-block">
+                        <h3 class="sub-chapter-title">外牆設計風壓 (負風壓 p⁻，kgf/m²)</h3>
+                        <table class="data-table">
+                            <!-- ... (此處 wall_neg_pressure_table (高層-負壓) 內容不變) ... -->
+                        </table>
+                    </div>
+                {% endif %}
+
+                {% if chapter_6_data.roof_pos_rows %}
+                    <div class="report-content-block print-page-break">
+                        <h3 class="sub-chapter-title">6.2 屋頂設計風壓</h3>
+                        {% if chapter_6_roof_image_path %}
+                            <div class="cc-schematic-image">
+                                <img src="{% static chapter_6_roof_image_path %}" alt="屋頂風壓分布示意圖">
+                            </div>
+                        {% endif %}
+                        <h3 class="sub-chapter-title">{{ chapter_6_data.roof_title }} (正風壓 p⁺，kgf/m²)</h3>
+                        <table class="param-table data-table">
+                            <!-- ... (此處 roof_pos_rows 內容不變) ... -->
+                        </table>
+                    </div>
+                {% endif %}
+                {% if chapter_6_data.roof_neg_rows %}
+                    <div class="report-content-block">
+                        <h3 class="sub-chapter-title">{{ chapter_6_data.roof_title }} (負風壓 p⁻，kgf/m²)</h3>
+                        <table class="param-table data-table">
+                            <!-- ... (此處 roof_neg_rows 內容不變) ... -->
+                        </table>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p>無法計算局部構材風壓。</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- ====================================================== -->
+    <!-- ====            附錄 (新頁面)                       ==== -->
+    <!-- ====================================================== -->
+    {% if appendix_data.x_wind_g_details or appendix_data.y_wind_g_details %}
+        <div class="report-page">
+            {% include "Wind_TW/appendix_g_factor.html" with geo=geometry_params %}
+        </div>
+    {% endif %}
+{% endblock %}

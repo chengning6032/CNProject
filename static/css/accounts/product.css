@@ -1,0 +1,412 @@
+/* static/css/accounts/product.css (新檔案) */
+
+/* ============================================= */
+/* ====      商店主佈局 (兩欄式)     ==== */
+/* ============================================= */
+.shop-container {
+    display: flex;
+    flex-wrap: wrap; /* 在窄螢幕時允許換行 */
+    gap: 40px;
+    width: 100%;
+    max-width: 1400px; /* 擴大最大寬度以容納兩欄 */
+    margin: 20px auto;
+    align-items: flex-start; /* 頂部對齊 */
+}
+
+.product-list-wrapper {
+    flex: 2; /* 商品列表佔用 2/3 寬度 */
+    min-width: 400px; /* 確保商品列表不會被過度壓縮 */
+}
+
+.cart-summary-wrapper {
+    flex: 1; /* 購物車佔用 1/3 寬度 */
+    min-width: 320px;
+    position: sticky; /* 關鍵：讓購物車在滾動時固定在原地 */
+    top: 40px; /* 距離視窗頂部的距離 */
+}
+
+/* 響應式設計：當螢幕寬度小於 992px 時，變為單欄佈局 */
+@media (max-width: 991.98px) {
+    .shop-container {
+        flex-direction: column;
+    }
+
+    .cart-summary-wrapper {
+        width: 100%;
+        position: static; /* 取消固定定位 */
+    }
+}
+
+
+/* ============================================= */
+/* ====      麵包屑 (Breadcrumbs) 樣式       ==== */
+/* ============================================= */
+.breadcrumb-container {
+    margin-bottom: 25px;
+    padding: 0;
+}
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    margin: 0;
+    list-style: none;
+    background-color: #e9ecef;
+    border-radius: 6px;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    display: inline-block;
+    padding: 0 0.75rem;
+    color: #6c757d;
+    content: ">";
+}
+
+.breadcrumb-item a:hover {
+    color: #1d3557;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+
+/* ============================================= */
+/* ====      商品列表 (Product) 頁面     ==== */
+/* ============================================= */
+.product-list-wrapper h2 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.product-list-wrapper > p {
+    font-size: 16px;
+    color: #6c757d;
+    margin-bottom: 35px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    text-align: left;
+}
+
+.product-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.product-card h3 {
+    font-size: 20px;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.product-desc {
+    color: #6c757d;
+    font-size: 15px;
+    flex-grow: 1; /* 讓描述區塊填滿剩餘空間，確保 footer 對齊 */
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+/* 訂閱選項 */
+.subscription-options {
+    display: flex;
+    flex-direction: row;
+    /* 【核心修改】從 space-between 改為 flex-start，讓群組靠左 */
+    justify-content: flex-start;
+    /* 【核心修改】新增 gap 來控制選項間的固定間距 */
+    gap: 30px;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.subscription-options label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto; /* 將 footer 推到底部 */
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.product-price {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1d3557;
+}
+
+.add-to-cart-btn {
+    background-color: #457b9d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #1d3557;
+    transform: scale(1.05);
+}
+
+
+/* ============================================= */
+/* ====      購物車內部樣式 (Cart)     ==== */
+/* ============================================= */
+.cart-summary {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.cart-header h3 {
+    margin: 0;
+    text-align: left;
+}
+
+.cart-items {
+    padding: 10px 25px;
+    min-height: 150px;
+}
+
+.cart-empty-msg {
+    text-align: center;
+    color: #6c757d;
+    padding: 40px 0;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+    min-width: 0; /* 防止文字過長時擠壓佈局 */
+}
+
+.cart-item-name {
+    font-weight: 500;
+    color: #333;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cart-item-plan {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.cart-item-price {
+    font-weight: 500;
+    font-size: 15px;
+    white-space: nowrap;
+    margin-left: 15px;
+}
+
+.cart-item-remove {
+    background: #f1f3f5;
+    color: #adb5bd;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 15px;
+    flex-shrink: 0;
+}
+
+.cart-item-remove:hover {
+    background-color: #e63946;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.cart-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.cart-calculation {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.cart-line-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    color: #495057;
+}
+
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.checkout-btn {
+    width: 100%;
+    background-color: #e63946;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.checkout-btn:hover {
+    background-color: #d62828;
+}
+
+/* 結帳成功動畫 */
+.checkout-success {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.checkout-success p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2a9d8f;
+}
+
+.checkmark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 3;
+    stroke: #2a9d8f;
+    stroke-miterlimit: 10;
+    box-shadow: inset 0px 0px 0px #2a9d8f;
+    animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+    margin: 0 auto 20px;
+}
+
+.checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 3;
+    stroke-miterlimit: 10;
+    stroke: #2a9d8f;
+    fill: #fff;
+    animation: stroke .6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke .3s cubic-bezier(0.65, 0, 0.45, 1) .8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes scale {
+    0%, 100% {
+        transform: none;
+    }
+    50% {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+}
+
+@keyframes fill {
+    100% {
+        box-shadow: inset 0px 0px 0px 40px #2a9d8f;
+    }
+}
+
+/* ============================================= */
+/* ====      結帳成功頁面微調 (新增)       ==== */
+/* ============================================= */
+.checkout-success .checkout-link-to-profile {
+    display: inline-block; /* 讓連結可以設定內外距 */
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d3557;
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.checkout-success .checkout-link-to-profile:hover {
+    background-color: #dee2e6;
+    border-color: #ced4da;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}

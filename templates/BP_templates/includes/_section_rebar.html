@@ -1,0 +1,60 @@
+<div class="content-section card">
+    <h3>6. 錨栓鋼筋</h3>
+    <form method="post" id="rebar-form">
+        {% csrf_token %}
+
+        <!-- 抗拉鋼筋選項 -->
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="tension_rebar" name="tension_rebar">
+                <label class="form-check-label" for="tension_rebar">抗拉鋼筋</label>
+            </div>
+
+            <!-- 抗拉鋼筋詳細設定 -->
+            <div id="tension_rebar_details" class="form-row flex flex-wrap gap-2 mt-2 ml-4"
+                 style="display: none;">
+                <div class="form-group flex-1">
+                    <label for="tension_rebar_size">鋼筋尺寸：</label>
+                    <select class="form-control" id="tension_rebar_size" name="tension_rebar_size">
+                        <option value="#3">#3 (D10)</option>
+                        <option value="#4">#4 (D13)</option>
+                        <option value="#5">#5 (D16)</option>
+                        <option value="#6">#6 (D19)</option>
+                    </select>
+                </div>
+                <div class="form-group flex-1">
+                    <label for="tension_rebar_qty">數量：</label>
+                    <input type="number" class="form-control" id="tension_rebar_qty"
+                           name="tension_rebar_qty"
+                           min="0" step="1" value="4">
+                </div>
+            </div>
+        </div>
+
+        <!-- 抗剪鋼筋選項 -->
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="shear_rebar" name="shear_rebar">
+                <label class="form-check-label" for="shear_rebar">抗剪鋼筋</label>
+            </div>
+
+            <!-- 抗剪鋼筋詳細設定 -->
+            <div id="shear_rebar_details" class="form-row flex flex-wrap gap-2 mt-2 ml-4"
+                 style="display: none;">
+                <div class="form-group flex-1">
+                    <label for="shear_rebar_size">鋼筋尺寸：</label>
+                    <select class="form-control" id="shear_rebar_size" name="shear_rebar_size">
+                        <option value="#3">#3 (D10)</option>
+                        <option value="#4">#4 (D13)</option>
+                        <option value="#5">#5 (D16)</option>
+                    </select>
+                </div>
+                <div class="form-group flex-1">
+                    <label for="shear_rebar_qty">數量：</label>
+                    <input type="number" class="form-control" id="shear_rebar_qty" name="shear_rebar_qty"
+                           min="0" step="1" value="2">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

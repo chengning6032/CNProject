@@ -1,0 +1,399 @@
+{% extends "Wind_TW/wind_report_base.html" %}
+{% load static %}
+
+{% block page_title %}開放式結構風力計算報告書{% endblock %}
+{% block report_main_title %}開放式結構風力計算報告書{% endblock %}
+
+{% block report_content %}
+    <!-- ====================================================== -->
+    <!-- ====       第三章 (新頁面)                         ==== -->
+    <!-- ====================================================== -->
+    <div class="report-page">
+        <h2 class="chapter-title">第三章 建築物參數</h2>
+        <h3 class="sub-chapter-title">3.1 建築物基本資料</h3>
+        <table class="param-table">
+            <tbody>
+            <tr>
+                <th>建築物類型</th>
+                <td>{{ chapter_3_data.building_type_zh }}</td>
+            </tr>
+            <tr>
+                <th>用途係數 I</th>
+                <td>{{ chapter_3_data.importance_factor }}</td>
+            </tr>
+            <tr>
+                <th>阻尼比 β</th>
+                <td>{{ chapter_3_data.damping_ratio }}</td>
+            </tr>
+            <tr>
+                <th>自然頻率</th>
+                <td>f<sub>nx</sub>={{ chapter_3_data.fn_x }} Hz / f<sub>ny</sub>={{ chapter_3_data.fn_y }} Hz</td>
+            </tr>
+            </tbody>
+        </table>
+
+        {% if chapter_3_data.free_roof %}
+            <h3 class="sub-chapter-title">3.2 屋頂幾何資料</h3>
+            <table class="param-table">
+                <tbody>
+                <tr>
+                    <th>屋脊高度 h<sub>ridge</sub></th>
+                    <td>{{ chapter_3_data.free_roof.roof.h_ridge }} m</td>
+                </tr>
+                <tr>
+                    <th>屋簷高度 h<sub>eave</sub></th>
+                    <td>{{ chapter_3_data.free_roof.roof.h_eave }} m</td>
+                </tr>
+                <tr>
+                    <th>屋頂平均高度 h</th>
+                    <td>{{ chapter_3_data.calculated_h|floatformat:2 }} m</td>
+                </tr>
+                <tr>
+                    <th>屋脊方向</th>
+                    <td>{{ chapter_3_data.free_roof.roof.ridge_direction }} 方向</td>
+                </tr>
+                <tr>
+                    <th>X向屋頂投影尺寸 B<sub>x</sub></th>
+                    <td>{{ chapter_3_data.free_roof.roof.b_x }} m</td>
+                </tr>
+                <tr>
+                    <th>Y向屋頂投影尺寸 B<sub>y</sub></th>
+                    <td>{{ chapter_3_data.free_roof.roof.b_y }} m</td>
+                </tr>
+                <tr>
+                    <th>屋頂傾斜角度 θ</th>
+                    <td>{{ chapter_3_data.free_roof.roof.theta|floatformat:2 }} °</td>
+                </tr>
+                <tr>
+                    <th>屋頂下方阻擋率</th>
+                    <td>{% if chapter_3_data.free_roof.roof.blockage == "obstructed" %}Obstructed (有阻擋, φ >=
+                        0.5){% else %}Clear (無阻擋, φ < 0.5){% endif %}</td>
+                </tr>
+                </tbody>
+            </table>
+        {% elif chapter_3_data.chimney %}
+            <h3 class="sub-chapter-title">3.2 煙囪幾何資料</h3>
+            <table class="param-table">
+                <tbody>
+                <tr>
+                    <th>斷面形狀</th>
+                    <td>{{ chapter_3_data.chimney.shape_zh }}</td>
+                </tr>
+                <tr>
+                    <th>結構體高度 h(m)</th>
+                    <td>{{ chapter_3_data.calculated_h|floatformat:2 }} m</td>
+                </tr>
+                <tr>
+                    <th>頂端投影寬度(直徑) D<sub>top</sub></th>
+                    <td>{{ chapter_3_data.chimney.d_top }} m</td>
+                </tr>
+                <tr>
+                    <th>底端投影寬度(直徑) D<sub>bot</sub></th>
+                    <td>{{ chapter_3_data.chimney.d_bot }} m</td>
+                </tr>
+                <tr>
+                    <th>表面粗糙度</th>
+                    <td>{{ chapter_3_data.chimney.roughness_zh }}</td>
+                </tr>
+                </tbody>
+            </table>
+        {% elif chapter_3_data.sign %}
+            <h3 class="sub-chapter-title">3.2 標示物幾何資料</h3>
+            <table class="param-table">
+                <tbody>
+                <tr>
+                    <th style="width: 30%;">標示物橫向寬度 B (m)</th>
+                    <td style="width: 70%;">{{ chapter_3_data.sign.b_h|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>標示物垂直尺寸 L (m)</th>
+                    <td>{{ chapter_3_data.sign.b_v|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>標示物頂高 h (m)</th>
+                    <td>{{ chapter_3_data.calculated_h|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>地面至標示物底緣距離 d (m)</th>
+                    <td>{{ chapter_3_data.sign.d|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>標示物特徵面積法向量方向</th>
+                    <td>{{ chapter_3_data.sign.normal_direction }} 向</td>
+                </tr>
+                <tr>
+                    <th>開孔率 ε</th>
+                    <td>{{ chapter_3_data.sign.opening_ratio|floatformat:2 }} %</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h3 class="sub-chapter-title">3.3 支撐結構幾何資料</h3>
+            <table class="param-table">
+                <tbody>
+                <tr>
+                    <th style="width: 30%;">支撐構件幾何形狀</th>
+                    <td style="width: 70%;">{{ chapter_3_data.support.shape_zh }}</td>
+                </tr>
+                <tr>
+                    <th>支撐結構分析高度 (m)</th>
+                    <td>{{ chapter_3_data.support.h|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>頂端X方向投影寬度 D<sub>top,x</sub> (m)</th>
+                    <td>{{ chapter_3_data.support.dtop_x|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>底部X方向投影寬度 D<sub>bot,x</sub> (m)</th>
+                    <td>{{ chapter_3_data.support.dbot_x|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>頂端Y方向投影寬度 D<sub>top,y</sub> (m)</th>
+                    <td>{{ chapter_3_data.support.dtop_y|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>底部Y方向投影寬度 D<sub>bot,y</sub> (m)</th>
+                    <td>{{ chapter_3_data.support.dbot_y|floatformat:2 }}</td>
+                </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- ====       第四章                                  ==== -->
+    <!-- ====================================================== -->
+    {% if building_type == 'solid-sign' or building_type == 'hollow-sign' %}
+        {% with res=chapter_4_data.main_wind.pos %}
+
+            <!-- 包含 4.1 的第一頁 -->
+            <div class="report-page">
+                <h2 class="chapter-title">第四章 主風力抵抗系統 (MWFRS) 設計風壓</h2>
+                <h3 class="sub-chapter-title">4.1 標示物主體風力計算</h3>
+                {% if building_type == 'solid-sign' %}
+                    <div class="summary-box" style="text-align: center; display: block; margin-bottom: 20px;">
+                        <div style="font-size: 1.0em; margin-top: 15px; text-align: left; padding: 0 10px;">
+                            <p class="math-formula" style="text-align: left;">設計風力 $F = q_z G C_f A_f R_{\epsilon}$</p>
+                            <p class="math-formula" style="text-align: left;">其中風速壓 $q_z = q(h) = 0.06 K(h) K_{zt}
+                                \left[ I V_{10}\left(C\right)\right]^{2}$ at $h
+                                = {{ chapter_3_data.calculated_h|floatformat:2 }} \text{m}$</p>
+                            <p class="math-formula" style="text-align: left; padding-left: 20px;">
+                                {% if chapter_3_data.calculated_h <= 5 %}
+                                    $K(h) = 2.77 \left(\dfrac{5 \text{ (取 z=5m)}}{z_{g}}\right)^{2\alpha} = 2.77
+                                    \left(\dfrac{5}{ {{ terrain_params.zg }} }\right)^{2\times
+                                    {{ terrain_params.alpha }} } = {{ chapter_3_data.k_h_value|floatformat:3 }}$
+                                {% else %}
+                                    $K(h) = 2.77 \left(\dfrac{h}{z_{g}}\right)^{2\alpha} = 2.77 \left(\dfrac{
+                                    {{ chapter_3_data.calculated_h|floatformat:2 }} }{ {{ terrain_params.zg }}
+                                    }\right)^{2\times {{ terrain_params.alpha }} } =
+                                    {{ chapter_3_data.k_h_value|floatformat:3 }}$
+                                {% endif %}
+                            </p>
+                            <p>採用 X、Y 風向中較保守的地形影響因子 K<sub>zt</sub> 進行計算</p>
+                            <p class="math-formula" style="text-align: left; padding-left: 20px;">$K_{zt, conservative}
+                                = max(K_{zt,x}, K_{zt,y}) = {{ chapter_3_data.kzt_conservative|floatformat:3 }}$</p>
+                            <p class="math-formula" style="text-align: left;">$\Rightarrow q(h) = 0.06
+                                \times {{ chapter_3_data.k_h_value|floatformat:3 }}
+                                \times {{ chapter_3_data.kzt_conservative|floatformat:3 }} \times
+                                \left[ {{ chapter_3_data.importance_factor }} \times {{ v10c }} \right]^{2}
+                                = {{ chapter_3_data.q_h_conservative|floatformat:2 }} \text{ kgf/m}^2$</p>
+                            <hr style="border: 0; border-top: 1px dotted #ccc; margin: 10px 0;">
+                            <p style="font-weight: bold;">標示物主體之風力係數 C<sub>f</sub> 依據 ASCE 7-22 Fig 29.3-1
+                                查圖內插得之。</p>
+                            <p class="math-formula"
+                               style="font-size: 1.1em; text-align: left; padding-left: 20px; margin-top: 10px;">
+                                $s/h = {{ chapter_3_data.sign.b_v|floatformat:2 }}
+                                / {{ chapter_3_data.calculated_h|floatformat:2 }}
+                                = {{ chapter_4_data.s_over_h|floatformat:3 }}$
+                            </p>
+                            <p class="math-formula" style="font-size: 1.0em; text-align: left; padding-left: 20px;">
+                                $B/s = {{ chapter_3_data.sign.b_h|floatformat:2 }}
+                                / {{ chapter_3_data.sign.b_v|floatformat:2 }}
+                                = {{ chapter_4_data.b_over_s|floatformat:3 }}$
+                            </p>
+                            <ol style="padding-left: 20px; text-align: left; font-size: 1.0em;">
+                                {% for note in chapter_4_data.notes_to_display %}
+                                    <li style="margin-bottom: 8px;">{{ note|safe }}</li>
+                                {% endfor %}
+                            </ol>
+
+                            {% if chapter_4_data.opening_reduction %}
+                                <hr style="border: 0; border-top: 1px dotted #ccc; margin: 10px 0;">
+                                <p>因標示物主體有開孔，依規範 Note 1，風力係數可乘以折減係數：</p>
+                                <p class="math-formula" style="font-size: 1.0em; text-align: left; padding-left: 20px;">
+                                    實體率 $\epsilon = 1 - \epsilon_{open} = 1
+                                    - {{ chapter_3_data.sign.opening_ratio|floatformat:2 }} / 100
+                                    = {{ chapter_4_data.opening_reduction.solidity_ratio|floatformat:3 }}$
+                                </p>
+                                <p class="math-formula" style="font-size: 1.0em; text-align: left; padding-left: 20px;">
+                                    折減係數 $ R_{\epsilon}= (1 - (1 - \epsilon)^{1.5}) = (1 - (1
+                                    - {{ chapter_4_data.opening_reduction.solidity_ratio|floatformat:3 }})^{1.5})
+                                    = {{ chapter_4_data.opening_reduction.reduction_factor|floatformat:3 }}$
+                                </p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                {% endif %}
+
+                <div class="report-content-block">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th style="width: 20%;">區域 (Region)</th>
+                            <th style="width: 20%;">陣風反應因子 G/Gf</th>
+                            <th style="width: 20%;">風力係數 C<sub>f</sub></th>
+                            <th style="width: 20%;">作用面積 A<sub>f</sub> (m²)</th>
+                            <th style="width: 20%;">設計風力 F (kgf)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- Case A/B 標頭列 -->
+                        <tr class="header-row">
+                            <td colspan="5">工況 Case A / Case B</td>
+                        </tr>
+                        <!-- Case A/B 數據列 -->
+                        <tr>
+                            <td>all</td>
+                            <td>{{ res.gust_factor|floatformat:3 }}</td>
+                            <td>{{ res.cf_value|floatformat:3 }}</td>
+                            <td>{{ res.area_main|floatformat:2 }}</td>
+                            <td style="font-size: 1.1em; font-weight: bold; color: #e63946;">{{ res.total_force|floatformat:2 }}</td>
+                        </tr>
+                        </tbody>
+
+                        <!-- Case C 內容 (僅在有數據時顯示) -->
+                        {% if res.case_c_forces %}
+                            <tbody>
+                            <!-- Case C 標頭列 -->
+                            <tr class="header-row">
+                                <td colspan="5">工況 Case C</td>
+                            </tr>
+                            <!-- Case C 數據列 -->
+                            {% for row in res.case_c_forces %}
+                                <tr>
+                                    <td>{{ row.region }}</td>
+                                    <td>{{ res.gust_factor|floatformat:3 }}</td>
+                                    <td>{{ row.cf|floatformat:3 }}</td>
+                                    <td>{{ row.area|floatformat:2 }}</td>
+                                    <td>{{ row.force|floatformat:2 }}</td>
+                                </tr>
+                            {% endfor %}
+                            <!-- Case C 總計列 -->
+                            <tr style="background-color: #f1f3f5; font-weight: bold;">
+                                <td colspan="4" style="text-align: right;">Case C 總計</td>
+                                <td style="font-size: 1.1em; color: #e63946;">{{ res.case_c_total_force|floatformat:2 }}</td>
+                            </tr>
+                            </tbody>
+                        {% endif %}
+                    </table>
+                </div>
+            </div> <!-- 結束 4.1 的頁面 -->
+
+            <!-- 包含 4.2 的新頁面 -->
+            {% if res.support_forces and res.support_forces.total_force is not None %}
+                <div class="report-page">
+                    {% with res_support=res.support_forces cf_details=res.support_cf_details %}
+                        <h3 class="sub-chapter-title">4.2 支撐結構風力計算</h3>
+                        <div class="summary-box">
+                            <p style="font-weight: bold;">支撐結構之風力係數 C<sub>f</sub> 參考煙囪、高塔及獨立桿狀物之規範
+                                (ASCE 7-22 Fig. 29.4-1)
+                                進行計算。</p>
+                            <p class="math-formula"
+                               style="font-size: 1.0em; text-align: left; padding-left: 20px; margin-top: 10px;">
+                                $\bar{D}_x = (D_{top,x} + D_{bot,x}) / 2 =
+                                ({{ chapter_3_data.support.dtop_x|floatformat:2 }}
+                                + {{ chapter_3_data.support.dbot_x|floatformat:2 }}) / 2
+                                = {{ cf_details.B_x|floatformat:3 }} \text{ m}$
+                            </p>
+                            <p class="math-formula" style="font-size: 1.0em; text-align: left; padding-left: 20px;">
+                                $\bar{D}_y = (D_{top,y} + D_{bot,y}) / 2 =
+                                ({{ chapter_3_data.support.dtop_y|floatformat:2 }}
+                                + {{ chapter_3_data.support.dbot_y|floatformat:2 }}) / 2
+                                = {{ cf_details.B_y|floatformat:3 }} \text{ m}$
+                            </p>
+                            <p class="math-formula"
+                               style="font-size: 1.0em; text-align: left; padding-left: 20px; margin-top: 10px;">
+                                為採保守計算，取 $D_{conservative} = \min(\bar{D}_x, \bar{D}_y) =
+                                \min({{ cf_details.B_x|floatformat:3 }}, {{ cf_details.B_y|floatformat:3 }})
+                                = {{ cf_details.D_conservative|floatformat:3 }} \text{ m}$
+                            </p>
+                            <p class="math-formula" style="font-size: 1.0em; text-align: left; padding-left: 20px;">
+                                $\Rightarrow h/D_{conservative} = {{ cf_details.h_support|floatformat:2 }}
+                                / {{ cf_details.D_conservative|floatformat:3 }}
+                                = {{ cf_details.h_over_d_conservative|floatformat:3 }}$
+                            </p>
+                            <ul style="padding-left: 20px; margin-top: 5px; font-size: 0.95em;">
+                                <li>X 向風作用 (迎風面為 YZ 平面, 迎風寬度 $\bar{D}_y$): $C_{f,x}$ =
+                                    <strong>{{ cf_details.cf_x|floatformat:3 }}</strong></li>
+                                <li>Y 向風作用 (迎風面為 XZ 平面, 迎風寬度 $\bar{D}_x$): $C_{f,y}$ =
+                                    <strong>{{ cf_details.cf_y|floatformat:3 }}</strong></li>
+                                <li>取保守值進行計算: $C_{f,conservative} = \max(C_{f,x}, C_{f,y}) =$
+                                    <strong>{{ res_support.cf_conservative|floatformat:3 }}</strong></li>
+                            </ul>
+                        </div>
+                        <h4 class="table-specific-title">支撐結構設計風力</h4>
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>總設計風力 F (kgf)</th>
+                                <th>陣風反應因子 G/Gf</th>
+                                <th>保守風力係數 C<sub>f</sub></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td style="font-size: 1.2em; font-weight: bold; color: #e63946;">{{ res_support.total_force|floatformat:2 }}</td>
+                                <td>{{ res_support.main_params.gust_factor|floatformat:3 }}</td>
+                                <td>{{ res_support.cf_conservative|floatformat:3 }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <table class="data-table" style="margin-top: -10px;">
+                            <thead>
+                            <tr>
+                                <th>高程 (m)</th>
+                                <th>有效高度 z̄ (m)</th>
+                                <th>K(z)</th>
+                                <th>K<sub>zt</sub></th>
+                                <th>風速壓 q(z) (kgf/m²)</th>
+                                <th>投影面積 A<sub>f</sub> (m²)</th>
+                                <th>設計風力 (kgf)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in res_support.details %}
+                                <tr>
+                                    <td>{{ row.z_range }}</td>
+                                    <td>{{ row.z_eff|floatformat:2 }}</td>
+                                    <td>{{ row.k_z|floatformat:3 }}</td>
+                                    <td>{{ row.kzt|floatformat:3 }}</td>
+                                    <td>{{ row.q_z|floatformat:2 }}</td>
+                                    <td>{{ row.area|floatformat:2 }}</td>
+                                    <td>{{ row.force|floatformat:2 }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endwith %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+    {% else %} {# 如果不是標示物類型 #}
+        <div class="report-page">
+            <h2 class="chapter-title">第四章 主風力抵抗系統 (MWFRS) 設計風壓</h2>
+            <!-- ... (此處放置煙囪、屋頂、桁架等其他類型的第四章內容) ... -->
+        </div>
+    {% endif %}
+
+
+    <!-- ====================================================== -->
+    <!-- ====       附錄 (新頁面)                           ==== -->
+    <!-- ====================================================== -->
+    {% if appendix_data.x_wind_g_details or appendix_data.y_wind_g_details or appendix_data.main_wind_g_details or appendix_data.support_g_details %}
+        <div class="report-page">
+            {% include "Wind_TW/appendix_g_factor.html" %}
+        </div>
+    {% endif %}
+{% endblock %}

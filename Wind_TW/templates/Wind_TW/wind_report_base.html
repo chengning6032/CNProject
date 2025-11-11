@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block page_title %}風力計算報告書{% endblock %}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap">
+    <link rel="stylesheet" href="{% static 'css/Wind_TW/style_wind_table.css' %}">
+    <script>
+        MathJax = {
+            tex: {
+                tags: 'ams',
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {fontCache: 'global'}
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body class="report-body-page">
+
+<div class="report-actions-floating">
+    <button class="report-action-btn" onclick="window.print()" title="列印">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+        </svg>
+    </button>
+    <button class="report-action-btn" onclick="window.close()" title="關閉">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+    </button>
+</div>
+
+<!-- 第一頁內容 -->
+<div class="report-page" id="first-page-container">
+    <h1 class="report-title">{% block report_main_title %}風力計算報告書{% endblock %}</h1>
+    <div class="report-body">
+        <h2 class="chapter-title">第一章 規範依據</h2>
+        <ol>
+            <li>建築物耐風設計規範及解說，台內營字第1030813291號</li>
+            {% block standards_list %}
+                <li>ASCE/SEI 7-22, "Minimum Design Loads and Associated Criteria for Buildings and Other Structures"
+                </li>
+            {% endblock %}
+        </ol>
+
+        <h2 class="chapter-title">第二章 地點與地形參數</h2>
+        <table class="param-table">
+            <tbody>
+            <tr>
+                <th>工址</th>
+                <td>{{ site_location }}</td>
+            </tr>
+            <tr>
+                <th>基本設計風速 V<sub>10</sub>(C)</th>
+                <td>{{ v10c }} m/s</td>
+            </tr>
+            <tr>
+                <th>地況</th>
+                <td>地況 {{ terrain_category }}</td>
+            </tr>
+            <tr>
+                <th>地況參數</th>
+                <td class="sub-table-wrapper">
+                    <table class="sub-table sub-table-params">
+                        <thead>
+                        <tr>
+                            <th>α</th>
+                            <th>z<sub>g</sub> (m)</th>
+                            <th>z<sub>min</sub> (m)</th>
+                            <th>c</th>
+                            <th>λ&#772; (m)</th>
+                            <th>ε&#772;</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>{{ terrain_params.alpha }}</td>
+                            <td>{{ terrain_params.zg }}</td>
+                            <td>{{ terrain_params.z_min }}</td>
+                            <td>{{ terrain_params.c }}</td>
+                            <td>{{ terrain_params.l_lambda }}</td>
+                            <td>{{ terrain_params.epsilon_bar }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <th>地形參數</th>
+                <td class="sub-table-wrapper">
+                    <table class="sub-table sub-table-topo">
+                        <thead>
+                        <tr>
+                            <th rowspan="2">項目</th>
+                            <th colspan="1">±X風向</th>
+                            <th colspan="1">±Y風向</th>
+                        </tr>
+                        <tr>
+                            <th>{{ topo_x_data.type_display }}</th>
+                            <th>{{ topo_y_data.type_display }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>地形高度 H (m)</td>
+                            <td>{{ topo_x_data.H|floatformat:2 }}</td>
+                            <td>{{ topo_y_data.H|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>地形水平距離 L<sub>h</sub> (m)</td>
+                            <td>{{ topo_x_data.Lh|floatformat:2 }}</td>
+                            <td>{{ topo_y_data.Lh|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>與頂點水平距離 x (m)</td>
+                            <td>{{ topo_x_data.x|floatformat:2 }}</td>
+                            <td>{{ topo_y_data.x|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>H / L<sub>h</sub></td>
+                            <td>{{ topo_x_data.H_Lh }}</td>
+                            <td>{{ topo_y_data.H_Lh }}</td>
+                        </tr>
+                        <tr>
+                            <td>x / L<sub>h</sub> (+風向 / -風向)</td>
+                            <td>{{ topo_x_data.x_Lh_pair }}</td>
+                            <td>{{ topo_y_data.x_Lh_pair }}</td>
+                        </tr>
+                        <tr>
+                            <td>z / L<sub>h</sub> (最大值，z=h)</td>
+                            <td>{{ topo_x_data.z_Lh_max }}</td>
+                            <td>{{ topo_y_data.z_Lh_max }}</td>
+                        </tr>
+                        <tr>
+                            <td>K<sub>1</sub></td>
+                            <td>{{ topo_x_data.K1|floatformat:3 }}</td>
+                            <td>{{ topo_y_data.K1|floatformat:3 }}</td>
+                        </tr>
+                        <tr>
+                            <td>K<sub>2</sub> (+風向 / -風向)</td>
+                            <td>{{ topo_x_data.K2_pair }}</td>
+                            <td>{{ topo_y_data.K2_pair }}</td>
+                        </tr>
+                        <tr>
+                            <td>K<sub>3</sub> (最大值)</td>
+                            <td>{{ topo_y_data.K3_max|floatformat:3 }}</td>
+                            <td>{{ topo_y_data.K3_max|floatformat:3 }}</td>
+                        </tr>
+                        <tr>
+                            <td>K<sub>zt</sub> (最大值) (+風向 / -風向)</td>
+                            <td><strong>{{ topo_x_data.Kzt_pair }}</strong></td>
+                            <td><strong>{{ topo_y_data.Kzt_pair }}</strong></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        {% if topo_images %}
+            <div class="topo-image-container">
+                {% for image in topo_images %}
+                    <div class="topo-image-item">
+                        <img src="{% static image.path %}" alt="{{ image.caption }}">
+                        <p class="topo-image-caption">{{ image.caption }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 後續頁面內容 -->
+{% block report_content %}
+    {# 子模板將會把內容填充到這裡 (從第三章開始)，並自行用 <div class="report-page"> 包裹 #}
+{% endblock %}
+
+</body>
+</html>

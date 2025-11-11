@@ -1,0 +1,65 @@
+/* static/css/layouts/_grid.css */
+
+/* 網格布局 */
+/*.main-content {*/
+/*    display: flex; !* 使用 flexbox 實現主區域布局 *!*/
+/*    height: calc(100vh - var(--navbar-height)); !* 減去導航欄高度 *!*/
+/*    margin-top: var(--navbar-height); !* 騰出導航欄空間 *!*/
+/*    overflow: hidden; !* 防止整個區域滾動，讓內部區域滾動 *!*/
+/*}*/
+.main-content {
+    display: grid;
+    grid-template-columns:
+        [sidebar-start] var(--sidebar-width)
+        [main-start] var(--main-width)
+        [sidebar-end] var(--right-sidebar-width);
+    grid-template-rows: 1fr;
+    height: calc(100vh - var(--navbar-height));
+}
+
+.left-sidebar {
+    grid-column: sidebar-start;
+}
+
+.main-area {
+    grid-column: main-start;
+}
+
+.right-sidebar {
+    grid-column: sidebar-end;
+}
+
+
+@media (max-width: 992px) {
+    .main-content {
+        grid-template-columns: 25% 75%;
+        grid-template-areas: "sidebar main"
+                             "sidebar sidebar-right";
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "main"
+            "sidebar"
+            "sidebar-right";
+    }
+
+    .main-area {
+        width: 100%;
+        height: auto; /* 手機上高度自動 */
+        overflow-y: visible; /* 在小螢幕上允許主內容區滾動 */
+    }
+
+    /* 調整側邊欄在手機上的顯示 */
+    .left-sidebar, .right-sidebar {
+        width: 100%; /* 手機上佔滿寬度 */
+        height: auto; /* 高度自動 */
+        border-right: none;
+        border-left: none;
+        border-bottom: 1px solid var(--border-color); /* 在底部添加邊框 */
+        box-shadow: none; /* 移除陰影 */
+    }
+}

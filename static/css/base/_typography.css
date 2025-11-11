@@ -1,0 +1,84 @@
+/* static/css/base/_typography.css */
+
+/* 字體排版 */
+body {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: var(--space-md);
+    color: var(--text-primary); /* 確保標題顏色 */
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+h4 {
+    font-size: 1.5rem;
+}
+
+h5 {
+    font-size: 1.25rem;
+}
+
+h6 {
+    font-size: 1rem;
+}
+
+p {
+    margin-bottom: var(--space-md);
+}
+
+a {
+    color: var(--color-secondary); /* 使用你的次要色 */
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--color-primary); /* 使用你的主色 */
+}
+
+small, .text-small {
+    font-size: var(--font-size-sm);
+}
+
+.text-muted {
+    color: var(--text-secondary);
+}
+
+/* 保留必要的頁面專用樣式 */
+sub, sup {
+    font-size: 0.75em;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+sup {
+    top: -0.5em;
+}
+
+.design-standard {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-md);
+    margin: var(--space-lg) 0;
+    background: rgba(231, 76, 60, 0.05); /* 使用 accent 顏色透明化 */
+}

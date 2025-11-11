@@ -1,0 +1,66 @@
+<!-- 臺北盆地專用報告書內容 -->
+<div class="section">
+    <h3>2. 譜加速度參數</h3>
+    <div class="content-block">
+        <h4>2.1 震區水平譜加速度係數 & 2.2 工址放大係數</h4>
+        <p class="reasoning">依據規範，臺北盆地區域採用專屬設計譜，不適用一般區域之震區係數 ($S_S, S_1$) 與工址放大係數
+            ($F_a, F_v$) 計算。</p>
+    </div>
+
+    <!-- 【核心新增】補上 2.3, 2.4 節 -->
+    <h4>2.3 工址譜加速度係數 (S<sub>DS</sub>, S<sub>D1</sub>) <span class="chapter-ref">(2.7節)</span></h4>
+    <div class="content-block">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>地震情境</th>
+                <th>$S_{DS}$ | $S_{MS}$</th>
+                <th>$S_{D1}$ | $S_{M1}$</th>
+                <th>$T_{0D}$ | $T_{0M}$ (sec)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>設計地震</td>
+                <td>{{ results.SDS|floatformat:4 }}</td>
+                <td>{% if results.SD1 is not None %}{{ results.SD1|floatformat:4 }}{% else %}-{% endif %}</td>
+                <td>{{ results.T0D|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>最大考量地震</td>
+                <td>{{ results.SMS|floatformat:4 }}</td>
+                <td>{% if results.SM1 is not None %}{{ results.SM1|floatformat:4 }}{% else %}-{% endif %}</td>
+                <td>{{ results.T0M|floatformat:3 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h4>2.4 設計譜加速度 (S<sub>aD</sub>, S<sub>aM</sub>) <span class="chapter-ref">(2.6節)</span></h4>
+    <div class="content-block">
+        <table class="table" style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>方向</th>
+                <th>設計地震 $S_{aD}$</th>
+                <th>中小度地震 $S_{aD}^*$</th>
+                <th>最大考量地震 $S_{aM}$</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>X ($T_x={{ results.Tx|floatformat:3 }}s$)</td>
+                <td>{{ results.SaDX|floatformat:4 }}</td>
+                <td>{{ results.SaDX_no_fault|floatformat:4 }}</td>
+                <td>{{ results.SaMX|floatformat:4 }}</td>
+            </tr>
+            <tr>
+                <td>Y ($T_y={{ results.Ty|floatformat:3 }}s$)</td>
+                <td>{{ results.SaDY|floatformat:4 }}</td>
+                <td>{{ results.SaDY_no_fault|floatformat:4 }}</td>
+                <td>{{ results.SaMY|floatformat:4 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

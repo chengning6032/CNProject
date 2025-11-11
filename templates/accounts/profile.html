@@ -1,0 +1,77 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{% static 'css/accounts/profile.css' %}">
+{% endblock %}
+
+{% block title %}會員資訊 | OLI{% endblock %}
+
+{% block content %}
+    <div class="page-container">
+        <nav aria-label="breadcrumb" class="breadcrumb-container">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'homepage' %}">OLI 首頁</a></li>
+                <li class="breadcrumb-item active" aria-current="page">會員資訊</li>
+            </ol>
+        </nav>
+
+        <h2>{{ user.username }} 的會員資訊</h2>
+
+        <div class="profile-info-card">
+            <!-- ... 您現有的 info-item 內容不變 ... -->
+            <div class="info-item">
+                <span class="info-label">使用者名稱:</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">電子郵件:</span>
+                <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">會員等級：</span>
+                <span class="info-value">
+                    {% if user.is_superuser %}
+                        <span class="membership-admin">管理員</span>
+                    {% elif profile.purchased_modules %}
+                        <span class="membership-paid">訂閱會員</span>
+                    {% else %}
+                        <span class="membership-general">一般會員</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">已購買模組：</span>
+                <ul class="info-value purchased-modules-list">
+                    {% for module_id, module_data in processed_modules.items %}
+                        <li class="purchased-module-item">
+                            <span class="module-name">{{ module_data.name }}</span>
+                            <span class="module-dates">
+                                {{ module_data.purchase_date_str }} ~ {{ module_data.expiration_date_str }}
+                            </span>
+                        </li>
+                    {% empty %}
+                        <li class="no-modules">您尚未購買任何模組。</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- 【核心修改】操作按鈕區塊 -->
+        <div class="profile-actions">
+            <a href="{% url 'products:list' %}" class="action-link primary">前往購買/續訂模組</a>
+
+            <!-- 【核心新增】登出按鈕表單 -->
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="action-link danger">登出帳號</button>
+            </form>
+
+            <a href="{% url 'homepage' %}" class="action-link">返回 OLi 首頁</a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- 此區塊為空 -->
+{% endblock %}

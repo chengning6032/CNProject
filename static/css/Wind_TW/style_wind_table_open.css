@@ -1,0 +1,458 @@
+/* static/css/Wind_TW/style_wind_table.css (最終修正版) */
+
+@page {
+    size: A4 portrait;
+    margin: 2cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: 'Noto Sans JP', sans-serif, 'Microsoft JhengHei', sans-serif;
+        font-size: 10px;
+        color: #888;
+        margin-bottom: 1cm;
+    }
+}
+
+body.report-body-page {
+    font-family: 'Noto Sans JP', sans-serif, 'Microsoft JhengHei', sans-serif;
+    color: #333;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    counter-reset: page 0;
+}
+
+.report-page {
+    margin: 20px auto;
+    width: 21cm;
+    min-height: 29.7cm;
+    height: auto;
+    background-color: white;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    padding: 2cm;
+    box-sizing: border-box;
+    counter-increment: page;
+}
+
+.report-body {
+    padding: 0;
+}
+
+.report-title {
+    color: #1d3557;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+    padding-top: 10px;
+}
+
+.chapter-title {
+    font-size: 16px;
+    color: #457b9d;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.sub-chapter-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #343a40;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.report-body > .chapter-title:first-child {
+    margin-top: 0;
+}
+
+ol {
+    padding-left: 20px;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+
+
+.sub-table-wrapper {
+    padding: 0;
+}
+
+.sub-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1em;
+    table-layout: fixed;
+}
+
+.sub-table th, .sub-table td {
+    border: 1px solid #e9ecef;
+    padding: 6px 10px;
+    text-align: center;
+}
+
+.sub-table thead th {
+    background-color: #f1f3f5;
+    font-weight: normal;
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.sub-table-topo thead tr:first-child th:first-child,
+.sub-table-topo tbody tr td:first-child {
+    width: 35%;
+    text-align: left;
+}
+
+.data-table {
+    font-size: 11px;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.data-table thead {
+    background-color: #e9ecef;
+    color: #495057;
+    font-weight: 700;
+}
+
+.data-table th, .data-table td {
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.data-table .zone-header {
+    font-size: 12px;
+}
+
+.data-table .zone-header span {
+    font-weight: normal;
+    color: #6c757d;
+    margin-left: 4px;
+}
+
+.data-table .sub-header {
+    background-color: #f8f9fa;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+.summary-box {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.summary-box > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.summary-box span:nth-child(odd) {
+    min-width: 200px;
+    display: inline-block;
+}
+
+.summary-box b {
+    margin-top: 5px;
+}
+
+.table-specific-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #495057;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px dotted #adb5bd;
+}
+
+.table-specific-title::before {
+    content: '▶';
+    margin-right: 8px;
+    color: #457b9d;
+    font-size: 0.9em;
+}
+
+.topo-image-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.topo-image-item {
+    flex: 1;
+    max-width: 50%;
+    text-align: center;
+}
+
+.topo-image-item img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.topo-image-caption {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.report-actions-floating {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(5px);
+}
+
+.report-action-btn {
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    color: #495057;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.report-action-btn:hover {
+    color: #fff;
+    background-color: #457b9d;
+    border-color: #457b9d;
+}
+
+.report-action-btn svg {
+    width: 100%;
+    height: 100%;
+}
+
+.building-image-container {
+    margin-top: 25px;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.building-image-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.report-schematic-image {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    page-break-inside: avoid;
+}
+
+.image-caption-small {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 5px;
+    font-weight: normal;
+}
+
+.report-schematic-image img {
+    max-width: 100%;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* 專為第六章 C&C 示意圖設計的容器 */
+.cc-schematic-image {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+    page-break-inside: avoid;
+}
+
+/* 讓 C&C 示意圖縮小 */
+.cc-schematic-image img {
+    max-width: 50%; /* 核心修改：將最大寬度設為 25% */
+    height: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+
+
+
+.calculation-detail-table th {
+    font-weight: normal;
+    width: 35%; /* 讓參數名稱欄位寬一點 */
+}
+
+.calculation-detail-table td {
+    text-align: right; /* 讓數值靠右對齊 */
+    font-family: monospace; /* 使用等寬字體讓數字更好對齊 */
+    font-size: 1.1em;
+}
+
+.calculation-detail-table .final-result {
+    font-weight: bold;
+    color: #e63946; /* 使用醒目的紅色 */
+    background-color: #f8f9fa;
+}
+
+.summary-box p {
+    margin-bottom: 10px;
+}
+
+.calculation-detail-table th {
+    font-weight: normal;
+    width: 35%; /* 讓參數名稱欄位寬一點 */
+}
+
+.calculation-detail-table td {
+    text-align: right; /* 讓數值靠右對齊 */
+    font-family: monospace; /* 使用等寬字體讓數字更好對齊 */
+    font-size: 1.1em;
+}
+
+.calculation-detail-table .final-result {
+    font-weight: bold;
+    color: #e63946; /* 使用醒目的紅色 */
+    background-color: #f8f9fa;
+}
+
+.summary-box p {
+    margin-bottom: 10px;
+}
+
+.math-formula {
+    text-align: center;
+    padding: 10px 0;
+    margin: 5px 0;
+}
+
+
+@media print {
+    body.report-body-page {
+        background-color: white;
+        padding: 0;
+        margin: 0;
+    }
+
+    .report-page {
+        width: auto;
+        height: auto;
+        min-height: 0;
+        margin: 0;
+        box-shadow: none;
+        padding: 0;
+        page-break-after: always;
+    }
+
+    .report-page:last-child {
+        page-break-after: auto;
+    }
+
+    #first-page-container .report-title {
+        text-align: left;
+        font-size: 18pt;
+        color: #1d3557;
+        margin: 0 0 15px 0;
+        padding: 0;
+        border-bottom: none;
+    }
+
+    #first-page-container .chapter-title {
+        margin-top: 12px;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+    }
+
+    #first-page-container .chapter-title:not(:first-of-type) {
+        margin-top: 12px;
+    }
+
+    #first-page-container ol {
+        line-height: 2;
+        margin-bottom: 0;
+    }
+
+
+
+    #first-page-container .sub-table th,
+    #first-page-container .sub-table td {
+        padding: 2px 4px;
+    }
+
+    #first-page-container .topo-image-container {
+        margin-top: 10px;
+        page-break-inside: avoid;
+    }
+
+    .print-page-break {
+        page-break-before: always !important;
+    }
+
+    .data-table {
+        page-break-inside: auto;
+    }
+
+    .sub-chapter-title, .summary-box {
+        page-break-inside: avoid !important;
+    }
+
+    .data-table thead {
+        display: table-header-group;
+    }
+
+    /* ** 核心修改: 新增一個 class 來包裹標題和摘要，並使其不可分割 ** */
+    .report-block-header {
+        /*page-break-inside: avoid;*/
+    }
+
+    .report-content-block {
+        page-break-inside: avoid !important;
+    }
+
+    .report-actions-floating {
+        display: none !important;
+    }
+
+    .math-formula {
+        font-size: 85%;
+    }
+
+    .math-formula mjx-container[jax="SVG"] * {
+        font-synthesis: none !important;
+        font-weight: normal !important;
+    }
+}
+/* 確保 param-table 在合併後依然有固定佈局 */

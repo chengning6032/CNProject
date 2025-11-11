@@ -1,0 +1,189 @@
+/* static/css/pages/_design-system.css */
+
+/* 設計系統頁面專用樣式 */
+
+/*
+ * .content-section 說明：
+ * 這個類別的樣式與 _cards.css 中的 .card 非常相似。
+ * 建議策略：
+ * 1. 如果你在這個頁面之外不需要 .content-section，可以將其樣式整合進 .card，
+ * 並在 HTML 中直接使用 .card。
+ * 2. 如果你需要一個與 .card 略有不同的通用內容區塊，可以讓 .content-section
+ * 繼承 .card 的基礎樣式，然後覆寫或添加獨特的屬性。
+ * 目前將其樣式與 .card 保持一致，並直接使用 .card 相關變數。
+ */
+.content-section {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg); /* 與 .card 保持一致 */
+    margin-bottom: var(--space-xxl); /* 與 .card 保持一致 */
+}
+
+/*
+ * .content-section h3 說明：
+ * 這個樣式與 _sidebar.css 中的 .sidebar h3 非常相似。
+ * 將其統一為 .card h3 的樣式，如果這個 h3 用於 .card 內部。
+ * 如果它確實需要一個獨立的、不同於 .card h3 和 .sidebar h3 的樣式，
+ * 可以考慮給它一個更具體的 class。
+ * 目前將其刪除，假設應使用 .card h3 或 .sidebar h3 樣式。
+ */
+/* .content-section h3 { ... } */
+
+/* 修正 .execution-button 為 Ghost 風格 (應在 _buttons.css 中定義，這裡只做覆寫或補充) */
+/* 這裡的樣式應該在 _buttons.css 中定義，如果這裡有，表示針對 design-system 頁面的特殊覆寫 */
+/* 如果沒有特殊需求，請移除這裡的 .execution-button 樣式，統一由 _buttons.css 管理 */
+.execution-button {
+    width: 100%;
+    /* 使用你已經定義在 _buttons.css 中的 .execution-button 樣式 */
+    /* 這裡只留下針對 design-system 頁面特有的樣式覆蓋，如果沒有則刪除 */
+    /* background: transparent; */
+    /* color: var(--color-primary); */
+    /* border: 1px solid var(--color-primary); */
+    /* box-shadow: none; */
+}
+
+/* 提示框樣式 (與 _utilities.css 中的 .tooltip 統一，這裡只做樣式演示) */
+.hint-box {
+    background-color: var(--color-info); /* 使用信息藍色 */
+    color: var(--color-white);
+    padding: var(--space-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--space-lg);
+    font-size: var(--font-size-base);
+    text-align: center;
+}
+
+/* 顏色調色板 */
+/*.color-palette {*/
+/*    display: flex;*/
+/*    flex-wrap: wrap;*/
+/*    gap: var(--space-md); !* 調整間距 *!*/
+/*    margin-bottom: var(--space-xl);*/
+/*}*/
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-md);
+}
+
+/*.color-item {*/
+/*    flex: 1 1 calc(33.333% - var(--space-md) * 2 / 3); !* 每個顏色項目佔 1/3 寬度，考慮間距 *!*/
+/*    max-width: calc(33.333% - var(--space-md) * 2 / 3);*/
+/*    border-radius: var(--border-radius);*/
+/*    overflow: hidden;*/
+/*    box-shadow: var(--shadow-sm);*/
+/*    text-align: center;*/
+/*}*/
+.color-item {
+    flex: none; /* 取消 flex 佈局 */
+    max-width: 100%;
+}
+
+.color-box {
+    height: 80px; /* 固定高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--text-light); /* 通常是白色文字 */
+}
+
+.color-info {
+    padding: var(--space-sm);
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+/* 針對特定顏色變數應用背景色，這需要在 HTML 中使用內聯樣式或 JavaScript 動態生成 */
+/* 例如: <div class="color-box" style="background-color: var(--color-primary);">Primary</div> */
+
+/* 字體排版示範 */
+.typography-section h1,
+.typography-section h2,
+.typography-section h3,
+.typography-section h4,
+.typography-section h5,
+.typography-section h6,
+.typography-section p {
+    margin-top: 0;
+    margin-bottom: var(--space-sm);
+}
+
+/* 按鈕示例容器 */
+.button-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.button-examples .btn {
+    margin-bottom: 0; /* 移除多餘的 margin-bottom */
+}
+
+/* 表單元素示例容器 */
+.form-examples {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg); /* 增加表單組件間距 */
+    margin-bottom: var(--space-xl);
+}
+
+/* 提示訊息和載入動畫示例容器 */
+.utility-examples {
+    padding: var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    align-items: flex-start; /* 讓內容靠左對齊 */
+}
+
+/* 為 .loader 提供一個可見的容器 */
+.loader-example-container {
+    width: 100px; /* 或你希望的任何大小 */
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-page);
+}
+
+/* 為 Notification 示例提供一個佔位 */
+.notification-placeholder {
+    padding: var(--space-md);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .color-item {
+        flex: 1 1 calc(50% - var(--space-md) / 2); /* 兩個項目一行 */
+        max-width: calc(50% - var(--space-md) / 2);
+    }
+}
+
+@media (max-width: 480px) {
+    .color-item {
+        flex: 1 1 100%; /* 一個項目一行 */
+        max-width: 100%;
+    }
+
+    .button-examples {
+        flex-direction: column;
+        align-items: stretch; /* 讓按鈕佔滿寬度 */
+    }
+
+    .button-examples .btn {
+        width: 100%; /* 小螢幕按鈕佔滿寬度 */
+    }
+}

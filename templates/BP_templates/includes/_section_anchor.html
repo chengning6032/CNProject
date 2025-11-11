@@ -1,0 +1,68 @@
+<div class="content-section card">
+    <h3>4. 錨栓</h3>
+    <form method="post" id="anchor-form">
+        {% csrf_token %}
+
+        <!-- 錨栓設置方式 -->
+        <div class="form-group">
+            <label style="margin-bottom: 0.5rem;">設置方式：</label>
+            <div class="flex flex-wrap gap-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="anchor_type" id="anchor_embedded"
+                           value="embedded" checked>
+                    <label class="form-check-label" for="anchor_embedded">預埋</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="anchor_type" id="anchor_postset"
+                           value="postset">
+                    <label class="form-check-label" for="anchor_postset">後置</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 錨栓數量 -->
+        <div class="form-group">
+            <label for="anchor_x">X方向數量：</label>
+            <input type="number" class="form-control" id="anchor_x" name="anchor_x" min="1" step="1"
+                   value="4" required>
+        </div>
+        <div class="form-group">
+            <label for="anchor_y">Y方向數量：</label>
+            <input type="number" class="form-control" id="anchor_y" name="anchor_y" min="1" step="1"
+                   value="4" required>
+        </div>
+
+        <!-- 錨栓型號 -->
+        <div class="form-group">
+            <label for="anchor_diameter">型號直徑：</label>
+            <select class="form-control" id="anchor_diameter" name="anchor_diameter" required>
+                <option value="0.5">1/2"</option>
+                <option value="0.625">5/8"</option>
+                <option value="0.75">3/4"</option>
+            </select>
+        </div>
+
+        <!-- 錨栓材料 -->
+        <div class="form-group">
+            <label for="anchor_material">材料：</label>
+            <select class="form-control" id="anchor_material" name="anchor_material" required>
+                <option value="F1884" selected>F1884</option>
+                <option value="A36">A36</option>
+                <option value="A572">A572</option>
+            </select>
+        </div>
+
+        <!-- 特殊考量 -->
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="cracked_concrete"
+                       name="cracked_concrete">
+                <label class="form-check-label" for="cracked_concrete">考慮為開裂混凝土</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="brittle_steel" name="brittle_steel">
+                <label class="form-check-label" for="brittle_steel">考慮為脆性鋼材</label>
+            </div>
+        </div>
+    </form>
+</div>

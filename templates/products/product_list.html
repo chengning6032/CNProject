@@ -1,0 +1,96 @@
+{% extends "base_auth.html" %}
+{% load static %}
+{% block extra_styles %}
+    <link rel="stylesheet" href="{% static 'css/accounts/product.css' %}">
+{% endblock %}
+{% block title %}商品列表 | OLI{% endblock %}
+
+{% block content %}
+    {% csrf_token %}
+    <div class="shop-container">
+        <!-- 左欄：商品列表 -->
+        <div class="product-list-wrapper">
+
+            <!-- [核心新增] 麵包屑導航 -->
+            <nav aria-label="breadcrumb" class="breadcrumb-container">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'homepage' %}">OLI 首頁</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'profile' %}">會員資訊</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">商品列表</li>
+                </ol>
+            </nav>
+
+            <h2>OLI 工程設計模組</h2>
+            <p>選擇您需要的模組，並選擇訂閱期間，以提升您的工作效率。</p>
+
+
+            <div class="product-grid">
+                {% for product in products %}
+                    <div class="product-card" data-product-id="{{ product.product_id }}">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-desc">{{ product.description }}</p>
+
+                        <div class="subscription-options">
+                            <label>
+                                <input type="radio" name="plan-{{ product.product_id }}" value="monthly"
+                                       data-price="NT${{ product.prices.monthly|floatformat:0 }}" checked> 一個月
+                            </label>
+                            <label>
+                                <!-- 【核心修正】將 value 和 data-price 中的鍵名統一為 semi_annually -->
+                                <input type="radio" name="plan-{{ product.product_id }}" value="semiannually"
+                                       data-price="NT${{ product.prices.semiannually|floatformat:0 }}"> 半年
+                            </label>
+                            <label>
+                                <input type="radio" name="plan-{{ product.product_id }}" value="annually"
+                                       data-price="NT${{ product.prices.annually|floatformat:0 }}"> 一年
+                            </label>
+                        </div>
+
+                        <div class="product-footer">
+                            <span class="product-price">NT${{ product.prices.monthly|floatformat:0 }}</span>
+                            <button class="add-to-cart-btn">加入購物車</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 右欄：購物清單 -->
+        <div class="cart-summary-wrapper">
+            <div class="cart-summary">
+                <div class="cart-header">
+                    <h3>購物清單</h3>
+                </div>
+                <div class="cart-items" id="cart-items">
+                    <p class="cart-empty-msg">您的購物車是空的。</p>
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-calculation">
+                        <div class="cart-line-item">
+                            <span>小計：</span>
+                            <span id="cart-subtotal-price">NT$0</span>
+                        </div>
+                        <div class="cart-line-item">
+                            <span>營業稅 (5%)：</span>
+                            <span id="cart-tax-price">NT$0</span>
+                        </div>
+                    </div>
+                    <div class="cart-total">
+                        <span>總計：</span>
+                        <span id="cart-total-price">NT$0</span>
+                    </div>
+                    <button class="checkout-btn"
+                            data-profile-url="{% url 'profile' %}"
+                            data-checkout-url="{% url 'products:simulate_checkout' %}">
+                        前往結帳
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ purchased_module_ids|json_script:"purchased-modules-data" }}
+    <script src="{% static 'js/accounts/product_cart.js' %}"></script>
+{% endblock %}

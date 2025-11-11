@@ -1,0 +1,384 @@
+{% extends "EqStaticAnalysis_TW/eqTW_report_base.html" %}
+{% load static %}
+{% block page_title %}地震力分析計算報告書{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /*
+          【核心修正】這裡只放報告書內容的樣式
+        */
+        :root {
+            --text-color: #333; --border-color: #ccc;
+            --header-bg: #f2f2f2; --section-title-color: #005a9e;
+        }
+
+        .a4-page {
+            width: 21cm; min-height: 29.7cm; height: auto;
+            padding: 2.5cm 2cm 2cm 2cm;
+            margin: 0 auto 20px auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+            box-sizing: border-box; position: relative;
+        }
+        .report-header { text-align: center; margin-bottom: 1.5cm; }
+        .report-header h1 { font-weight: 700; font-size: 18pt; margin-bottom: 8px; }
+        .report-header .lead { font-size: 9pt; color: #666; }
+        .section { margin-bottom: 1.2cm; }
+        .section h3 {
+            color: var(--section-title-color); border-bottom: 2px solid var(--section-title-color);
+            padding-bottom: 6px; margin-bottom: 16px; font-size: 15pt; font-weight: 700;
+        }
+        .section h4 {
+            font-size: 12pt; font-weight: 500; color: #34495e; margin-top: 20px;
+            margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;
+        }
+        .chapter-ref { font-size: 9pt; color: #888; font-weight: 400; margin-left: 8px; }
+        .table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 0.5rem; }
+        .table th, .table td { border: 1px solid var(--border-color); padding: 6px 10px; text-align: center; vertical-align: middle; }
+        .table thead th { background-color: var(--header-bg); font-weight: 500; }
+        .formula-group { border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; page-break-inside: avoid; }
+        .formula-step { display: grid; grid-template-columns: 210px 1fr; align-items: center; margin: 8px 0; }
+        .formula-step .label { font-weight: 500; }
+        .formula-step .calculation { font-size: 1.0em; justify-self: start; }
+        .reasoning { font-size: 9pt; color: #555; margin-left: 1em; padding-left: 1em; border-left: 2px solid #eee; }
+        mjx-container { font-size: 1.0em !important; }
+        mjx-container .mjx-numerator, mjx-container .mjx-denominator, mjx-container .mjx-char, mjx-container .mjx-base, mjx-container .mjx-root, mjx-container .mjx-op { font-size: 100% !important; }
+
+        @media print {
+            .a4-page { page-break-after: always; }
+            .a4-page:last-child { page-break-after: auto; }
+            .section, .table, tr, .formula-group { page-break-inside: avoid !important; }
+        }
+
+        @page { size: A4; margin: 2.5cm 2cm 2cm 2cm; }
+    </style>
+{% endblock %}
+
+
+{% block report_content %}
+
+    <!-- ================== 第 1 頁 ================== -->
+    <div class="a4-page">
+        <div class="report-header">
+            <h1>建築物耐震設計靜力分析計算報告書</h1>
+            <p class="lead">依據「建築物耐震設計規範及解說 (民國113年3月1日)」</p>
+        </div>
+
+        {% if results %}
+            <!-- 1. 工址參數 -->
+            <div class="section">
+                <h3>1. 工址參數</h3>
+                <div class="content-block">
+                    <table class="table">
+                        <tbody>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">分析地點</td>
+                            <td>{{ results.county }} {{ results.township }} {{ results.village }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">地震分區</td>
+                            <td>{{ results.zone_name }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. 譜加速度參數 (動態載入) -->
+            {% if report_type == 'taipei' %}
+                {% include 'EqStaticAnalysis_TW/_report_taipei.html' %}
+            {% elif report_type == 'near_fault' %}
+                {% include 'EqStaticAnalysis_TW/_report_near_fault.html' %}
+            {% else %}
+                {% include 'EqStaticAnalysis_TW/_report_general.html' %}
+            {% endif %}
+        {% else %}
+            <div style="text-align:center; ..."><p>無計算資料可供顯示。</p></div>
+        {% endif %}
+    </div>
+
+    <!-- ================== 第 2 頁 ================== -->
+    <div class="a4-page">
+        {% if results %}
+            <!-- 3. 建築物參數 -->
+            <div class="section">
+                <h3>3. 建築物參數</h3>
+                <div class="content-block">
+                    <table class="table">
+                        <tbody>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">建築物高度 ($h_n$)</td>
+                            <td>{{ results.hn|floatformat:2 }} 公尺</td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">結構系統</td>
+                            <td>{% if results.structure_type == 2.0 %}
+                                鋼筋混凝土造{% elif results.structure_type == 1.0 %}
+                                鋼構造{% else %}其他{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">用途係數 (I)</td>
+                            <td>{{ results.I|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">設計方法</td>
+                            <td>{% if results.structure_type == 1.0 %}{% if results.alpha_y_choice == "asd" %}鋼構造 -
+                                容許應力設計法 (ASD){% else %}鋼構造 - 極限強度設計法
+                                (LRFD){% endif %}{% elif results.structure_type == 2.0 %}
+                                {% if results.alpha_y_choice == "general" %}鋼筋混凝土造 - 極限強度設計法 (一般情況)
+                                {% else %}
+                                    鋼筋混凝土造 - 極限強度設計法 (地震力載重因子=1.0){% endif %}{% else %}其他
+                                (使用者自行輸入){% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td style="width:30%; font-weight:500; background-color: #f8f9fa;">起始降伏力放大倍數
+                                ($\alpha_y$)
+                            </td>
+                            <td>{{ results.alpha_y|floatformat:2 }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>3.1 韌性容量與折減係數 <span class="chapter-ref">(2.9節)</span></h4>
+                <div class="content-block">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>方向</th>
+                            <th>韌性容量 ($R$)</th>
+                            <th>容許韌性容量 ($R_a$)</th>
+                            <th>設計地震折減係數 ($F_{uD}$)</th>
+                            <th>最大考量地震折減係數 ($F_{uM}$)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>X 方向</td>
+                            <td>{{ results.Rx|floatformat:2 }}</td>
+                            <td>{{ results.RaX|floatformat:3 }}</td>
+                            <td>{{ results.FuDX|floatformat:3 }}</td>
+                            <td>{{ results.FuMX|floatformat:3 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Y 方向</td>
+                            <td>{{ results.Ry|floatformat:2 }}</td>
+                            <td>{{ results.RaY|floatformat:3 }}</td>
+                            <td>{{ results.FuDY|floatformat:3 }}</td>
+                            <td>{{ results.FuMY|floatformat:3 }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ================== 第 3 頁 ================== -->
+    <div class="a4-page">
+        {% if results %}
+            <!-- 4. 總橫力係數 -->
+            <div class="section">
+                <h3>4. 總橫力係數</h3>
+                <h4>4.1 最小設計總橫力係數 C <span class="chapter-ref">(2.2節)</span></h4>
+                <div class="content-block">
+                    <div class="formula-group">
+                        <h5>X 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值:</span><span class="calculation">$\displaystyle{ \dfrac{S_{aD,X}}{F_{uD,X}} = \dfrac{ {{ results.SaDX|floatformat:4 }} }{ {{ results.FuDX|floatformat:4 }} } = {{ results.ratio_SaDX_FuDX|floatformat:4 }} }$</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-2)修正:</span><span class="calculation">$\displaystyle{\left( \dfrac{S_{aD,X}}{F_{uD,X}} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_X|floatformat:4 }} } }$</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaDX_FuDX %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤
+                                0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} <
+                                0.8，故修正值
+                                = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaD_over_FuD_m_X|floatformat:4 }}。
+                            {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }}
+                                =
+                                {{ results.SaD_over_FuD_m_X|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>X</sub>:</span><span
+                                class="calculation">$\displaystyle{ C_X = \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aD,X}}{F_{uD,X}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_X|floatformat:4 }} = \mathbf{ {{ results.C_VX|floatformat:4 }} } }$</span>
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>Y 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值:</span><span class="calculation">$\displaystyle{\displaystyle{ \dfrac{S_{aD,Y}}{F_{uD,Y}} = \dfrac{ {{ results.SaDY|floatformat:4 }} }{ {{ results.FuDY|floatformat:4 }} } = {{ results.ratio_SaDY_FuDY|floatformat:4 }} }}$</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-2)修正:</span><span class="calculation">$\displaystyle{ \left( \dfrac{S_{aD,Y}}{F_{uD,Y}} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_Y|floatformat:4 }} } }$</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaDY_FuDY %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤
+                                0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} <
+                                0.8，故修正值
+                                = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaD_over_FuD_m_Y|floatformat:4 }}。
+                            {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }}
+                                =
+                                {{ results.SaD_over_FuD_m_Y|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>Y</sub>:</span><span
+                                class="calculation">$\displaystyle{ C_Y = \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aD,Y}}{F_{uD,Y}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_Y|floatformat:4 }} = \mathbf{ {{ results.C_VY|floatformat:4 }} } }$</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>4.2 中小度地震力係數 C* <span class="chapter-ref">(2.10.1節)</span></h4>
+                <div class="content-block">
+                    <div class="formula-group">
+                        <h5>X 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值 (不考慮近斷層):</span><span
+                                class="calculation">$\displaystyle{ \dfrac{S_{aD,X}^*}{F_{uD,X}^*} = \dfrac{ {{ results.SaDX_no_fault|floatformat:4 }} }{ {{ results.FuDX_no_fault|floatformat:4 }} } = {{ results.ratio_SaDX_no_fault_FuDX_no_fault|floatformat:4 }} }$</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-2)修正:</span><span class="calculation">$\displaystyle{ \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} } }$</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaDX_no_fault_FuDX_no_fault %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤ 0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值
+                                {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }}。{% else %}因比值
+                                {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                                {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>X</sub>*:</span>
+                            {% if results.is_taipei_basin %}
+                                <span class="calculation">$\displaystyle{ C_X^* = \dfrac{I \cdot F_{uD,X}^*}{3.5 \alpha_y} \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDX_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_X|floatformat:4 }} } }$</span>{% else %}
+                                <span class="calculation">$\displaystyle{ C_X^* = \dfrac{I \cdot F_{uD,X}^*}{4.2 \alpha_y} \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDX_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_X|floatformat:4 }} } }$</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>Y 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值 (不考慮近斷層):</span><span
+                                class="calculation">$ \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} = \dfrac{ {{ results.SaDY_no_fault|floatformat:4 }} }{ {{ results.FuDY_no_fault|floatformat:4 }} } = {{ results.ratio_SaDY_no_fault_FuDY_no_fault|floatformat:4 }} $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-2)修正:</span><span class="calculation">$ \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaDY_no_fault_FuDY_no_fault %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤ 0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值
+                                {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }}。{% else %}因比值
+                                {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                                {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>Y</sub>*:</span>
+                            {% if results.is_taipei_basin %}
+                                <span class="calculation">$ C_Y^* = \dfrac{I \cdot F_{uD,Y}^* }{3.5 \alpha_y} \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDY_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_Y|floatformat:4 }} } $</span>{% else %}
+                                <span class="calculation">$ C_Y^* = \dfrac{I \cdot F_{uD,Y}^* }{4.2 \alpha_y} \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDY_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_Y|floatformat:4 }} } $</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <h4>4.3 最大考量地震力係數 C<sub>M</sub> <span class="chapter-ref">(2.10.2節)</span></h4>
+                <div class="content-block">
+                    <div class="formula-group">
+                        <h5>X 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值:</span><span class="calculation">$ \dfrac{S_{aM,X}}{F_{uM,X}} = \dfrac{ {{ results.SaMX|floatformat:4 }} }{ {{ results.FuMX|floatformat:4 }} } = {{ results.ratio_SaMX_FuMX|floatformat:4 }} $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-13d)修正:</span><span
+                                class="calculation">$ \left( \dfrac{S_{aM,X}}{F_{uM,X}} \right)_m = \mathbf{ {{ results.SaM_over_FuM_m_X|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaMX_FuMX %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤
+                                0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} <
+                                0.8，故修正值
+                                = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaM_over_FuM_m_X|floatformat:4 }}。
+                            {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }}
+                                =
+                                {{ results.SaM_over_FuM_m_X|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>MX</sub>:</span><span
+                                class="calculation">$ C_{MX} = \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,X}}{F_{uM,X}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaM_over_FuM_m_X|floatformat:4 }} = \mathbf{ {{ results.C_VMX|floatformat:4 }} } $</span>
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>Y 方向</h5>
+                        <div class="formula-step"><span class="label">A. 計算原始比值:</span><span class="calculation">$ \dfrac{S_{aM,Y}}{F_{uM,Y}} = \dfrac{ {{ results.SaMY|floatformat:4 }} }{ {{ results.FuMY|floatformat:4 }} } = {{ results.ratio_SaMY_FuMY|floatformat:4 }} $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">B. 依式(2-13d)修正:</span><span
+                                class="calculation">$ \left( \dfrac{S_{aM,Y}}{F_{uM,Y}} \right)_m = \mathbf{ {{ results.SaM_over_FuM_m_Y|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="reasoning">
+                            {% with ratio=results.ratio_SaMY_FuMY %}{% if ratio <= 0.3 %}因比值
+                                {{ ratio|floatformat:4 }} ≤
+                                0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} <
+                                0.8，故修正值
+                                = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                                {{ results.SaM_over_FuM_m_Y|floatformat:4 }}。
+                            {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }}
+                                =
+                                {{ results.SaM_over_FuM_m_Y|floatformat:4 }}。{% endif %}{% endwith %}</div>
+                        <div class="formula-step"><span class="label">C. 計算係數 C<sub>MY</sub>:</span><span
+                                class="calculation">$ C_{MY} = \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,Y}}{F_{uM,Y}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaM_over_FuM_m_Y|floatformat:4 }} = \mathbf{ {{ results.C_VMY|floatformat:4 }} } $</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>4.4 垂直地震力係數 C<sub>z</sub> <span class="chapter-ref">(2.18節)</span></h4>
+                <div class="content-block">
+                    <div class="formula-group">
+                        <h5>梁、版適用之設計垂直力係數 (C<sub>z,D</sub>)</h5>
+                        <div class="formula-step"><span class="label">X 方向:</span><span class="calculation">$ C_{z,DX} = \mathbf{ {{ results.C_VZX_D|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">Y 方向:</span><span class="calculation">$ C_{z,DY} = \mathbf{ {{ results.C_VZY_D|floatformat:4 }} } $</span>
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>梁、版適用之中小度垂直力係數 (C<sub>z</sub>*)</h5>
+                        <div class="formula-step"><span class="label">X 方向:</span><span class="calculation">$ C_{z,X}^* = \mathbf{ {{ results.C_V_star_ZX|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">Y 方向:</span><span class="calculation">$ C_{z,Y}^* = \mathbf{ {{ results.C_V_star_ZY|floatformat:4 }} } $</span>
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>梁、版適用之最大考量垂直力係數 (C<sub>z,M</sub>)</h5>
+                        <div class="formula-step"><span class="label">X 方向:</span><span class="calculation">$ C_{z,MX} = \mathbf{ {{ results.C_VMZX|floatformat:4 }} } $</span>
+                        </div>
+                        <div class="formula-step"><span class="label">Y 方向:</span><span class="calculation">$ C_{z,MY} = \mathbf{ {{ results.C_VMZY|floatformat:4 }} } $</span>
+                        </div>
+                    </div>
+                    <div class="formula-group">
+                        <h5>柱子專用之垂直力係數 (C<sub>column</sub>)</h5>
+                        {% if results.is_near_fault %}
+                            <div class="formula-step"><span class="label">公式 (近斷層):</span><span
+                                    class="calculation">$\displaystyle{ C_{column} = \dfrac{0.80 S_{DS} I}{3 \alpha_y} = \dfrac{0.80 \times {{ results.SDS|floatformat:4 }} \times {{ results.I|floatformat:2 }} }{3 \times {{ results.alpha_y|floatformat:2 }} } = \mathbf{ {{ results.C_column|floatformat:4 }} } }$</span>
+                            </div>
+                        {% else %}
+                            <div class="formula-step"><span class="label">公式 (一般區):</span><span
+                                    class="calculation">$\displaystyle{ C_{column} = \dfrac{0.40 S_{DS} I}{2 \alpha_y} = \dfrac{0.40 \times {{ results.SDS|floatformat:4 }} \times {{ results.I|floatformat:2 }} }{2 \times {{ results.alpha_y|floatformat:2 }} } = \mathbf{ {{ results.C_column|floatformat:4 }} } }$</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ================== 第 4 頁 ================== -->
+    <div class="a4-page">
+        {% if results %}
+            <!-- 5. 設計建議與結論 -->
+            <div class="section">
+                <h3>5. 設計建議與結論</h3>
+                <div class="content-block">
+                    <table class="table">
+                        <thead style="background-color: var(--header-bg); font-weight: 700;">
+                        <td colspan="2">最終建議設計係數 C<sub>design</sub> = max(C, C*)</td>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="width:50%; font-weight:500;">X方向建議設計係數 (C<sub>design,x</sub>)</td>
+                            <td><b>{{ results.C_design_X|floatformat:4 }}</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:50%; font-weight:500;">Y方向建議設計係數 (C<sub>design,y</sub>)</td>
+                            <td><b>{{ results.C_design_Y|floatformat:4 }}</b></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

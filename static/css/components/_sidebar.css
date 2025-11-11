@@ -1,0 +1,96 @@
+/* static/css/components/_sidebar.css */
+
+/* 側邊欄樣式 */
+.sidebar {
+    overflow-y: auto;
+    padding: var(--space-md);
+    height: 100%;
+}
+
+.left-sidebar, .right-sidebar {
+    height: 100%;
+    overflow: auto;
+    /* 新增陰影以增加視覺深度 */
+    box-shadow: var(--shadow-light); /* 使用輕微陰影 */
+}
+
+.left-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+}
+
+.right-sidebar {
+    width: var(--right-sidebar-width);
+    background-color: var(--right-sidebar-bg);
+    border-left: 1px solid var(--border-color);
+}
+
+.main-area {
+    width: var(--main-width);
+    background-color: var(--main-bg);
+    overflow-y: auto; /* 將 overflow-y: auto 從 hidden 改為 auto，確保主內容區可滾動 */
+    padding: var(--space-md); /* 增加主內容區內邊距 */
+}
+
+.sidebar h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color); /* 使用變數 */
+}
+
+.sidebar ul {
+    padding-left: var(--space-sm);
+}
+
+.sidebar li {
+    margin-bottom: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar li a {
+    display: block; /* 讓整個 li 區域可點擊 */
+    color: var(--text-primary); /* 使用主文字色 */
+}
+
+.sidebar li:hover {
+    background-color: var(--color-secondary); /* 懸停時使用次要色 */
+    color: var(--color-white); /* 文字變為白色 */
+}
+
+.sidebar li:hover a {
+    color: var(--color-white); /* 確保內部連結文字也變白 */
+}
+
+/* 選中狀態樣式 */
+.sidebar li.active {
+    background-color: var(--color-primary); /* 選中時使用主色 */
+    color: var(--color-white);
+    font-weight: bold;
+}
+
+.sidebar li.active a {
+    color: var(--color-white);
+}
+
+/* 滾動條樣式（Webkit 瀏覽器） */
+.sidebar::-webkit-scrollbar {
+    width: 8px; /* 寬度 */
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--bg-page); /* 軌道背景 */
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--color-gray); /* 滾動條顏色 */
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary); /* 懸停時顏色 */
+}

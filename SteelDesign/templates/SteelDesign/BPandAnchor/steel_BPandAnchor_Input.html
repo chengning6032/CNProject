@@ -1,0 +1,790 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLi-Steel Base Plate & Anchor Design</title>
+    <!-- 引用您專案中的CSS檔案路徑 -->
+    <link rel="stylesheet" href="{% static 'css/SteelDesign/BPandAnchor/style.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap">
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .schematic-container {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        /* ===== START: 核心修正区域 (统一的、干净的样式) ===== */
+
+        /* --- 表格样式 --- */
+        .loads-table-wrapper {
+            border: none;
+        }
+
+        #loads-table {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #loads-table th {
+            white-space: nowrap;
+        }
+
+        .input-table input[type="number"].load-input {
+            min-width: 60px;
+            max-width: 100px;
+            padding: 8px 5px;
+            font-size: 14px;
+        }
+
+        .input-table .remove-row-btn {
+            background-color: #ffffff; /* 明确指定背景 */
+            border: 1px solid #ced4da;
+            color: #6c757d;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .input-table .remove-row-btn:hover {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+            transform: scale(1.05);
+        }
+
+        /* --- 面包屑样式 --- */
+        .breadcrumb-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto 15px auto;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            list-style: none;
+            background-color: #e9ecef;
+            border-radius: 6px;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            display: inline-block;
+            padding: 0 0.75rem;
+            color: #6c757d;
+            content: "/";
+        }
+
+        .breadcrumb-item a {
+            color: #0275d8;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #025aa5;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        /* --- 动作按钮容器 --- */
+        .load-actions-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        /* --- 统一的动作按钮样式 (核心) --- */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            border: 1px solid #ced4da;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+            font-family: inherit; /* 确保 button 和 label 字体一致 */
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- 特定按钮的颜色 --- */
+        .add-row-button {
+            background-color: #ffffff;
+            color: #495057;
+        }
+
+        .add-row-button:hover {
+            background-color: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .upload-label-btn {
+            background-color: #5cb85c;
+            border-color: #4cae4c;
+            color: white;
+        }
+
+        .upload-label-btn:hover {
+            background-color: #449d44;
+            border-color: #398439;
+        }
+
+        #excel-file-input {
+            display: none;
+
+
+        }
+
+        /* ===== END: 核心修正区域 ===== */
+    </style>
+</head>
+<body>
+{% csrf_token %}
+<!--
+  【核心新增】使用 json_script 將使用者登入狀態傳遞給前端
+  這個 script 標籤會儲存一個 true 或 false 的值
+-->
+{{ user.is_authenticated|json_script:"user-auth-status" }}
+
+<main class="main-content">
+    <nav class="breadcrumb-container" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'homepage' %}">OLI 首頁</a></li>
+            <li class="breadcrumb-item active" aria-current="page">鋼柱基礎版及錨栓設計檢核</li>
+        </ol>
+    </nav>
+    <div class="main-title-container">
+        <h1 class="main-title">鋼柱底板與錨栓設計檢核</h1>
+        <p class="sub-title">Base Plate and Anchor Bolt Design Check Module</p>
+    </div>
+
+    <!-- [核心新增] 单位制切换器 -->
+    <div class="unit-switcher-container">
+        <label><input type="radio" name="unit-system" value="imperial"> 英制 (kip, in, ksi)</label>
+        <label><input type="radio" name="unit-system" value="mks" checked> MKS 制 (tf, m, cm, kgf/cm²)</label>
+    </div>
+
+    <div class="main-layout-grid">
+        <!-- 1. 外力與荷載 Section -->
+        <div class="section-container" style="grid-column: span 2;">
+            <h3 class="section-title">外力加載</h3>
+            <div class="input-container" style="align-items: stretch; text-align: left;">
+                <p class="option-comment" style="padding: 0; margin-bottom: 10px;">
+                    請輸入所有需要檢核的荷載組合。程式將自動找出各檢核項目的最不利情況。<br>
+                    (壓力為負值, 拉力為正值)
+                </p>
+
+                <!-- 【核心修改】新增 "loads-table-wrapper" 以便滚动 -->
+                <div class="loads-table-wrapper">
+                    <table id="loads-table" class="input-table"> <!-- 使用新的 class -->
+                        <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th>P<sub>u</sub><br><span data-unit="force">(kips)</span></th>
+                            <th>M<sub>ux</sub><br><span data-unit="moment">(kip-in)</span></th>
+                            <th>M<sub>uy</sub><br><span data-unit="moment">(kip-in)</span></th>
+                            <th>V<sub>ux</sub><br><span data-unit="force">(kips)</span></th>
+                            <th>V<sub>uy</sub><br><span data-unit="force">(kips)</span></th>
+                            <th>T<sub>z</sub><br><span data-unit="moment">(kip-in)</span></th>
+                            <th style="width: 10%;">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 【核心修改】将按钮样式统一 -->
+                <div class="load-actions-container">
+                    <button type="button" id="add-load-combo-btn" class="action-btn add-row-button">+ 新增荷載組合
+                    </button>
+
+                    <label for="excel-file-input" class="action-btn upload-label-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                             viewBox="0 0 16 16">
+                            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.64L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 8 4.5v1.338l-1.17.702a.5.5 0 0 0-.256.434v3.812a.5.5 0 0 0 .256.434L8 11.838V13.5A1.5 1.5 0 0 0 9.5 15h.001l.001-.001L12 11l-2.5-4h-2z"/>
+                        </svg>
+                        Excel檔批次加入外力
+                    </label>
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-container" style="grid-column: span 1; padding: 20px;">
+            <h3 class="section-title" style="margin-bottom: 10px;">外力加載方向示意圖</h3>
+            <div style="width: 100%; max-width: 450px; margin: 0 auto; padding-top: 15px;">
+                <img src="{% static 'img/3D_loading.png' %}" alt="外力加載方向示意圖"
+                     style="width: 100%; height: auto; border-radius: 8px;">
+            </div>
+
+        </div>
+
+        <!-- 2. 材料性質 Section -->
+        <div class="section-container">
+            <h3 class="section-title">材料性質</h3>
+            <div class="input-container">
+                <div class="sub-section-title">鋼材 (Steel)</div>
+                <div class="input-group">
+                    <label for="plate-fy-input">基礎版降伏強度 F<sub>y</sub> <span data-unit="stress-ksi">(ksi)</span>:</label>
+                    <input type="number" id="plate-fy-input" value="36.0" data-value-imperial="36.0">
+                </div>
+                <div class="input-group">
+                    <label for="bolt-fya-input">錨栓降伏強度 F<sub>ya</sub> <span
+                            data-unit="stress-ksi">(ksi)</span>:</label>
+                    <input type="number" id="bolt-fya-input" value="36.0" data-value-imperial="36.0">
+                </div>
+                <div class="input-group">
+                    <label for="bolt-futa-input">錨栓極限強度 F<sub>uta</sub> <span data-unit="stress-ksi">(ksi)</span>:</label>
+                    <input type="number" id="bolt-futa-input" value="58.0" data-value-imperial="58.0">
+                </div>
+                <div class="input-group">
+                    <label for="es-input">鋼材彈性模數 E<sub>s</sub> <span data-unit="stress-ksi">(ksi)</span>:</label>
+                    <input type="number" id="es-input" value="29000.0" data-value-imperial="29000.0">
+                </div>
+                <div class="sub-section-title">混凝土 (Concrete)</div>
+                <div class="input-group">
+                    <label>輕質混凝土:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="is_lightweight" value="true"> 是</label>
+                        <label><input type="radio" name="is_lightweight" value="false" checked> 否</label>
+                    </div>
+                </div>
+
+                <!-- [核心新增] 新增「混凝土單位重」輸入框 -->
+                <div class="input-group">
+                    <label for="concrete-wc-input">混凝土單位重 w<sub>c</sub> <span data-unit="density">(lb/ft³)</span>:</label>
+                    <input type="number" id="concrete-wc-input" value="150.0" data-value-imperial="150.0">
+                </div>
+                <!-- [核心新增] 新增「輕質混凝土修正係數」輸入框 -->
+                <div class="input-group">
+                    <label for="lambda-a-input">輕質混凝土修正係數 λ<sub>a</sub>:</label>
+                    <input type="number" id="lambda-a-input" value="1.0" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label for="fc-input">混凝土抗壓強度 f'<sub>c</sub> <span
+                            data-unit="stress-psi">(psi)</span>:</label>
+                    <input type="number" id="fc-input" value="3000.0" data-value-imperial="3000.0">
+                </div>
+                <!-- [核心新增] 新增 f'c 的錯誤訊息容器 -->
+                <div id="fc-validation-warning" class="validation-error"
+                     style="display: none; text-align: center; margin-top: 5px;"></div>
+                <div class="input-group">
+                    <label for="ec-input">混凝土彈性模數 E<sub>c</sub> <span
+                            data-unit="stress-ksi">(ksi)</span>:</label>
+                    <input type="number" id="ec-input" value="3122.02" data-value-imperial="3122.02">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 幾何尺寸 Section -->
+        <div class="section-container" style="grid-column: span 2;">
+            <h3 class="section-title">幾何尺寸</h3>
+            <div class="main-layout-grid" style="gap: 50px; width: 100%; padding-top: 10px;">
+                <!-- 3a. 鋼柱斷面 -->
+                <div class="nested-group">
+                    <h4 class="sub-section-title">鋼柱斷面</h4>
+                    <div class="input-group">
+                        <label for="col-shape-select">斷面類型:</label>
+                        <select id="col-shape-select">
+                            <option value="H-Shape" selected>H 型鋼 (H-Shape)</option>
+                            <option value="Tube">矩形管 (Rectangular Tube)</option>
+                            <option value="Pipe">圓管 (Circular Pipe)</option>
+                        </select>
+                    </div>
+                    <!-- H-Shape Params -->
+                    <div id="col-params-h-shape" class="col-params-group">
+                        <div class="input-group"><label for="col-d-input">柱深 d <span data-unit="length-in">(in)</span>:</label><input
+                                type="number" id="col-d-input" value="10.0" data-value-imperial="10.0"></div>
+                        <div class="input-group"><label for="col-bf-input">翼板寬 b<sub>f</sub> <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-bf-input"
+                                                                                 value="10.0"
+                                                                                 data-value-imperial="10.0"></div>
+                        <div class="input-group"><label for="col-tf-input">翼板厚 t<sub>f</sub> <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-tf-input"
+                                                                                 value="0.56"
+                                                                                 data-value-imperial="0.56"></div>
+                        <div class="input-group"><label for="col-tw-input">腹板厚 t<sub>w</sub> <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-tw-input"
+                                                                                 value="0.34"
+                                                                                 data-value-imperial="0.34"></div>
+                    </div>
+                    <!-- Tube Params -->
+                    <div id="col-params-tube" class="col-params-group" style="display: none;">
+                        <div class="input-group"><label for="col-h-tube-input">管深 H <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-h-tube-input"
+                                                                                 value="10.0"
+                                                                                 data-value-imperial="10.0"></div>
+                        <div class="input-group"><label for="col-b-tube-input">管寬 B <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-b-tube-input"
+                                                                                 value="8.0" data-value-imperial="8.0">
+                        </div>
+                        <div class="input-group"><label for="col-t-tube-input">管壁厚 t <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-t-tube-input"
+                                                                                 value="0.5" data-value-imperial="0.5">
+                        </div>
+                    </div>
+                    <!-- Pipe Params -->
+                    <div id="col-params-pipe" class="col-params-group" style="display: none;">
+                        <div class="input-group"><label for="col-d-pipe-input">外徑 D <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-d-pipe-input"
+                                                                                 value="10.0"
+                                                                                 data-value-imperial="10.0"></div>
+                        <div class="input-group"><label for="col-t-pipe-input">管壁厚 t <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="col-t-pipe-input"
+                                                                                 value="0.5" data-value-imperial="0.5">
+                        </div>
+                    </div>
+
+
+                    <h4 class="sub-section-title">基礎版 (Base Plate)</h4>
+                    <div class="input-group">
+                        <label for="plate-shape-select">基礎版形狀:</label>
+                        <select id="plate-shape-select">
+                            <option value="rectangle" selected>矩形 (Rectangle)</option>
+                            <option value="circle">圓形 (Circle)</option>
+                            <option value="octagon">八邊形 (Octagon)</option>
+                        </select>
+                    </div>
+                    <!-- Rectangle Plate Params -->
+                    <div id="plate-params-rectangle" class="plate-params-group">
+                        <div class="input-group"><label for="plate-n-input">版長 N <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="plate-n-input"
+                                                                                 value="25.0"
+                                                                                 data-value-imperial="25.0"></div>
+                        <div class="input-group"><label for="plate-b-input">版寬 B <span
+                                data-unit="length-in">(in)</span>:</label><input type="number" id="plate-b-input"
+                                                                                 value="20.0"
+                                                                                 data-value-imperial="20.0"></div>
+                    </div>
+                    <!-- Radial Plate Params -->
+                    <div id="plate-params-radial" class="plate-params-group" style="display: none;">
+                        <div class="input-group"><label for="plate-radius-input">外半徑 R <span data-unit="length-in">(in)</span>:</label><input
+                                type="number" id="plate-radius-input" value="12.0" data-value-imperial="12.0"></div>
+                    </div>
+                    <div class="input-group"><label for="plate-tp-input">版厚 t<sub>p</sub> <span data-unit="length-in">(in)</span>:</label><input
+                            type="number" id="plate-tp-input" value="1.5" data-value-imperial="1.5"></div>
+
+                    <div class="input-group"><label for="plate-ex-input">X向偏心 e<sub>x</sub> <span
+                            data-unit="length-in">(in)</span>:</label><input
+                            type="number" id="plate-ex-input" value="0.0" data-value-imperial="0.0"></div>
+
+                    <div class="input-group"><label for="plate-ey-input">Y向偏心 e<sub>y</sub> <span
+                            data-unit="length-in">(in)</span>:</label><input
+                            type="number" id="plate-ey-input" value="0.0" data-value-imperial="0.0"></div>
+
+                    <!-- 開孔選項 (維持不變) -->
+                    <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 15px 0;">
+
+                    <div class="input-group">
+                        <label>是否有開孔:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="has_hole" value="true"> 是</label>
+                            <label><input type="radio" name="has_hole" value="false" checked> 否</label>
+                        </div>
+                    </div>
+                    <div id="hole-options-container" class="conditional-inputs"
+                         style="display: none; border-left-color: #e63946;">
+                        <div class="input-group"><label for="hole-shape-select">開孔形狀:</label><select
+                                id="hole-shape-select">
+                            <option value="rectangle" selected>矩形孔</option>
+                            <option value="circle">圓形孔</option>
+                            <option value="octagon">八邊形孔</option>
+                        </select></div>
+                        <div id="hole-params-rectangle" class="hole-params-group">
+                            <div class="input-group"><label for="hole-n-input">孔長 n <span
+                                    data-unit="length-in">(in)</span>:</label><input type="number"
+                                                                                     id="hole-n-input"
+                                                                                     value="8.0"
+                                                                                     data-value-imperial="8.0">
+                            </div>
+                            <div class="input-group"><label for="hole-b-input">孔寬 b <span
+                                    data-unit="length-in">(in)</span>:</label><input type="number"
+                                                                                     id="hole-b-input"
+                                                                                     value="6.0"
+                                                                                     data-value-imperial="6.0">
+                            </div>
+                        </div>
+                        <div id="hole-params-radial" class="hole-params-group" style="display: none;">
+                            <div class="input-group"><label for="hole-radius-input">內半徑 <span data-unit="length-in">(in)</span>:</label><input
+                                    type="number" id="hole-radius-input" value="4.0" data-value-imperial="4.0"></div>
+                        </div>
+                        <!-- 【核心新增】在這裡加入一個空的 div 用於顯示錯誤訊息 -->
+                        <div id="hole-validation-warning" class="validation-error" style="display: none;">
+                            <!-- JavaScript 將會在此處填入錯誤訊息 -->
+                        </div>
+                    </div>
+                </div>
+                <!-- 3b. 基礎版與墩柱 -->
+                <div class="nested-group">
+                    <h4 class="sub-section-title">混凝土墩柱 (Pedestal)</h4>
+                    <!-- ===== START: 核心修改區域 ===== -->
+                    <div class="input-group">
+                        <label for="pedestal-shape-select">墩柱形狀:</label>
+                        <select id="pedestal-shape-select">
+                            <option value="rectangle" selected>矩形 (Rectangle)</option>
+                            <option value="circle">圓形 (Circle)</option>
+                        </select>
+                    </div>
+
+                    <!-- 矩形墩柱參數 -->
+                    <div id="pedestal-params-rectangle" class="pedestal-params-group">
+                        <div class="input-group">
+                            <label for="pedestal-n-input">墩柱長 N<sub>ped</sub> <span data-unit="length-in">(in)</span>:</label>
+                            <input type="number" id="pedestal-n-input" value="50.0" data-value-imperial="50.0">
+                        </div>
+                        <div class="input-group">
+                            <label for="pedestal-b-input">墩柱寬 B<sub>ped</sub> <span data-unit="length-in">(in)</span>:</label>
+                            <input type="number" id="pedestal-b-input" value="30.0" data-value-imperial="30.0">
+                        </div>
+                    </div>
+
+                    <!-- 圓形墩柱參數 -->
+                    <div id="pedestal-params-circle" class="pedestal-params-group" style="display: none;">
+                        <div class="input-group">
+                            <label for="pedestal-d-input">墩柱直徑 D<sub>ped</sub> <span
+                                    data-unit="length-in">(in)</span>:</label>
+                            <input type="number" id="pedestal-d-input" value="40.0" data-value-imperial="40.0">
+                        </div>
+                    </div>
+
+                    <!-- 共用參數 -->
+                    <div class="input-group">
+                        <label for="pedestal-h-input">墩柱厚/高 h<sub>ped</sub> <span data-unit="length-in">(in)</span>:</label>
+                        <input type="number" id="pedestal-h-input" value="40.0" data-value-imperial="40.0">
+                    </div>
+                    <!-- ===== END: 核心修改區域 ===== -->
+
+                    <div class="input-group">
+                        <label for="pedestal-rebar-size-select">縱向鋼筋尺寸:</label>
+                        <select id="pedestal-rebar-size-select">
+                            <option value="D10">D10 (#3)</option>
+                            <option value="D13">D13 (#4)</option>
+                            <option value="D16" selected>D16 (#5)</option>
+                            <option value="D19">D19 (#6)</option>
+                            <option value="D22">D22 (#7)</option>
+                            <option value="D25">D25 (#8)</option>
+                            <option value="D29">D29 (#9)</option>
+                            <option value="D32">D32 (#10)</option>
+                            <option value="D36">D36 (#11)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== START: 核心新增区域 ===== -->
+        <div class="section-container" style="grid-column: span 1; padding: 20px;">
+            <h3 class="section-title" style="margin-bottom: 15px;">即時幾何預覽</h3>
+            <div id="realtime-preview-container"
+                 style="width: 100%; height: 350px; flex-grow: 1; border: 1px solid #ddd; border-radius: 8px;">
+                <!-- JavaScript 将在这里生成 SVG 图形 -->
+            </div>
+        </div>
+        <!-- ===== END: 核心新增区域 ===== -->
+
+        <!-- 4. 錨栓佈置與參數 Section -->
+        <div class="section-container">
+            <h3 class="section-title">錨栓佈置與參數</h3>
+            <div class="input-container">
+                <div class="input-group">
+                    <label for="anchor-install-type-select">錨栓安裝方式:</label>
+                    <select id="anchor-install-type-select">
+                        <option value="cast-in" selected>預埋 (Cast-In)</option>
+                        <option value="post-installed">後置 (Post-Installed)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="bolt-diameter-input">錨栓直徑 d<sub>a</sub> <span
+                            data-unit="length-in">(in)</span>:</label>
+                    <input type="number" id="bolt-diameter-input" value="0.625" data-value-imperial="0.625">
+                </div>
+
+                <div class="input-group">
+                    <label for="anchor-hef-input">有效埋深 h<sub>ef</sub> <span
+                            data-unit="length-in">(in)</span>:</label>
+                    <input type="number" id="anchor-hef-input" value="20.0" data-value-imperial="20.0">
+                </div>
+
+                <!-- [核心修改] 建立一個容器來包裹所有 "預埋式" 專用的選項 -->
+                <div id="cast-in-anchor-options" class="full-width-subgroup">
+                    <div class="form-divider"></div>
+
+                    <div class="input-group">
+                        <label for="anchor-structural-type-select">錨栓類型:</label>
+                        <select id="anchor-structural-type-select">
+                            <option value="headed" selected>擴頭錨栓 (Headed)</option>
+                            <option value="hooked">J或L形錨栓 (Hooked)</option>
+                        </select>
+                    </div>
+
+                    <!-- 擴頭錨栓參數 -->
+                    <div id="headed-anchor-params" class="anchor-type-group full-width-subgroup">
+                        <div class="input-group">
+                            <label for="anchor-abrg-input">錨栓頭承壓面積 A<sub>brg</sub> <span data-unit="area-in2">(in²)</span>:</label>
+                            <input type="number" id="anchor-abrg-input" value="0.454" data-value-imperial="0.454">
+                        </div>
+                        <div class="input-group">
+                            <label for="bolt-tpi-input">每英吋螺紋數 (TPI):</label>
+                            <input type="number" id="bolt-tpi-input" value="11">
+                        </div>
+                    </div>
+
+                    <!-- J/L 形錨栓參數 -->
+                    <div id="hooked-anchor-params" class="anchor-type-group full-width-subgroup" style="display: none;">
+                        <div class="input-group">
+                            <label for="anchor-eh-input">彎鉤延伸長度 e<sub>h</sub> <span
+                                    data-unit="length-in">(in)</span>:</label>
+                            <input type="number" id="anchor-eh-input" value="3.5" data-value-imperial="3.5">
+                        </div>
+                        <!-- eh 驗證警告 (跨欄顯示) -->
+                        <div id="eh-validation-warning" class="validation-error full-width-sub-item"
+                             style="display: none; font-size: 13px; text-align: center; margin-top: 0;">
+                            依據規範17.6.3.2.2節，3dₐ ≤ eₕ ≤ 4.5dₐ
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-divider"></div>
+
+                <!-- 佈置模式選擇 -->
+                <div class="input-group">
+                    <label for="bolt-layout-select">佈置模式:</label>
+                    <select id="bolt-layout-select">
+                        <option value="grid" selected>網格佈置 (Grid)</option>
+                        <option value="circular">圓形佈置 (Circular)</option>
+                        <option value="custom">自訂座標 (Custom)</option>
+                    </select>
+                </div>
+
+                <!-- 網格佈置參數 -->
+                <div id="bolt-layout-grid" class="bolt-layout-group full-width-subgroup">
+                    <div class="input-group"><label for="bolt-edge-x-input">X向邊距 <span
+                            data-unit="length-in">(in)</span>:</label><input type="number" id="bolt-edge-x-input"
+                                                                             value="2.5" data-value-imperial="2.5">
+                    </div>
+                    <div class="input-group"><label for="bolt-edge-y-input">Y向邊距 <span
+                            data-unit="length-in">(in)</span>:</label><input type="number" id="bolt-edge-y-input"
+                                                                             value="2.5" data-value-imperial="2.5">
+                    </div>
+                    <div class="input-group"><label for="bolt-num-x-input">X向插入錨栓數:</label><input type="number"
+                                                                                                        id="bolt-num-x-input"
+                                                                                                        value="1"
+                                                                                                        min="0"
+                                                                                                        step="1"></div>
+                    <div class="input-group"><label for="bolt-num-y-input">Y向插入錨栓數:</label><input type="number"
+                                                                                                        id="bolt-num-y-input"
+                                                                                                        value="1"
+                                                                                                        min="0"
+                                                                                                        step="1"></div>
+                </div>
+
+                <!-- 圓形佈置參數 -->
+                <div id="bolt-layout-circular" class="bolt-layout-group full-width-subgroup" style="display: none;">
+                    <div class="input-group"><label for="bolt-count-input">錨栓總數:</label><input type="number"
+                                                                                                   id="bolt-count-input"
+                                                                                                   value="8" min="2"
+                                                                                                   step="1"></div>
+                    <div class="input-group"><label for="bolt-radius-input">佈置半徑 <span
+                            data-unit="length-in">(in)</span>:</label><input type="number" id="bolt-radius-input"
+                                                                             value="8.5" data-value-imperial="8.5">
+                    </div>
+                    <div class="input-group"><label for="bolt-start-angle-input">起始角度 (°):</label><input
+                            type="number" id="bolt-start-angle-input" value="0"></div>
+                </div>
+
+                <!-- 自訂座標 -->
+                <!-- 自訂座標 -->
+                <div id="bolt-layout-custom" class="bolt-layout-group full-width-subgroup" style="display: none;">
+                    <p class="full-width-sub-item" style="font-size: 14px; color: #555; text-align: left;">請輸入各錨栓的
+                        (X, Y) 座標。</p>
+                    <table id="custom-bolt-table" class="input-table full-width-sub-item" style="margin-top: 10px;">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>X (<span data-unit="length-in">in</span>)</th> <!-- [建議] 讓單位也能動態變化 -->
+                            <th>Y (<span data-unit="length-in">in</span>)</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <!-- [核心修正] 明確添加 <tbody> 標籤 -->
+                        <tbody>
+                        <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                    <button type="button" id="add-bolt-row-btn" class="full-width-sub-item"
+                            style="align-self: flex-start; margin-top: 10px;">+ 新增錨栓
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 錨栓檢核參數 Section -->
+        <div class="section-container">
+            <h3 class="section-title">錨栓檢核參數 (ACI 318)</h3>
+            <div class="input-container">
+                <div class="input-group">
+                    <label>混凝土開裂假設:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="is_cracked" value="true" checked> 是</label>
+                        <label><input type="radio" name="is_cracked" value="false"> 否</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>有無設置輔助鋼筋:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="has_supplementary_reinf" value="true"> 有</label>
+                        <label><input type="radio" name="has_supplementary_reinf" value="false" checked> 無</label>
+                    </div>
+                </div>
+                <div id="supplementary-reinf-options" class="conditional-inputs" style="display: none;">
+                    <div class="input-group">
+                        <label for="supplementary-rebar-size-select">輔助鋼筋尺寸:</label>
+                        <select id="supplementary-rebar-size-select">
+                            <option value="D10">D10 (#3)</option>
+                            <option value="D13" selected>D13 (#4)</option>
+                            <option value="D16">D16 (#5)</option>
+                            <option value="D19">D19 (#6)</option>
+                            <option value="D22">D22 (#7)</option>
+                            <option value="D25">D25 (#8)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="supplementary-rebar-spacing-input">輔助鋼筋間距 <span
+                                data-unit="length-in">(in)</span>:</label>
+                        <input type="number" id="supplementary-rebar-spacing-input" value="4.0"
+                               data-value-imperial="4.5">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- 主要操作按鈕 -->
+<div class="action-buttons-container">
+    <button id="calculate-button" class="calculate-button">開始分析與檢核</button>
+</div>
+
+<!-- 結果顯示 Modal -->
+{#<div id="results-modal" class="modal">#}
+{#    <div class="modal-content results-modal-content">#}
+{#        <!-- 【核心修改】使用经过验证的 SVG 图标代码 -->#}
+{#        <div class="results-modal-actions">#}
+{#            <button id="report-button-modal" class="results-modal-btn" title="製作報告書">#}
+{#                <!-- SVG Icon for Report (Article Icon) -->#}
+{#                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"#}
+{#                     fill="currentColor">#}
+{#                    <path d="M0 0h24v24H0V0z" fill="none"/>#}
+{#                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>#}
+{#                </svg>#}
+{#            </button>#}
+{#            <button id="close-results-modal-btn" class="results-modal-btn" title="關閉">#}
+{#                <!-- SVG Icon for Close (Close Icon) -->#}
+{#                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"#}
+{#                     fill="currentColor">#}
+{#                    <path d="M0 0h24v24H0V0z" fill="none"/>#}
+{#                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>#}
+{#                </svg>#}
+{#            </button>#}
+{#        </div>#}
+{##}
+{#        <h3 class="section-title">計算結果</h3>#}
+{#        <div id="results-modal-body" class="results-content-wrapper">#}
+{#            <p class="placeholder-text">點擊「開始分析與檢核」按鈕以顯示結果...</p>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+<div id="results-modal" class="modal">
+    <div class="modal-content results-modal-content">
+        <div class="results-modal-actions">
+
+            <!-- 【核心修改】
+                 1. 加上 id="report-button-modal"
+                 2. 預設加上 disabled 屬性
+            -->
+            <button id="report-button-modal" class="results-modal-btn" title="請先完成計算" disabled>
+                <!-- SVG Icon for Report -->
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                     fill="currentColor">
+                    <path d="M0 0h24v24H0V0z" fill="none"/>
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+            </button>
+
+            <button id="close-results-modal-btn" class="results-modal-btn" title="關閉">
+                <!-- SVG Icon for Close -->
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                     fill="currentColor">
+                    <path d="M0 0h24v24H0V0z" fill="none"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                </svg>
+            </button>
+        </div>
+
+        <h3 class="section-title">計算結果</h3>
+        <div id="results-modal-body" class="results-content-wrapper">
+            <p class="placeholder-text">點擊「開始分析與檢核」按鈕以顯示結果...</p>
+        </div>
+    </div>
+</div>
+<div id="report-modal" class="report-modal-view">
+    <div class="report-controls">
+        <button id="print-report-btn" title="列印或另存為 PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                <path d="M0 0h24v24H0V0z" fill="none"/>
+                <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM16 18H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM18 3H6v4h12V3z"/>
+            </svg>
+        </button>
+        <button id="close-report-btn" title="關閉預覽">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                <path d="M0 0h24v24H0V0z" fill="none"/>
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+            </svg>
+        </button>
+    </div>
+    <div id="report-content" class="report-body-content">
+        <!-- JavaScript 將會在這裡動態生成報告頁面 -->
+    </div>
+</div>
+
+<!-- 引用您專案中的JS檔案路徑 -->
+<script src="{% static 'js/SteelDesign/BPandAnchor/main.js' %}"></script>
+</body>
+</html>

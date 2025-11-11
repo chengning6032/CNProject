@@ -1,0 +1,1073 @@
+/* static/css/SteelDesign/BPandAnchor/style.css (v2.2 - 佈局細節優化版) */
+
+/* 全域樣式重設 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #333;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.main-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.main-title-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0;
+    auto: 40px auto;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.main-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: #1d3557;
+    letter-spacing: 2px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    text-align: left;
+    margin-bottom: 4px;
+}
+
+.sub-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: #6c757d;
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* 主佈局容器 */
+.main-layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    max-width: 1400px;
+    width: 95%;
+}
+
+/* 內容區塊容器 */
+.section-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.section-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* 區塊標題 */
+.section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #457b9d;
+    margin-bottom: 25px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+}
+
+/* 輸入欄位的外層容器 */
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+
+/* ========================================================== */
+/* ==== START: [核心重構] Input Group Grid Layout (v2.2) ==== */
+/* ========================================================== */
+
+.section-container .input-group {
+    display: grid;
+    grid-template-columns: 58% 42%; /* 實現 65% / 35% 欄位寬度 */
+    gap: 15px; /* 統一欄位間距 */
+    align-items: center;
+    width: 100%;
+}
+
+.section-container .input-group label {
+    font-size: 16px;
+    color: #555;
+    text-align: left;
+    padding-right: 15px;
+    grid-column: 1 / 2;
+    display: flex;
+    align-items: center;
+}
+
+/* 適用於位於第二欄的標準輸入元件 */
+.section-container .input-group input[type="number"],
+.section-container .input-group select {
+    grid-column: 2 / 3;
+    width: 100%; /* 標準輸入項填滿 35% 欄位 */
+    box-sizing: border-box;
+}
+
+/* 【核心修正】針對 Radio Group 容器的特殊網格對齊設定 */
+.section-container .input-group .radio-group {
+    grid-column: 2 / 3;
+    width: auto;             /* 讓容器寬度自適應內容 */
+    justify-self: start;     /* 在網格單元格內靠左對齊 */
+}
+
+.section-container .input-group input[type="number"],
+.section-container .input-group select {
+    height: 32px;
+    padding: 4px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #444;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section-container .input-group input[type="number"] {
+    text-align: right;
+}
+
+/* Radio Group 內部選項的樣式 */
+.section-container .radio-group {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px; /* 這裡的 gap 控制 "是" 與 "否" 之間的間距 */
+}
+
+.section-container .radio-group label {
+    text-align: left;
+    padding-right: 0;
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.radio-group input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* 動態顯示的參數群組，確保其內部的 input-group 有垂直間距 */
+.col-params-group,
+.plate-params-group,
+.hole-params-group,
+.pedestal-params-group,
+.anchor-type-group,
+.bolt-layout-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+
+/* 用於 Grid 佈局中的全寬元素 */
+.input-container > .form-divider,
+.input-container > .full-width-subgroup,
+.input-container .full-width-sub-item {
+    grid-column: 1 / -1;
+}
+
+.full-width-subgroup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.form-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+/* ========================================================== */
+/* ==== END: Input Group Grid Layout ==== */
+/* ========================================================== */
+
+/* 條件式輸入的特殊樣式 */
+.conditional-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    border-left: 2px solid #a8dadc;
+    padding-left: 20px; /* 增加縮排空間 */
+}
+
+/* 單位制切換器 */
+.unit-switcher-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 25px auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 0 10px;
+}
+
+.unit-switcher-container label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ==== START: 外力加載表格樣式 (獨立設定，不受 Grid 影響) ==== */
+/* ========================================================== */
+.loads-table-wrapper {
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.input-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.input-table th,
+.input-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.input-table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.input-table thead th span {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.input-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.input-table tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+.input-table input[type="number"] {
+    min-width: 80px;
+    max-width: 120px;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-table input[type="number"]:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.remove-row-btn {
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    color: #495057;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-row-btn:hover {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* ========================================================== */
+/* ==== END: 外力加載表格樣式 ==== */
+/* ========================================================== */
+
+.modal-content {
+    background-color: #fefefe;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation-name: slideIn;
+    animation-duration: 0.3s;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.control-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.control-stack .input-group {
+    width: 100%;
+}
+
+.info-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+/* 錯誤訊息樣式 */
+.error-message {
+    color: #e63946;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #e63946;
+    border-radius: 8px;
+    background-color: #fde8e8;
+}
+
+#show-height-modal-link,
+#show-fn-modal-link {
+    align-self: flex-end;
+    margin-top: -10px;
+    padding-right: 5px;
+}
+
+/* Modal 相關樣式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    animation-name: fadeIn;
+    animation-duration: 0.3s;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.modal-caption {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+    font-weight: 500;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+}
+
+.close-button:hover, .close-button:focus {
+    color: #333;
+}
+
+#topo-modal .modal-content,
+#height-modal .modal-content,
+#fn-modal .modal-content {
+    padding: 20px;
+}
+
+#topo-modal .modal-content {
+    max-width: 600px;
+}
+
+#height-modal .modal-content, #fn-modal .modal-content {
+    max-width: 500px;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.modal-caption {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+    font-weight: 500;
+}
+
+
+.sawtooth-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.sawtooth-table th, .sawtooth-table td {
+    border: 1px solid #eee;
+    padding: 8px;
+    text-align: center;
+}
+
+.sawtooth-table th {
+    background-color: #f8f8f8;
+    font-weight: 500;
+}
+
+.sawtooth-table input[type="number"] {
+    width: 100%;
+}
+
+.validation-error {
+    color: #e63946;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: left;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fde8e8;
+    border-radius: 5px;
+    border-left: 4px solid #e63946;
+}
+
+.nested-group .input-group > label {
+    min-width: 160px;
+}
+
+#building-dims-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#hip-roof-options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#building-height-options-group,
+.fn-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+
+#show-topo-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+#show-height-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+
+#show-fn-modal-link {
+    font-size: 14px;
+    color: #457b9d;
+    text-decoration: none;
+    align-self: flex-end;
+    transition: color 0.3s ease;
+    margin-top: -15px;
+    margin-bottom: 5px;
+}
+
+.eligibility-notice {
+    font-size: 13px;
+    text-align: right;
+    width: 100%;
+    margin-top: -8px;
+    padding-right: 5px;
+    transition: color 0.3s ease;
+}
+
+.eligibility-notice.eligible {
+    color: #2a9d8f;
+}
+
+.eligibility-notice.not-eligible {
+    color: #999;
+}
+
+.results-content-wrapper {
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.results-content-wrapper .placeholder-text {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.results-content-wrapper .result-message {
+    font-weight: bold;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.results-content-wrapper .result-message.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.results-content-wrapper .result-message.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.option-comment {
+    font-size: 13px;
+    color: #888;
+    text-align: left;
+    width: 100%;
+    margin-top: -8px;
+    padding-left: 20px;
+    line-height: 1.5;
+}
+
+.sub-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    text-align: left;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #ccc;
+}
+
+.applicability-notice {
+    font-size: 13px;
+    color: #999;
+    text-align: right;
+    width: 100%;
+    font-style: italic;
+    line-height: 16px;
+}
+
+.action-buttons-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.calculate-button, .report-button {
+    border: none;
+    padding: 14px 30px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1.5px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.calculate-button {
+    background-color: #e63946;
+    color: white;
+}
+
+.calculate-button:hover {
+    background-color: #d62828;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.report-button {
+    background-color: #457b9d;
+    color: white;
+}
+
+.report-button:hover {
+    background-color: #1d3557;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.report-button:disabled {
+    background-color: #adb5bd;
+    color: #e9ecef;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.report-button:disabled:hover {
+    background-color: #adb5bd;
+    transform: none;
+    box-shadow: none;
+}
+
+@media print {
+    body > *:not(.report-modal-view) {
+        display: none !important;
+    }
+
+    body, .report-modal-view {
+        display: block !important;
+        visibility: visible !important;
+        background-color: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .report-modal-view .modal-content {
+        visibility: visible !important;
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .report-header {
+        display: none !important;
+    }
+
+    .report-body-content {
+        visibility: visible !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+}
+
+.results-modal-content {
+    width: 22cm;
+    max-width: 95%;
+    height: 90vh;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.results-modal-content .section-title {
+    padding: 20px 30px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.results-content-wrapper {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 0 30px 20px 30px;
+}
+
+.results-modal-actions {
+    position: absolute;
+    top: 15px;
+    right: 55px;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+}
+
+.results-modal-btn {
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+    padding: 8px;
+    width: 40px; /* 确保有明确的宽度 */
+    height: 40px; /* 确保有明確的高度 */
+    color: #495057; /* SVG 将继承这个颜色 */
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.results-modal-btn:hover {
+    color: #fff;
+    background-color: #457b9d;
+    border-color: #457b9d;
+    transform: translateY(-2px);
+}
+
+.results-modal-btn svg {
+    width: 24px; /* 给予一个明确的尺寸 */
+    height: 24px; /* 给予一个明确的尺寸 */
+}
+
+.results-modal-btn.btn-report {
+    background-color: #e63946;
+    border-color: #e63946;
+    color: white;
+}
+
+.results-modal-btn.btn-report:hover {
+    background-color: #d62828;
+    border-color: #d62828;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* START: 新增示意圖樣式 */
+#building-schematic-container {
+    display: none; /* 由 JS 控制顯示 */
+    margin-top: 15px;
+    width: 100%;
+    /* 移除 max-width 限制 */
+}
+
+#building-schematic-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* END: 新增示意圖樣式 */
+
+
+/* 表格外層容器，用於控制最大高度和滾動條 */
+.loads-table-wrapper {
+    width: 100%;
+    max-height: 400px; /* 當內容超過400px時，出現滾動條 */
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+/* 輸入表格的通用樣式 */
+.input-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.input-table th,
+.input-table td {
+    padding: 10px 8px;
+    border: none; /* 移除內部邊框，改用底線分隔 */
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* 表頭樣式 */
+.input-table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    position: sticky; /* 讓表頭在滾動時固定在頂部 */
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* 表頭中的單位文字樣式 */
+.input-table thead th span {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/* 表格內容行樣式 */
+.input-table tbody tr:last-child td {
+    border-bottom: none; /* 最後一行的底線移除 */
+}
+
+.input-table tbody tr:hover {
+    background-color: #f1f3f5; /* 滑鼠懸停時高亮 */
+}
+
+/* 表格內的輸入框樣式 */
+.input-table input[type="number"] {
+    min-width: 80px;
+    max-width: 120px;
+    box-sizing: border-box; /* 确保 padding 不会撑开宽度 */
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-table input[type="number"]:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 新增/移除 按鈕的通用樣式 */
+.add-row-button,
+.input-table .remove-load-row-btn {
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-row-button:hover,
+.input-table .remove-load-row-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+/* 移除按鈕的特定樣式 */
+.input-table .remove-load-row-btn {
+    background-color: #fff;
+}
+
+.input-table .remove-load-row-btn:hover {
+    background-color: #f8d7da; /* 紅色高亮 */
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1
+    }
+}
+
+/* ============================================= */
+/* ====      新增：報告書預覽樣式     ==== */
+/* ============================================= */
+
+/* 報告書 Modal 的外層容器 (覆蓋層) */
+.report-modal-view {
+    display: none; /* 預設隱藏 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75); /* 半透明黑色背景 */
+    z-index: 2000; /* 確保在最上層 */
+    overflow-y: auto; /* 允許垂直滾動來查看多頁報告 */
+    padding: 30px 0;
+    box-sizing: border-box;
+}
+
+/* 报告书在独立页面时的 body 样式 */
+body.report-body-view {
+    background-color: #525659; /* 深灰色背景，衬托白纸 */
+    padding: 30px 0;
+    box-sizing: border-box;
+}
+
+/* 報告書的控制按鈕 (列印、關閉) */
+.report-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    gap: 15px;
+}
+
+.report-controls button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.report-controls button:hover {
+    background-color: #f1f3f5;
+    transform: translateY(-2px);
+}
+
+.report-controls button svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* 報告書內容的主體 (滾動區域) */
+.report-body-content {
+    width: 210mm; /* A4 寬度 */
+    margin: 0 auto; /* 水平置中 */
+}
+
+/* 模擬 A4 紙張的樣式 */
+.a4-page {
+    background: white;
+    width: 210mm;
+    height: 297mm;
+    margin-bottom: 20px;
+    padding: 20mm; /* A4 標準邊距 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    page-break-after: always; /* 告訴瀏覽器在列印時，每頁結束後要換頁 */
+
+    /* 讓內容垂直置中 (為了範例) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 5rem; /* 大字體 */
+    font-weight: bold;
+    color: #333;
+}
+
+/* 針對列印時的特殊樣式 */
+@media print {
+    body > *:not(.report-modal-view) {
+        display: none !important; /* 列印時，隱藏所有非報告內容 */
+    }
+
+    .report-modal-view, .report-body-content {
+        visibility: visible !important;
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .report-controls {
+        display: none !important; /* 列印時，隱藏控制按鈕 */
+    }
+
+    .a4-page {
+        box-shadow: none !important; /* 移除陰影 */
+        margin: 0 !important; /* 移除頁間距 */
+        height: auto; /* 讓內容自動撐開高度 */
+        min-height: 257mm; /* 297mm - 20mm*2 */
+    }
+}

@@ -1,0 +1,182 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    /* ===== 全局與通用樣式 ===== */
+    .section { padding: 100px 0; overflow-x: hidden; /* 增加間距並防止動畫溢出 */ }
+    .section-title { text-align: center; margin-bottom: 60px; font-size: 2.8rem; color: #1d3557; font-weight: 800; }
+    .container { max-width: 1140px; }
+    
+    /* ===== 動畫基礎樣式 ===== */
+    .fade-in-up { opacity: 0; transform: translateY(40px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
+    .feature-list-item:nth-child(2), .service-card:nth-child(2) { transition-delay: 0.1s; }
+    .feature-list-item:nth-child(3), .service-card:nth-child(3) { transition-delay: 0.2s; }
+
+
+    /* ===== 1. 主視覺區塊 (Hero) 優化 ===== */
+    .hero {
+        background-image: linear-gradient(rgba(29, 53, 87, 0.6), rgba(29, 53, 87, 0.6)), url("{% static 'images/hero-background.jpg' %}");
+        background-size: cover; background-position: center; height: 70vh;
+        display: flex; justify-content: center; align-items: center; text-align: center; color: #fff;
+    }
+    .hero-content h1 { font-size: 3.8rem; margin-bottom: 1rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.7); }
+    .hero-content p { font-size: 1.3rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); max-width: 650px; margin: 0 auto; }
+
+    /* ===== 2. 核心價值 (Features) 優化 ===== */
+    .features { background-color: #ffffff; }
+    .features-container { display: flex; align-items: center; gap: 60px; }
+    .features-intro { flex: 1; max-width: 400px; }
+    .features-intro h2 { font-size: 2.5rem; color: #1d3557; margin-bottom: 20px; line-height: 1.4; }
+    .features-intro p { color: #555; font-size: 1.1em; line-height: 1.8; }
+    .features-list { flex: 1.2; display: flex; flex-direction: column; gap: 25px; }
+    .feature-list-item { display: flex; align-items: flex-start; gap: 25px; padding: 25px; border-radius: 12px; transition: all 0.3s ease; border: 1px solid transparent; }
+    .feature-list-item:hover { background-color: #fff; transform: scale(1.03); border-color: #e0e0e0; box-shadow: 0 10px 30px rgba(0,0,0,0.07); }
+    .feature-list-item .icon-wrapper { flex-shrink: 0; background-color: #eaf2f6; border-radius: 50%; width: 70px; height: 70px; display: flex; justify-content: center; align-items: center; }
+    .feature-list-item img { width: 40px; height: 40px; }
+    .feature-list-item h3 { margin-bottom: 8px; color: #0056b3; }
+    .feature-list-item p { color: #666; line-height: 1.7; }
+
+    /* ===== 3. 服務項目 (Services) 卡片再進化 ===== */
+    .services {
+        background: linear-gradient(180deg, #f9f9f9 0%, #ffffff 100%); /* 新增漸層背景 */
+    }
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+    .service-card {
+        background-color: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
+        overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: all 0.3s ease; display: flex; flex-direction: column; position: relative;
+    }
+    .service-card:hover { transform: translateY(-12px); box-shadow: 0 12px 30px rgba(0, 86, 179, 0.12); }
+    .service-card-img-wrapper { height: 220px; overflow: hidden; }
+    .service-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .service-card:hover img { transform: scale(1.05); }
+    .service-card-content { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+    .service-card-content h3 { margin-bottom: 15px; color: #1d3557; font-size: 1.4rem; }
+    .service-card-content p { color: #555; flex-grow: 1; margin-bottom: 20px; }
+    .service-card::after { /* 卡片底部的裝飾條 */
+        content: ''; position: absolute; bottom: 0; left: 0;
+        width: 100%; height: 5px; background-color: #457b9d;
+        transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease-in-out;
+    }
+    .service-card:hover::after { transform: scaleX(1); }
+
+    /* ===== 4. OLi 平台介紹區塊 (非對稱佈局) ===== */
+    .oli-feature-section { padding: 80px 0; background-color: #ffffff; }
+    .oli-feature-container { display: flex; align-items: center; gap: 60px; }
+    .oli-feature-content { flex: 1; }
+    /* 【核心修改】圖片在左，文字在右 */
+    .layout-reversed .oli-feature-image { order: 1; }
+    .layout-reversed .oli-feature-content { order: 2; }
+    .oli-feature-content .tagline { color: #0056b3; font-weight: bold; margin-bottom: 10px; display: block; }
+    .oli-feature-content h2 { font-size: 2.5rem; color: #1d3557; margin-bottom: 20px; }
+    .oli-feature-content p { font-size: 1.1em; line-height: 1.8; color: #555; margin-bottom: 25px; }
+    .oli-feature-list { list-style: none; padding-left: 0; margin-bottom: 30px; }
+    .oli-feature-list li { padding-left: 30px; position: relative; margin-bottom: 15px; font-size: 1.05em; }
+    .oli-feature-list li::before { content: '\ec5c'; font-family: 'remixicon'; position: absolute; left: 0; top: 2px; color: #28a745; font-size: 1.2em; }
+    .oli-feature-image { flex: 1; }
+    .oli-feature-image img { width: 100%; border-radius: 12px; box-shadow: 0 15px 40px rgba(0, 86, 179, 0.2); }
+    .btn-secondary { background-color: #fff; color: #0056b3; border: 2px solid #0056b3; padding: 13px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; }
+    .btn-secondary:hover { background-color: #0056b3; color: #fff; }
+
+    /* ===== 5. 行動呼籲區塊 (CTA) ===== */
+    .cta-section { background-color: #1d3557; color: #fff; padding: 100px 0; text-align: center; }
+    .cta-section h2 { font-size: 2.8rem; margin-bottom: 20px; }
+    .cta-section p { font-size: 1.2rem; color: #e0e0e0; max-width: 600px; margin: 0 auto F40px auto; }
+    .btn-primary { background-color: #fca311; color: #1d3557; padding: 18px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(252, 163, 17, 0.3); }
+    .btn-primary:hover { background-color: #ffb703; transform: translateY(-5px); box-shadow: 0 8px 20px rgba(252, 163, 17, 0.4); }
+
+    /* 響應式調整 */
+    @media (max-width: 992px) {
+        .features-container, .oli-feature-container { flex-direction: column; text-align: center; }
+        .features-intro, .oli-feature-content { max-width: 100%; }
+        .layout-reversed .oli-feature-image, .layout-reversed .oli-feature-content { order: 0; }
+        .oli-feature-image { margin-bottom: 40px; }
+    }
+{% endblock %}
+
+{% block content %}
+    <header class="hero">
+        <div class="hero-content"><h1>勤於專業，築就未來</h1><p>您的信賴，是我們最堅實的基石。我們致力於提供最高品質的工程服務，實現您的願景。</p></div>
+    </header>
+
+    <section class="features section">
+        <div class="container">
+            <div class="features-container">
+                <div class="features-intro fade-in-up"><h2>三大核心價值<br>我們不變的承諾</h2><p>勤築工程的每一個專案，都建立在效率、品質與溝通的基石之上。這不僅是我們的服務標準，更是我們對每一位客戶的鄭重承諾。</p></div>
+                <div class="features-list">
+                    <div class="feature-list-item fade-in-up"><div class="icon-wrapper"><img src="{% static 'images/icon-efficiency.png' %}" alt="效率圖示"></div><div><h3>效率展現</h3><p>透過嚴謹的流程控管與精準排程，我們確保專案如期交付，將您的寶貴時間轉化為實際資產。</p></div></div>
+                    <div class="feature-list-item fade-in-up"><div class="icon-wrapper"><img src="{% static 'images/icon-quality.png' %}" alt="精細品質圖示"></div><div><h3>精細品質</h3><p>從材料到工法，我們以近乎苛求的態度把關，確保交付的成果擁有無可挑剔的完美細節。</p></div></div>
+                    <div class="feature-list-item fade-in-up"><div class="icon-wrapper"><img src="{% static 'images/icon-communication.png' %}" alt="友善溝通圖示"></div><div><h3>友善溝通</h3><p>我們視您為忠實夥伴，堅持透明、雙向的溝通模式，確保專案的每個階段都與您的期望同步。</p></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="services section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">服務項目</h2>
+            <div class="services-grid">
+                <div class="service-card fade-in-up">
+                    <div class="service-card-img-wrapper"><img src="{% static 'images/steel-design.jpg' %}" alt="鋼構廠房結構設計"></div>
+                    <div class="service-card-content"><h3>鋼結構設計</h3><p>依據國內最新規範進行結構分析、設計及繪圖，專精於廠房、物流中心等大型鋼構建築。</p></div>
+                </div>
+                <div class="service-card fade-in-up">
+                    <div class="service-card-img-wrapper"><img src="{% static 'images/safety assessment.jpg' %}" alt="建築結構安全鑑定"></div>
+                    <div class="service-card-content"><h3>建築結構安全鑑定</h3><p>為各類型建築提供專業的安全評估鑑定，並可透過土木或結構技師公會出具正式鑑定報告書。</p></div>
+                </div>
+                <div class="service-card fade-in-up">
+                    <div class="service-card-img-wrapper"><img src="{% static 'images/water-conservancy-facilities.jpg' %}" alt="水利設施兼作搭排"></div>
+                    <div class="service-card-content"><h3>農田水利設施兼作搭排</h3><p>專業代辦向各地區農田水利管理處的兼作(加蓋)或搭排(排水)申請，並配合地政士辦理土地事宜。</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="oli-feature-section">
+        <div class="container">
+            <div class="oli-feature-container layout-reversed">
+                <div class="oli-feature-content fade-in-up">
+                    <span class="tagline">TECHNOLOGY & INNOVATION</span>
+                    <h2>OLI 結構工程輔助平台</h2>
+                    <p>結合多年的工程實務經驗與程式開發技術，勤築工程獨立開發了 OLi (Optimal Lean Interface) 平台，旨在為結構工程師提供一個高效、精準且符合最新規範的線上計算環境。</p>
+                    <ul class="oli-feature-list">
+                        <li>直觀易用的操作介面</li><li>符合國內最新設計規範</li><li>自動化計算與報告生成</li><li>持續更新與功能擴展</li>
+                    </ul>
+                    <a href="{% url 'homepage' %}" class="btn-secondary">前往 OLi 平台</a>
+                </div>
+                <div class="oli-feature-image fade-in-up">
+                    <video width="100%" autoplay muted loop playsinline>
+                        <source src="{% static 'videos/oli_showcase.mp4' %}" type="video/mp4">
+                        您的瀏覽器不支援影片播放。這是一段關於 OLi 平台操作的演示。
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="fade-in-up">準備好開始您的下一個專案了嗎？</h2>
+            <p class="fade-in-up" style="transition-delay: 0.1s;">讓我們成為您最可靠的夥伴。立即聯繫勤築的專業團隊，我們將為您提供初步諮詢與評估。</p>
+            <a href="{% url 'CZ_contact' %}" class="btn-primary fade-in-up" style="transition-delay: 0.2s;">立即諮詢</a>
+        </div>
+    </section>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const animatedElements = document.querySelectorAll('.fade-in-up');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        animatedElements.forEach(el => { observer.observe(el); });
+    });
+    </script>
+{% endblock %}

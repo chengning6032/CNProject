@@ -1,0 +1,1470 @@
+{% load unit_conversion_filters %}
+
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+        <div class="report-section">
+            {% with check=results.anchor_nsa.details %}
+                {% if check %}
+                    <div class="report-subtitle">6.3 最大受拉錨栓抗拉強度檢核 (Steel Strength of anchors in
+                        tension)
+                    </div>
+                    <p>此檢核由載重组合 <b>#{{ results.anchor_nsa.combo_id }}</b> 控制
+                        ，最不利錨栓為 <b>#{{ check.anchor_index }}</b>。</p>
+                    {% if check.plot_base64 and check.tension_table_data %}
+                        <div class="report-flex-container">
+                            <!-- 左欄: 應力分佈圖 -->
+                            <div class="figure-container">
+                                <figure class="report-figure" style="margin: 0;">
+                                    <img src="data:image/png;base64,{{ check.plot_base64|safe }}" alt="應力分布圖">
+                                    <figcaption>圖 6.3 最不利拉力之應力分佈圖 (Combo #{{ check_data.combo_id }})
+                                    </figcaption>
+                                </figure>
+                            </div>
+                            <!-- 右欄: 拉力表格 -->
+                            <div class="table-container">
+                                <p class="param-group-title"
+                                   style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                    各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                </p>
+                                <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                    <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                        <thead style="position: sticky; top: 0; z-index: 1;">
+                                        <tr>
+                                            <th>錨栓 #</th>
+                                            <th>拉力 N<sub>ua</sub></th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for row in check.tension_table_data %}
+                                            <tr {% if row.tension_force == check.demand %}class="critical-row"{% endif %}>
+                                                <td>{{ row.index }}</td>
+                                                <td>{% if unit_system == 'mks' %}
+                                                    {{ row.tension_force|to_tf:2 }}{% else %}
+                                                    {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                        <tr>
+                                            <td><b>總和</b></td>
+                                            <td><b>{% if unit_system == 'mks' %}
+                                                {{ check.total_tension|to_tf:2 }}{% else %}
+                                                {{ check.total_tension|floatformat:"-2" }}{% endif %}</b></td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <br>
+
+                    {% if unit_system == 'mks' %}
+                        <!-- MKS 單位顯示 -->
+                        <p>最大需求拉力 $N_{ua,max} = {{ check.demand|to_tf:2 }} \text{ tf}$</p>
+                        <p>標稱抗拉強度 $N_{sa} = A_{se,N} \times f_{uta} = {{ check.Ase_N_mks|floatformat:"-2" }}
+                            \times {{ check.futa_eff_mks|floatformat:"-0" }} / 1000
+                            = {{ check.Nsa_mks|floatformat:"-2" }} \text{ tf}$</p>
+                        <p>設計抗拉強度 $\phi N_{sa} = \phi_{st} \times N_{sa} = {{ check.phi_st|floatformat:"-2" }}
+                            \times {{ check.Nsa_mks|floatformat:"-2" }} = {{ check.phi_Nsa_mks|floatformat:"-2" }}
+                            \text{ tf}$</p>
+                        {% if check.dc_ratio > 1.0 %}
+                            <p>檢核：
+                                $ \dfrac{N_{ua,max}}{\phi N_{sa}} = \dfrac{ {{ check.demand|to_tf:2 }}
+                                }{ {{ check.phi_Nsa_mks|floatformat:"-2" }} }
+                                = {{ check.dc_ratio|floatformat:"-3" }} >
+                                1.0
+                                \rightarrow \textbf{ {{ check.result }} } $</p>
+                        {% else %}
+                            <p>檢核：
+                                $ \dfrac{N_{ua,max}}{\phi N_{sa}} = \dfrac{ {{ check.demand|to_tf:2 }}
+                                }{ {{ check.phi_Nsa_mks|floatformat:"-2" }} }
+                                = {{ check.dc_ratio|floatformat:"-3" }}
+                                \le 1.0
+                                \rightarrow \textbf{ {{ check.result }} } $</p>
+                        {% endif %}
+                    {% else %}
+                        <!-- Imperial 單位顯示 -->
+                        <p>最大需求拉力 $N_{ua,max} = {{ check.demand|floatformat:"-2" }} \text{ kips}$</p>
+                        <p>標稱抗拉強度 $N_{sa} = A_{se,N} \times f_{uta} = {{ check.Ase_N|floatformat:"-4" }}
+                            \text{ in}^2 \times {{ check.futa_eff|floatformat:"-2" }} \text{ ksi}
+                            = {{ check.Nsa|floatformat:"-2" }} \text{ kips}$</p>
+                        <p>設計抗拉強度 $\phi N_{sa} = \phi_{st} \times N_{sa} = {{ check.phi_st|floatformat:"-2" }}
+                            \times {{ check.Nsa|floatformat:"-2" }} = {{ check.phi_Nsa|floatformat:"-2" }} \text{
+                            kips}$</p>
+                        {% if check.dc_ratio > 1.0 %}
+                            <p>檢核：
+                                $ \dfrac{N_{ua,max}}{\phi N_{sa}} = \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                }{ {{ check.phi_Nsa|floatformat:"-2" }} } = {{ check.dc_ratio|floatformat:"-3" }} >
+                                1.0
+                                \rightarrow \textbf{ {{ check.result }} } $</p>
+                        {% else %}
+                            <p>檢核：
+                                $ \dfrac{N_{ua,max}}{\phi N_{sa}} = \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                }{ {{ check.phi_Nsa|floatformat:"-2" }} } = {{ check.dc_ratio|floatformat:"-3" }}
+                                \le 1.0
+                                \rightarrow \textbf{ {{ check.result }} } $</p>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+        <div class="report-section">
+            {% with check_data=results.anchor_npn %}
+                {% if check_data %}
+                    {% with check=check_data.details %}
+                        <div class="report-subtitle" style="margin-top: 30px;">6.4 錨栓拔出強度檢核 (Pullout
+                            Strength)
+                        </div>
+                        <p>此檢核由載重组合 <b>#{{ check_data.combo_id }}</b> 控制
+                            ，最不利錨栓為 <b>#{{ check.anchor_index }}</b>。</p>
+                        {% if check.plot_base64 and check.tension_table_data %}
+                            <div class="report-flex-container">
+                                <!-- 左欄: 應力分佈圖 -->
+                                <div class="figure-container">
+                                    <figure class="report-figure" style="margin: 0;">
+                                        <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                             alt="應力分布圖"
+                                             style="height: 100mm; width: auto; max-width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                        <figcaption>圖 6.4 最不利拉力之應力分佈圖 (Combo
+                                            #{{ results.anchor_nsa.combo_id }})
+                                        </figcaption>
+                                    </figure>
+                                </div>
+                                <!-- 右欄: 拉力表格 -->
+                                <div class="table-container">
+                                    <p class="param-group-title"
+                                       style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                        各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                    </p>
+                                    <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                        <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                            <thead style="position: sticky; top: 0; z-index: 1;">
+                                            <tr>
+                                                <th>錨栓 #</th>
+                                                <th>拉力 N<sub>ua</sub></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for row in check.tension_table_data %}
+                                                <tr {% if row.tension_force == check.demand %}class="critical-row"{% endif %}>
+                                                    <td>{{ row.index }}</td>
+                                                    <td>{% if unit_system == 'mks' %}
+                                                        {{ row.tension_force|to_tf:2 }}{% else %}
+                                                        {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                            <tr>
+                                                <td><b>總和</b></td>
+                                                <td><b>{% if unit_system == 'mks' %}
+                                                    {{ check.total_tension|to_tf:2 }}{% else %}
+                                                    {{ check.total_tension|floatformat:"-2" }}{% endif %}</b></td>
+                                            </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if unit_system == 'mks' %}
+                            <!-- MKS 單位顯示 -->
+                            <p>最大需求拉力 $N_{ua,max} = {{ check.demand|to_tf:2 }} \text{ tf}$</p>
+                            {% if check.anchor_structural_type == 'hooked' %}
+                                <p>錨栓類型為預埋式J或L形錨栓</p>
+                                <p>基本拔出強度 $N_{p} = 0.9 f'_{c} e_{h} d_{a} = 0.9
+                                    \times {{ check.fc_mks|floatformat:"-2" }}
+                                    \times {{ check.eh_mks|floatformat:"-2" }}
+                                    \times {{ check.da_mks|floatformat:"-2" }} / 1000
+                                    = {{ check.Np_mks|floatformat:"-2" }} \text{ tf}$</p>
+                            {% else %}
+                                <p>錨栓類型為預埋式擴頭錨栓</p>
+                                <p>基本拔出強度 $N_{p} = 8 A_{brg} f'_{c} = 8
+                                    \times {{ check.Abrg_mks|floatformat:"-2" }}
+                                    \times {{ check.fc_mks|floatformat:"-2" }} / 1000
+                                    = {{ check.Np_mks|floatformat:"-2" }} \text{ tf}$</p>
+                            {% endif %}
+
+                            {% if check.is_cracked %}
+                                <p>因設定混凝土構材區域會產生開裂 $\Rightarrow \Psi_{c,P} = 1.0$</p>
+                            {% else %}
+                                <p>因設定混凝土構材區域未產生開裂 $\Rightarrow \Psi_{c,P} = 1.4$</p>
+                            {% endif %}
+
+                            <p>標稱拔出強度 $N_{pn} = \Psi_{c,P} N_{p} = {{ check.psi_c_p|floatformat:"-1" }}
+                                \times {{ check.Np_mks|floatformat:"-2" }} = {{ check.Npn_mks|floatformat:"-2" }}
+                                \text{ tf}$</p>
+                            <p>設計拔出強度 $\phi N_{pn} = \phi_{pn} \times N_{pn}
+                                = {{ check.phi_pn|floatformat:"-2" }} \times {{ check.Npn_mks|floatformat:"-2" }}
+                                = {{ check.phi_Npn_mks|floatformat:"-2" }} \text{ tf}$</p>
+
+                            {% if check.dc_ratio > 1.0 %}
+                                <p>檢核： $ \dfrac{N_{ua,max}}{\phi N_{pn}} =
+                                    \dfrac{ {{ check.demand|to_tf:2 }}
+                                    }{ {{ check.phi_Npn_mks|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }} > 1.0 \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% else %}
+                                <p>檢核： $ \dfrac{N_{ua,max}}{\phi N_{pn}} =
+                                    \dfrac{ {{ check.demand|to_tf:2 }}
+                                    }{ {{ check.phi_Npn_mks|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }} \le 1.0 \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% endif %}
+
+                        {% else %}
+                            <!-- Imperial 單位顯示 -->
+                            <p>最大需求拉力 $N_{ua,max} = {{ check.demand|floatformat:"-2" }} \text{ kips}$</p>
+                            {% if check.anchor_structural_type == 'hooked' %}
+                                <p>錨栓類型為預埋式J或L形錨栓</p>
+                                <p>基本拔出強度 $N_{p} = 0.9 f'_{c} e_{h} d_{a} = 0.9
+                                    \times {{ check.fc|floatformat:"-0" }} \times {{ check.eh_in|floatformat:"-2" }}
+                                    \times {{ check.da|floatformat:"-3" }} / 1000
+                                    = {{ check.Np_kips|floatformat:"-2" }} \text{ kips}$</p>
+                            {% else %}
+                                <p>錨栓類型為預埋式擴頭錨栓</p>
+                                <p>基本拔出強度 $N_{p} = 8 A_{brg} f'_{c} = 8
+                                    \times {{ check.Abrg_in2|floatformat:"-3" }}
+                                    \times {{ check.fc|floatformat:"-2" }} / 1000
+                                    = {{ check.Np_kips|floatformat:"-2" }} \text{ kips}$</p>
+                            {% endif %}
+
+                            {% if check.is_cracked %}
+                                <p>因設定混凝土構材區域會產生開裂 $\Rightarrow \Psi_{c,P} = 1.0$</p>
+                            {% else %}
+                                <p>因設定混凝土構材區域未產生開裂 $\Rightarrow \Psi_{c,P} = 1.4$</p>
+                            {% endif %}
+
+                            <p>標稱拔出強度 $N_{pn} = \Psi_{c,P} N_{p} = {{ check.psi_c_p|floatformat:"-1" }}
+                                \times {{ check.Np_kips|floatformat:"-2" }} = {{ check.Npn|floatformat:"-2" }}
+                                \text{ kips}$</p>
+                            <p>設計拔出強度 $\phi N_{pn} = \phi_{pn} \times N_{pn}
+                                = {{ check.phi_pn|floatformat:"-2" }} \times {{ check.Npn|floatformat:"-2" }}
+                                = {{ check.phi_Npn|floatformat:"-2" }} \text{ kips}$</p>
+
+                            {% if check.dc_ratio > 1.0 %}
+                                <p>檢核： $ \dfrac{N_{ua,max}}{\phi N_{pn}} =
+                                    \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                    }{ {{ check.phi_Npn|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }} > 1.0 \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% else %}
+                                <p>檢核： $ \dfrac{N_{ua,max}}{\phi N_{pn}} =
+                                    \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                    }{ {{ check.phi_Npn|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }} \le 1.0 \rightarrow
+                                    \textbf{ {{ check.result }} } $</p>
+                            {% endif %}
+                        {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <div class="report-subtitle" style="margin-top: 30px;">6.4 錨栓拔出強度檢核 (Pullout Strength)
+                    </div>
+                    <p class="check-message"><i>不適用或未計算</i></p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+        <div class="report-section">
+            <div class="report-subtitle" style="margin-top: 0;">6.5 混凝土拉破強度檢核 (Concrete breakout strength
+                of anchors in tension)
+            </div>
+            <!-- 6.5.1 单根錨栓 -->
+            {% with check_data=results.anchor_ncb_single %}
+                {% if check_data and check_data.details.result != 'N/A' %}
+                    {% with check=check_data.details %}
+                        <div class="report-subsection" style="margin-left: 15px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.5.1
+                                單根錨栓混凝土拉破強度檢核</h4>
+                            <p>此檢核由載重组合 <b>#{{ check_data.combo_id }}</b> 的最不利錨栓控制。</p>
+
+                            {% if check.plot_base64 and check.tension_table_data %}
+                                <div class="report-flex-container">
+                                    <!-- 左欄: 應力分佈圖 -->
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                                 alt="應力分布圖"
+                                                 style="height: 100mm; width: auto; max-width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            <figcaption>圖 6.5.1-1 最不利拉力之應力分佈圖 (Combo
+                                                #{{ check_data.combo_id }})
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                    <!-- 右欄: 拉力表格 -->
+                                    <div class="table-container">
+                                        <p class="param-group-title"
+                                           style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                            各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                        </p>
+                                        <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                            <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                                <thead style="position: sticky; top: 0; z-index: 1;">
+                                                <tr>
+                                                    <th>錨栓 #</th>
+                                                    <th>拉力 N<sub>ua</sub></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for row in check.tension_table_data %}
+                                                    <tr {% if row.tension_force == check.demand %}class="critical-row"{% endif %}>
+                                                        <td>{{ row.index }}</td>
+                                                        <td>{% if unit_system == 'mks' %}
+                                                            {{ row.tension_force|to_tf:2 }}{% else %}
+                                                            {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                <tr>
+                                                    <td><b>總和</b></td>
+                                                    <td><b>{% if unit_system == 'mks' %}
+                                                        {{ check.total_tension|to_tf:2 }}{% else %}
+                                                        {{ check.total_tension|floatformat:"-2" }}{% endif %}</b>
+                                                    </td>
+                                                </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- [核心新增] ANc 影響範圍示意圖 -->
+                            {% if check.anc_plot_base64 %}
+                                <div class="report-flex-container" style="margin-top: 15px;">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.anc_plot_base64|safe }}"
+                                                 alt="ANc 示意圖"
+                                                 style="max-height: 100mm; width: auto; max-width: 100%; border: 1px solid #ccc;">
+                                            <figcaption>圖 6.5.1-2 混凝土拉破影響面積 A<sub>Nc</sub> 示意圖
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+
+                        </div>
+                    {% endwith %}
+                {% endif %}
+            {% endwith %}
+
+        </div>
+    </div>
+
+</div>
+
+<!-- 6.5.1 单根錨栓 -->
+{% with check_data=results.anchor_ncb_single %}
+    {% if check_data and check_data.details.result != 'N/A' %}
+        {% with check=check_data.details %}
+            <div class="a4-page">
+                <div class="page-content">
+                    <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                    <div class="report-section">
+                        <h4 style="font-weight: bold; margin-bottom: 10px;">6.5.1
+                            單根錨栓混凝土拉破強度檢核(續)</h4>
+                        {% if unit_system == 'mks' %}
+                            <p>最大需求拉力 $N_{ua,max} = {{ check.demand|to_tf:2 }} \text{ tf}$</p>
+                            <p>有效埋設深度 $h_{ef} = {{ check.h_ef_mks|floatformat:"-2" }} \text{ cm}$</p>
+                            <p>錨栓中心至混凝土邊緣最小距離 $c_{a,min} = {{ check.ca_min_mks|floatformat:"-2" }}
+                                \text{
+                                cm}$</p>
+                            {% if check.use_special_formula %}
+                                <p>因為預埋式錨栓，且 $28\text{ cm} \le h_{ef} \le 63.5 \text{ cm}$</p>
+                                <p>基本拉破強度 $N_b = 5.8 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{5/3}
+                                    = 5.8 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_mks|floatformat:"-2" }} }
+                                    \times {{ check.h_ef_mks|floatformat:"-2" }}^{5/3}/1000
+                                    = {{ check.Nb_mks|floatformat:"-2" }} \text{ tf}$</p>
+                            {% else %}
+                                {% if check.k_c == 10 %}
+                                    <p>因為預埋式錨栓，且 $h_{ef} < 28\text{ cm}$</p>
+                                    <p>基本拉破強度 $N_b = 10 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                        = 10 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_mks|floatformat:"-2" }} }
+                                        \times {{ check.h_ef_mks|floatformat:"-2" }}^{1.5}/1000
+                                        = {{ check.Nb_mks|floatformat:"-2" }} \text{ tf}$</p>
+                                {% else %}
+                                    <p>因為後置式錨栓，且 $h_{ef} < 28\text{ cm}$</p>
+                                    <p>基本拉破強度 $N_b = 7 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                        = 7 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_mks|floatformat:"-2" }} }
+                                        \times {{ check.h_ef_mks|floatformat:"-2" }}^{1.5}/1000
+                                        = {{ check.Nb_mks|floatformat:"-2" }} \text{ tf}$</p>
+                                {% endif %}
+                            {% endif %}
+
+                            <p>投影面積 $A_{Nc} = {{ check.A_Nc_mks|floatformat:"-2" }} \text{ cm}^2$, $A_{Nco}
+                                = {{ check.A_Nco_mks|floatformat:"-2" }} \text{ cm}^2$</p>
+
+                            <p>標稱拉破強度 $N_{cb} = \dfrac{A_{Nc}}{A_{Nco}} \Psi_{ed,N} \Psi_{c,N} \Psi_{cp,N}
+                                N_b$</p>
+                            <p>
+                            <p>拉破之邊距效應修正因數 $\Psi_{ed,N}$ (17.6.2.4)</p>
+                            {% if check.is_deep_enough == 0 %}
+                                <p>因 $c_{a,min} \ge 1.5 h_{ef} \Rightarrow \Psi_{ed,N} = 1.0$ (17.6.2.4)</p>
+                            {% else %}
+                                <p>因 $c_{a,min} < 1.5 h_{ef} \Rightarrow \Psi_{ed,N}
+                                    = 0.7 + 0.3\dfrac{ c_{a,min} }{ 1.5h_{ef} }
+                                    = 0.7 + 0.3\dfrac{ {{ check.ca_min_mks|floatformat:"-2" }} }{ 1.5
+                                    \times {{ check.h_ef_mks|floatformat:"-2" }} }
+                                    = {{ check.psi_ed_N|floatformat:"-3" }}$</p>
+                            {% endif %}
+                            <p>拉破之開裂修正因數 $\Psi_{c,N}$ (17.6.2.5)</p>
+                            {% if check.is_cracked %}
+                                <p>因設定混凝土構材區域會產生開裂$ \Rightarrow \Psi_{c,N} = 1.0$</p>
+                            {% else %}
+                                {% if check.anchor_type == 'cast-in' %}
+                                    <p>因設定混凝土構材區域未產生開裂，且為預埋式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                        1.25$</p>
+                                {% else %}
+                                    <p>因設定混凝土構材區域未產生開裂，且為後置式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                        1.40$</p>
+                                {% endif %}
+                            {% endif %}
+                            <p>拉破之劈裂修正因數 $\Psi_{cp,N}$ (17.6.2.6)</p>
+                            {% if check.anchor_type == 'cast-in' %}
+                                <p>因為預埋式錨栓 $ \Rightarrow \Psi_{cp,N} = 1.0$</p>
+                            {% else %}
+                                {% if check.is_deep_enough %}
+                                    <p>因為後置式錨栓，且$c_{a,min} \ge c_{Na} \Rightarrow \Psi_{c,N}
+                                        = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                {% else %}
+                                    <p>因為後置式錨栓，且$c_{a,min} < c_{Na} \Rightarrow \Psi_{c,N}
+                                        = 0.7 + 0.3\dfrac{ c_{a,min} }{ c_{Na} }
+                                        = 0.7 + 0.3\dfrac{ {{ check.ca_min_mks|floatformat:"-2" }} }{ 1.5
+                                        \times {{ check.h_ef_mks|floatformat:"-2" }} }
+                                        = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                {% endif %}
+
+                            {% endif %}
+
+
+                            $ N_{cb} = \dfrac{ {{ check.A_Nc_mks|floatformat:"-2" }}
+                            }{ {{ check.A_Nco_mks|floatformat:"-2" }} }
+                            \times {{ check.psi_ed_N|floatformat:"-3" }}
+                            \times {{ check.psi_c_N|floatformat:"-2" }}
+                            \times {{ check.psi_cp_N|floatformat:"-2" }} \times
+                            {{ check.Nb_mks|floatformat:"-2" }}
+                            = {{ check.Ncb|floatformat:"-2" }} \text{ tf} $
+
+
+                            <p>設計拉破強度 $\phi N_{cb} = \phi_{cb} \times N_{cb}
+                                = {{ check.phi_cb|floatformat:"-2" }}
+                                \times {{ check.Ncb|floatformat:"-2" }}
+                                = {{ check.phi_Ncb|floatformat:"-2" }} \text{ tf} $</p>
+
+                            {% if check.dc_ratio > 1.0 %}
+                                <p>檢核：
+                                    $ \dfrac{N_{ua,max}}{\phi N_{cb}} =
+                                    \dfrac{ {{ check.demand|to_tf:2 }}
+                                    }{ {{ check.phi_Ncb|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }}
+                                    > 1.0
+                                    \rightarrow \textbf{ {{ check.result }} } $</p>
+                            {% else %}
+                                <p>檢核：
+                                    $ \dfrac{N_{ua,max}}{\phi N_{cb}} =
+                                    \dfrac{ {{ check.demand|to_tf:2 }}
+                                    }{ {{ check.phi_Ncb|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }}
+                                    \le 1.0
+                                    \rightarrow \textbf{ {{ check.result }} } $</p>
+                            {% endif %}
+                        {% else %}
+                            <p>最大需求拉力 $N_{ua,max} = {{ check.demand|floatformat:"-2" }} \text{ kips}$</p>
+                            <p>有效埋設深度 $h_{ef} = {{ check.h_ef_imp|floatformat:"-2" }} \text{ in}$</p>
+                            <p>錨栓中心至混凝土邊緣最小距離 $c_{a,min} = {{ check.ca_min_imp|floatformat:"-2" }}
+                                \text{
+                                in}$</p>
+                            {% if check.use_special_formula %}
+                                <p>因為預埋式錨栓，且 $11\text{ in} \le h_{ef} \le 25 \text{ in}$</p>
+                                <p>基本拉破強度 $N_b = 16 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{5/3}
+                                    = 16 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_imp|floatformat:"-2" }} }
+                                    \times {{ check.h_ef_imp|floatformat:"-2" }}^{5/3}/1000
+                                    = {{ check.Nb_imp|floatformat:"-2" }} \text{ kips}$</p>
+                            {% else %}
+                                {% if check.k_c == 24 %}
+                                    <p>因為預埋式錨栓，且 $h_{ef} < 11\text{ in}$</p>
+                                    <p>基本拉破強度 $N_b = 24 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                        = 24 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_imp|floatformat:"-2" }} }
+                                        \times {{ check.h_ef_imp|floatformat:"-2" }}^{1.5}/1000
+                                        = {{ check.Nb_imp|floatformat:"-2" }} \text{ kips}$</p>
+                                {% else %}
+                                    <p>因為後置式錨栓，且 $h_{ef} < 11\text{ in}$</p>
+                                    <p>基本拉破強度 $N_b = 17 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                        = 17 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_imp|floatformat:"-2" }} }
+                                        \times {{ check.h_ef_imp|floatformat:"-2" }}^{1.5}/1000
+                                        = {{ check.Nb_imp|floatformat:"-2" }} \text{ kips}$</p>
+                                {% endif %}
+                            {% endif %}
+
+                            <p>投影面積 $A_{Nc} = {{ check.A_Nc_imp|floatformat:"-2" }} \text{ in}^2$, $A_{Nco}
+                                = {{ check.A_Nco_imp|floatformat:"-2" }} \text{ in}^2$</p>
+
+                            <p>標稱拉破強度 $N_{cb} = \dfrac{A_{Nc}}{A_{Nco}} \Psi_{ed,N} \Psi_{c,N} \Psi_{cp,N}
+                                N_b$</p>
+                            <p>
+                            <p>拉破之邊距效應修正因數 $\Psi_{ed,N}$ (17.6.2.4)</p>
+                            {% if check.is_deep_enough == 0 %}
+                                <p>因 $c_{a,min} \ge 1.5 h_{ef} \Rightarrow \Psi_{ed,N} = 1.0$ (17.6.2.4)</p>
+                            {% else %}
+                                <p>因 $c_{a,min} < 1.5 h_{ef} \Rightarrow \Psi_{ed,N}
+                                    = 0.7 + 0.3\dfrac{ c_{a,min} }{ 1.5h_{ef} }
+                                    = 0.7 + 0.3\dfrac{ {{ check.ca_min_imp|floatformat:"-2" }} }{ 1.5
+                                    \times {{ check.h_ef_imp|floatformat:"-2" }} }
+                                    = {{ check.psi_ed_N|floatformat:"-3" }}$</p>
+                            {% endif %}
+                            <p>拉破之開裂修正因數 $\Psi_{c,N}$ (17.6.2.5)</p>
+                            {% if check.is_cracked %}
+                                <p>因設定混凝土構材區域會產生開裂$ \Rightarrow \Psi_{c,N} = 1.0$</p>
+                            {% else %}
+                                {% if check.anchor_type == 'cast-in' %}
+                                    <p>因設定混凝土構材區域未產生開裂，且為預埋式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                        1.25$</p>
+                                {% else %}
+                                    <p>因設定混凝土構材區域未產生開裂，且為後置式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                        1.40$</p>
+                                {% endif %}
+                            {% endif %}
+                            <p>拉破之劈裂修正因數 $\Psi_{cp,N}$ (17.6.2.6)</p>
+                            {% if check.anchor_type == 'cast-in' %}
+                                <p>因為預埋式錨栓 $ \Rightarrow \Psi_{cp,N} = 1.0$</p>
+                            {% else %}
+                                {% if check.is_deep_enough %}
+                                    <p>因為後置式錨栓，且$c_{a,min} \ge c_{Na} \Rightarrow \Psi_{c,N}
+                                        = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                {% else %}
+                                    <p>因為後置式錨栓，且$c_{a,min} < c_{Na} \Rightarrow \Psi_{c,N}
+                                        = 0.7 + 0.3\dfrac{ c_{a,min} }{ c_{Na} }
+                                        = 0.7 + 0.3\dfrac{ {{ check.ca_min_imp|floatformat:"-2" }} }{ 1.5
+                                        \times {{ check.h_ef_imp|floatformat:"-2" }} }
+                                        = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                {% endif %}
+
+                            {% endif %}
+
+
+                            $ N_{cb} = \dfrac{ {{ check.A_Nc_imp|floatformat:"-2" }}
+                            }{ {{ check.A_Nco_imp|floatformat:"-2" }} }
+                            \times {{ check.psi_ed_N|floatformat:"-3" }}
+                            \times {{ check.psi_c_N|floatformat:"-2" }}
+                            \times {{ check.psi_cp_N|floatformat:"-2" }} \times
+                            {{ check.Nb_imp|floatformat:"-2" }}
+                            = {{ check.Ncb|floatformat:"-2" }} \text{ kips} $
+
+
+                            <p>設計拉破強度 $\phi N_{cb} = \phi_{cb} \times N_{cb}
+                                = {{ check.phi_cb|floatformat:"-2" }}
+                                \times {{ check.Ncb|floatformat:"-2" }}
+                                = {{ check.phi_Ncb|floatformat:"-2" }} \text{ kips} $</p>
+
+                            {% if check.dc_ratio > 1.0 %}
+                                <p>檢核：
+                                    $ \dfrac{N_{ua,max}}{\phi N_{cb}} =
+                                    \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                    }{ {{ check.phi_Ncb|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }}
+                                    > 1.0
+                                    \rightarrow \textbf{ {{ check.result }} } $</p>
+                            {% else %}
+                                <p>檢核：
+                                    $ \dfrac{N_{ua,max}}{\phi N_{cb}} =
+                                    \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                    }{ {{ check.phi_Ncb|floatformat:"-2" }} }
+                                    = {{ check.dc_ratio|floatformat:"-3" }}
+                                    \le 1.0
+                                    \rightarrow \textbf{ {{ check.result }} } $</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        {% endwith %}
+    {% endif %}
+{% endwith %}
+
+
+
+<div class="a4-page">
+    <div class="page-content">
+        <!-- 6.5 混凝土拉破強度檢核 -->
+        <div class="report-section">
+            <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+
+            <!-- 6.5.2 錨栓群组 -->
+            {% with check_data=results.anchor_ncbg_group %}
+                {% if check_data %}
+                    {% with check=check_data.details %}
+                        <div class="report-subsection" style="margin-left: 15px; margin-top: 25px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.5.2 錨栓群混凝土拉破強度檢核</h4>
+                            <p>此檢核由載重组合 <b>#{{ check_data.combo_id }}</b> 控制。</p>
+
+                            {% if check.plot_base64 and check.tension_table_data %}
+                                <div class="report-flex-container">
+                                    <!-- 左欄: 應力分佈圖 -->
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                                 alt="應力分布圖"
+                                                 style="height: 100mm; width: auto; max-width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            <figcaption>圖 6.5.2-1 最不利拉力之應力分佈圖 (Combo
+                                                #{{ check_data.combo_id }})
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                    <div class="table-container">
+                                        <p class="param-group-title"
+                                           style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                            各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                        </p>
+                                        <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                            <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                                <thead>
+                                                <tr>
+                                                    <th>錨栓 #</th>
+                                                    <th>拉力 N<sub>ua</sub></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for row in check.tension_table_data %}
+                                                    <tr {% if row.tension_force > 0 %}class="critical-row"{% endif %}>
+                                                        <td>{{ row.index }}</td>
+                                                        <td>{% if unit_system == 'mks' %}
+                                                            {{ row.tension_force|to_tf:2 }}{% else %}
+                                                            {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                <tr>
+                                                    <td><b>總和</b></td>
+                                                    <td><b>{% if unit_system == 'mks' %}
+                                                        {{ check.total_tension|to_tf:2 }}{% else %}
+                                                        {{ check.total_tension|floatformat:"-2" }}{% endif %}</b>
+                                                    </td>
+                                                </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- [核心新增] ANcbg 影響範圍示意圖 -->
+                            {% if check.ancg_plot_base64 %}
+                                <div class="report-flex-container" style="margin-top: 15px;">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.ancg_plot_base64|safe }}"
+                                                 alt="ANcbg 示意圖"
+                                                 style="max-height: 100mm; width: auto; max-width: 100%; border: 1px solid #ccc;">
+                                            <figcaption>圖 6.5.2-2 混凝土群組拉破影響面積 A<sub>Ncg</sub> 示意圖
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+
+                        </div>
+                    {% endwith %}
+                {% endif %}
+            {% endwith %}
+
+        </div>
+    </div>
+
+</div>
+
+
+{% with check_data=results.anchor_ncbg_group %}
+    {% if check_data %}
+        {% with check=check_data.details %}
+            <div class="a4-page">
+                <div class="page-content">
+                    <!-- 6.5 混凝土拉破強度檢核 -->
+                    <div class="report-section">
+                        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                        <div class="report-subsection" style="margin-left: 15px; margin-top: 25px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.5.2
+                                錨栓群混凝土拉破強度檢核(續)</h4>
+                            {% if unit_system == 'mks' %}
+                                <p>群组需求拉力 $N_{ua,g} = \sum N_{ua,i} = {{ check.demand|to_tf:2 }}
+                                    \text{
+                                    tf}$</p>
+                                <p>錨栓群距墩柱邊緣最小距離 $c_{a,min} = {{ check.ca_min|floatformat:"-2" }} \text{
+                                    cm}$</p>
+                                <p>錨栓群距墩柱邊緣最大距離 $c_{a,max} = {{ check.ca_max|floatformat:"-2" }} \text{
+                                    cm}$</p>
+                                <p>錨栓群之錨栓最大間距 $s = {{ check.max_spacing|floatformat:"-2" }} \text{
+                                    cm}$</p>
+                                {% if check.num_small_edges >= 3 %}
+                                    <p>滿足規範17.6.2.1.2要求，修正 $h_{ef} = h_{ef,used}
+                                        =max\left(c_{a,max}/1.5, s/3 \right)
+                                        = {{ check.hef_used|floatformat:"-2" }}\text{ cm}$</p>
+                                {% else %}
+                                    <p>未滿足規範17.6.2.1.2要求，$h_{ef} = {{ check.hef_used|floatformat:"-2" }}\text{
+                                        cm}$</p>
+                                {% endif %}
+
+                                {% if check.use_special_formula %}
+                                    <p>因為預埋式錨栓，且 $28\text{ cm} \le h_{ef} \le 63.5 \text{ cm}$</p>
+                                    <p>基本拉破強度 $N_b = 5.8 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{5/3}
+                                        = 5.8 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                        \times {{ check.hef_used|floatformat:"-2" }}^{5/3}/1000
+                                        = {{ check.Nb|floatformat:"-2" }} \text{ tf}$</p>
+                                {% else %}
+                                    {% if check.k_c == 10 %}
+                                        <p>因為預埋式錨栓，且 $h_{ef} < 28\text{ cm}$</p>
+                                        <p>基本拉破強度 $N_b = 10 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                            = 10 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                            \times {{ check.hef_used|floatformat:"-2" }}^{1.5}/1000
+                                            = {{ check.Nb|floatformat:"-2" }} \text{ tf}$</p>
+                                    {% else %}
+                                        <p>因為後置式錨栓，且 $h_{ef} < 28\text{ cm}$</p>
+                                        <p>基本拉破強度 $N_b = 7 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                            = 7 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                            \times {{ check.hef_used|floatformat:"-2" }}^{1.5}/1000
+                                            = {{ check.Nb|floatformat:"-2" }} \text{ tf}$</p>
+                                    {% endif %}
+                                {% endif %}
+
+                                <p>投影面積 $A_{Nc} = {{ check.A_Nc|floatformat:"-2" }} \text{ cm}^2$, $A_{Nco}
+                                    = {{ check.A_Nco|floatformat:"-2" }} \text{ cm}^2$</p>
+
+                                <p>標稱拉破強度 $N_{cbg} = \dfrac{A_{Nc}}{A_{Nco}} \Psi_{ec,N} \Psi_{ed,N}
+                                    \Psi_{c,N}
+                                    \Psi_{cp,N} N_b$</p>
+                                <p>拉破之偏心修正因數 $\Psi_{ec,N}$ (17.6.2.3)</p>
+                                {% if check.psi_ec_N == 1.0 %}
+                                    <p>受拉錨栓群無偏心載重作用，$\Rightarrow \Psi_{ec,N} = 1.0$</p>
+                                {% else %}
+                                    <p>受拉錨栓群受偏心載重作用</p>
+                                    $ \begin{align*}
+                                    \Rightarrow \Psi_{ec,N}= \Psi_{ecx,N} \Psi_{ecy,N}
+                                    &= \dfrac{1}{1+ \dfrac{ e'_{Nx} }{1.5h_{ef}}} \times \dfrac{1}{1+ \dfrac{
+                                    e'_{Ny}}{1.5h_{ef}}} \\
+                                    &= \dfrac{1}{1+ \dfrac{ {{ check.ecc_x|floatformat:"-2" }} }{1.5 \times
+                                    {{ check.hef_used|floatformat:"-2" }} }}
+                                    \times \dfrac{1}{1+ \dfrac{ {{ check.ecc_y|floatformat:"-2" }} }{1.5 \times
+                                    {{ check.hef_used|floatformat:"-2" }} }} = {{ check.psi_ec_N|floatformat:"-3" }}
+                                    \end{align*}$
+                                {% endif %}
+                                <p>拉破之邊距效應修正因數 $\Psi_{ed,N}$ (17.6.2.4)</p>
+                                {% if check.is_deep_enough %}
+                                    <p>因 $c_{a,min} \ge 1.5 h_{ef} \Rightarrow \Psi_{ed,N} = 1.0$ (17.6.2.4)</p>
+                                {% else %}
+                                    <p>因 $c_{a,min} < 1.5 h_{ef} \Rightarrow \Psi_{ed,N}
+                                        = 0.7 + 0.3\dfrac{ c_{a,min} }{ 1.5h_{ef} }
+                                        = 0.7 + 0.3\dfrac{ {{ check.ca_min|floatformat:"-2" }} }{ 1.5
+                                        \times {{ check.hef_used|floatformat:"-2" }} }
+                                        = {{ check.psi_ed_N|floatformat:"-3" }}$</p>
+                                {% endif %}
+                                <p>拉破之開裂修正因數 $\Psi_{c,N}$ (17.6.2.5)</p>
+                                {% if check.is_cracked %}
+                                    <p>因設定混凝土構材區域會產生開裂$ \Rightarrow \Psi_{c,N} = 1.0$</p>
+                                {% else %}
+                                    {% if check.anchor_type == 'cast-in' %}
+                                        <p>因設定混凝土構材區域未產生開裂，且為預埋式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                            1.25$</p>
+                                    {% else %}
+                                        <p>因設定混凝土構材區域未產生開裂，且為後置式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                            1.40$</p>
+                                    {% endif %}
+                                {% endif %}
+                                <p>拉破之劈裂修正因數 $\Psi_{cp,N}$ (17.6.2.6)</p>
+                                {% if check.anchor_type == 'cast-in' %}
+                                    <p>因為預埋式錨栓 $ \Rightarrow \Psi_{cp,N} = 1.0$</p>
+                                {% else %}
+                                    {% if check.is_deep_enough %}
+                                        <p>因為後置式錨栓，且$c_{a,min} \ge c_{Na} \Rightarrow \Psi_{c,N}
+                                            = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                    {% else %}
+                                        <p>因為後置式錨栓，且$c_{a,min} < c_{Na} \Rightarrow \Psi_{c,N}
+                                            = 0.7 + 0.3\dfrac{ c_{a,min} }{ c_{Na} }
+                                            = 0.7 + 0.3\dfrac{ {{ check.ca_min|floatformat:"-2" }} }{ 1.5
+                                            \times {{ check.hef|floatformat:"-2" }} }
+                                            = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                    {% endif %}
+
+                                {% endif %}
+
+                                $ N_{cbg} = \dfrac{ {{ check.A_Nc|floatformat:"-2" }}
+                                }{ {{ check.A_Nco|floatformat:"-2" }}
+                                } \times {{ check.psi_ec_N|floatformat:"-3" }}
+                                \times {{ check.psi_ed_N|floatformat:"-3" }}
+                                \times {{ check.psi_c_N|floatformat:"-2" }}
+                                \times {{ check.psi_cp_N|floatformat:"-2" }}
+                                \times {{ check.Nb|floatformat:"-2" }} = {{ check.Ncbg|floatformat:"-2" }} \text{
+                                tf}
+                                $
+
+                                <p>設計拉破強度 $\phi N_{cbg} = \phi_{cb} \times N_{cbg}
+                                    = {{ check.phi_cb|floatformat:"-2" }}
+                                    \times {{ check.Ncbg|floatformat:"-2" }} = {{ check.phi_Ncbg|floatformat:"-2" }}
+                                    \text{
+                                    tf} $</p>
+
+                                {% if check.dc_ratio > 1.0 %}
+                                    <p>檢核：
+                                        $ \dfrac{N_{ua,g}}{\phi N_{cbg}} =
+                                        \dfrac{ {{ check.demand|to_tf:2 }}
+                                        }{ {{ check.phi_Ncbg|floatformat:"-2" }} }
+                                        = {{ check.dc_ratio|floatformat:"-3" }}
+                                        > 1.0
+                                        \rightarrow \textbf{ {{ check.result }} } $</p>
+                                {% else %}
+                                    <p>檢核：
+                                        $ \dfrac{N_{ua,g}}{\phi N_{cbg}} =
+                                        \dfrac{ {{ check.demand|to_tf:2 }}
+                                        }{ {{ check.phi_Ncbg|floatformat:"-2" }} }
+                                        = {{ check.dc_ratio|floatformat:"-3" }}
+                                        \le 1.0
+                                        \rightarrow \textbf{ {{ check.result }} } $</p>
+                                {% endif %}
+                            {% else %}
+                                <p>群组需求拉力 $N_{ua,g} = \sum N_{ua,i} = {{ check.demand|floatformat:"-2" }}
+                                    \text{
+                                    kips}$</p>
+                                <p>錨栓群距墩柱邊緣最小距離 $c_{a,min} = {{ check.ca_min|floatformat:"-2" }} \text{
+                                    in}$</p>
+                                <p>錨栓群距墩柱邊緣最大距離 $c_{a,max} = {{ check.ca_max|floatformat:"-2" }} \text{
+                                    in}$</p>
+                                <p>錨栓群之錨栓最大間距 $s = {{ check.max_spacing|floatformat:"-2" }} \text{
+                                    in}$</p>
+
+                                {% if check.num_small_edges >= 3 %}
+                                    <p>滿足規範17.6.2.1.2要求，修正 $h_{ef} = h_{ef,used}
+                                        = max\left(c_{a,max}/1.5, s/3\right)
+                                        = {{ check.hef_used|floatformat:"-2" }}\text{ in}$</p>
+                                {% else %}
+                                    <p>未滿足規範17.6.2.1.2要求，$h_{ef} = {{ check.hef_used|floatformat:"-2" }}\text{
+                                        in}$</p>
+                                {% endif %}
+
+                                {% if check.use_special_formula %}
+                                    <p>因為預埋式錨栓，且 $11\text{ in} \le h_{ef} \le 25 \text{ in}$</p>
+                                    <p>基本拉破強度 $N_b = 16 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{5/3}
+                                        = 16 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                        \times {{ check.hef_used|floatformat:"-2" }}^{5/3}/1000
+                                        = {{ check.Nb|floatformat:"-2" }} \text{ kips}$</p>
+                                {% else %}
+                                    {% if check.k_c == 24 %}
+                                        <p>因為預埋式錨栓，且 $h_{ef} < 11\text{ in}$</p>
+                                        <p>基本拉破強度 $N_b = 24 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                            = 24 \times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                            \times {{ check.hef_used|floatformat:"-2" }}^{1.5}/1000
+                                            = {{ check.Nb|floatformat:"-2" }} \text{ kips}$</p>
+                                    {% else %}
+                                        <p>因為後置式錨栓，且 $h_{ef} < 11\text{ in}$</p>
+                                        <p>基本拉破強度 $N_b = 17 \lambda_{a}\sqrt{f'_{c}}h_{ef}^{1.5}
+                                            = 17 \times {{ check.lambda_a|floatformat:"-2" }}
+                                            \times \sqrt{ {{ check.fc_orig|floatformat:"-2" }} }
+                                            \times {{ check.hef_used|floatformat:"-2" }}^{1.5}/1000
+                                            = {{ check.Nb|floatformat:"-2" }} \text{ kips}$</p>
+                                    {% endif %}
+                                {% endif %}
+
+                                <p>投影面積 $A_{Nc} = {{ check.A_Nc|floatformat:"-2" }} \text{ in}^2$, $A_{Nco}
+                                    = {{ check.A_Nco|floatformat:"-2" }} \text{ in}^2$</p>
+
+                                <p>標稱拉破強度 $N_{cbg} = \dfrac{A_{Nc}}{A_{Nco}} \Psi_{ec,N} \Psi_{ed,N}
+                                    \Psi_{c,N}
+                                    \Psi_{cp,N} N_b$</p>
+                                <p>拉破之偏心修正因數 $\Psi_{ec,N}$ (17.6.2.3)</p>
+                                {% if check.psi_ec_N == 1.0 %}
+                                    <p>受拉錨栓群無偏心載重作用，$\Rightarrow \Psi_{ec,N} = 1.0$</p>
+                                {% else %}
+                                    <p>受拉錨栓群受偏心載重作用</p>
+                                    $ \begin{align*}
+                                    \Rightarrow \Psi_{ec,N}= \Psi_{ecx,N} \Psi_{ecy,N}
+                                    &= \dfrac{1}{1+ \dfrac{ e'_{Nx} }{1.5h_{ef}}} \times \dfrac{1}{1+ \dfrac{
+                                    e'_{Ny}}{1.5h_{ef}}} \\
+                                    &= \dfrac{1}{1+ \dfrac{ {{ check.ecc_x|floatformat:"-2" }} }{1.5 \times
+                                    {{ check.hef_used|floatformat:"-2" }} }}
+                                    \times \dfrac{1}{1+ \dfrac{ {{ check.ecc_y|floatformat:"-2" }} }{1.5 \times
+                                    {{ check.hef_used|floatformat:"-2" }} }} = {{ check.psi_ec_N|floatformat:"-3" }}
+                                    \end{align*}$
+                                {% endif %}
+                                <p>拉破之邊距效應修正因數 $\Psi_{ed,N}$ (17.6.2.4)</p>
+                                {% if check.is_deep_enough %}
+                                    <p>因 $c_{a,min} \ge 1.5 h_{ef} \Rightarrow \Psi_{ed,N} = 1.0$ (17.6.2.4)</p>
+                                {% else %}
+                                    <p>因 $c_{a,min} < 1.5 h_{ef} \Rightarrow \Psi_{ed,N}
+                                        = 0.7 + 0.3\dfrac{ c_{a,min} }{ 1.5h_{ef} }
+                                        = 0.7 + 0.3\dfrac{ {{ check.ca_min|floatformat:"-2" }} }{ 1.5
+                                        \times {{ check.hef_used|floatformat:"-2" }} }
+                                        = {{ check.psi_ed_N|floatformat:"-3" }}$</p>
+                                {% endif %}
+                                <p>拉破之開裂修正因數 $\Psi_{c,N}$ (17.6.2.5)</p>
+                                {% if check.is_cracked %}
+                                    <p>因設定混凝土構材區域會產生開裂$ \Rightarrow \Psi_{c,N} = 1.0$</p>
+                                {% else %}
+                                    {% if check.anchor_type == 'cast-in' %}
+                                        <p>因設定混凝土構材區域未產生開裂，且為預埋式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                            1.25$</p>
+                                    {% else %}
+                                        <p>因設定混凝土構材區域未產生開裂，且為後置式錨栓 $ \Rightarrow \Psi_{c,N} =
+                                            1.40$</p>
+                                    {% endif %}
+                                {% endif %}
+                                <p>拉破之劈裂修正因數 $\Psi_{cp,N}$ (17.6.2.6)</p>
+                                {% if check.anchor_type == 'cast-in' %}
+                                    <p>因為預埋式錨栓 $ \Rightarrow \Psi_{cp,N} = 1.0$</p>
+                                {% else %}
+                                    {% if check.is_deep_enough %}
+                                        <p>因為後置式錨栓，且$c_{a,min} \ge c_{Na} \Rightarrow \Psi_{c,N}
+                                            = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                    {% else %}
+                                        <p>因為後置式錨栓，且$c_{a,min} < c_{Na} \Rightarrow \Psi_{c,N}
+                                            = 0.7 + 0.3\dfrac{ c_{a,min} }{ c_{Na} }
+                                            = 0.7 + 0.3\dfrac{ {{ check.ca_min|floatformat:"-2" }} }{ 1.5
+                                            \times {{ check.hef|floatformat:"-2" }} }
+                                            = {{ check.psi_cp_N|floatformat:"-3" }}$</p>
+                                    {% endif %}
+
+                                {% endif %}
+
+                                $ N_{cbg} = \dfrac{ {{ check.A_Nc|floatformat:"-2" }}
+                                }{ {{ check.A_Nco|floatformat:"-2" }}
+                                } \times {{ check.psi_ec_N|floatformat:"-3" }}
+                                \times {{ check.psi_ed_N|floatformat:"-3" }}
+                                \times {{ check.psi_c_N|floatformat:"-2" }}
+                                \times {{ check.psi_cp_N|floatformat:"-2" }}
+                                \times {{ check.Nb|floatformat:"-2" }} = {{ check.Ncbg|floatformat:"-2" }} \text{
+                                kips}
+                                $
+
+                                <p>設計拉破強度 $\phi N_{cbg} = \phi_{cb} \times N_{cbg}
+                                    = {{ check.phi_cb|floatformat:"-2" }}
+                                    \times {{ check.Ncbg|floatformat:"-2" }} = {{ check.phi_Ncbg|floatformat:"-2" }}
+                                    \text{
+                                    kips} $</p>
+
+                                {% if check.dc_ratio > 1.0 %}
+                                    <p>檢核：
+                                        $ \dfrac{N_{ua,g}}{\phi N_{cbg}} =
+                                        \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                        }{ {{ check.phi_Ncbg|floatformat:"-2" }} }
+                                        = {{ check.dc_ratio|floatformat:"-3" }}
+                                        > 1.0
+                                        \rightarrow \textbf{ {{ check.result }} } $</p>
+                                {% else %}
+                                    <p>檢核：
+                                        $ \dfrac{N_{ua,g}}{\phi N_{cbg}} =
+                                        \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                        }{ {{ check.phi_Ncbg|floatformat:"-2" }} }
+                                        = {{ check.dc_ratio|floatformat:"-3" }}
+                                        \le 1.0
+                                        \rightarrow \textbf{ {{ check.result }} } $</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endwith %}
+    {% endif %}
+{% endwith %}
+
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+        <!-- 【核心新增】6.6 混凝土侧向胀破强度檢核 -->
+        <div class="report-section">
+            <div class="report-subtitle" style="margin-top: 0;">6.6 混凝土側向脹破強度檢核 (Side-Face Blowout)</div>
+
+            <!-- 6.6.1 单根錨栓 -->
+            {% with check_data=results.anchor_nsb_single %}
+                {% if check_data and check_data.details.result != 'N/A' %}
+                    {% with check=check_data.details context_data=check_data.context %}
+                        <div class="report-subsection" style="margin-left: 15px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.1 單根錨栓側向脹破強度檢核</h4>
+
+
+
+                            {% if check.plot_base64 and check.tension_table_data %}
+                                <div class="report-flex-container">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                                 alt="應力分布圖"
+                                                 style="height: 100mm; width: auto; max-width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            <figcaption>圖 6.6.1-1 控制工況之應力分佈圖 (Combo
+                                                #{{ check_data.combo_id }})
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                    <div class="table-container">
+                                        <p class="param-group-title"
+                                           style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                            各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                        </p>
+                                        <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                            <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                                <thead style="position: sticky; top: 0; z-index: 1;">
+                                                <tr>
+                                                    <th>錨栓 #</th>
+                                                    <th>拉力 N<sub>ua</sub></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for row in check.tension_table_data %}
+                                                    <tr {% if row.tension_force == check.demand %}class="critical-row"{% endif %}>
+                                                        <td>{{ row.index }}</td>
+                                                        <td>{% if unit_system == 'mks' %}
+                                                            {{ row.tension_force|to_tf:2 }}{% else %}
+                                                            {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                <tr>
+                                                    <td><b>總和</b></td>
+                                                    <td><b>{% if unit_system == 'mks' %}
+                                                        {{ check.total_tension|to_tf:2 }}{% else %}
+                                                        {{ check.total_tension|floatformat:"-2" }}{% endif %}</b>
+                                                    </td>
+                                                </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- [核心新增] Nsb 幾何示意圖 -->
+                            {% if check.nsb_plot_base64 %}
+                                <div class="report-flex-container" style="margin-top: 15px;">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.nsb_plot_base64|safe }}"
+                                                 alt="Nsb 示意圖"
+                                                 style="max-height: 100mm; width: auto; max-width: 100%; border: 1px solid #ccc;">
+                                            <figcaption>圖 6.6.1-2 Nsb 幾何關係示意圖</figcaption>
+                                        </figure>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+
+                        </div>
+                    {% endwith %}
+                {% else %}
+                    <div class="report-subsection" style="margin-left: 15px;">
+                        <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.1 單根錨栓側向脹破強度檢核
+                            ($N_{sb}$)</h4>
+                        <p class="check-message">
+                            <i>{{ check_data.details.message|default:"不適用或未計算" }}</i></p>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+        </div>
+
+    </div>
+</div>
+
+{% with check_data=results.anchor_nsb_single %}
+    {% if check_data and check_data.details.result != 'N/A' %}
+        {% with check=check_data.details context_data=check_data.context %}
+            <div class="a4-page">
+                <div class="page-content">
+                    <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                    <!-- 【核心新增】6.6 混凝土侧向胀破强度檢核 -->
+                    <div class="report-section">
+                        <div class="report-subsection" style="margin-left: 15px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.1
+                                單根錨栓側向脹破強度檢核(續)</h4>
+                            {% if check.is_deep_enough == 1 %}
+                                <p> 考量為預埋擴頭式錨栓，最大受拉力錨栓為
+                                    <b>#{{ check_data.combo_id }}</b> 的錨栓 <b>#{{ check.anchor_index }}</b></p>
+                                {% if unit_system == 'mks' %}
+                                    <p> 控制錨栓中心距離墩柱邊緣最小距離 $c_{a1} = {{ check.ca1|floatformat:"-2" }}
+                                        \text{ cm}$</p>
+                                    <p> $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ cm} > 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$，故須進行此檢核</p>
+                                    <p>需求拉力 $N_{ua,max} = {{ check.demand|to_tf:2 }} \text{ tf}$</p>
+
+                                    <p>基本標稱強度 $N_{sb} = 42.44 c_{a1} \sqrt{A_{brg}} \lambda_a
+                                        \sqrt{f'_{c}}$</p>
+                                    $ N_{sb} = 42.44 \times {{ check.ca1|floatformat:"-2" }} \times \sqrt{
+                                    {{ check.Abrg|floatformat:"-3" }} } \times {{ check.lambda_a|floatformat:"-1" }}
+                                    \times
+                                    \sqrt{ {{ check.fc_orig|floatformat:"-2" }} } /1000 =
+                                    {{ check.Nsb_base|floatformat:"-2" }} \text{ tf} $
+
+                                    {% if check.is_modified %}
+                                        <p>因 $c_{a2} = {{ check.ca2|floatformat:"2" }} \text{ cm} < 3 c_{a1}
+                                            = 3 \times {{ check.ca1|floatformat:"2" }} \text{ cm}$，需進行修正：</p>
+                                        $ N_{sb,mod} = N_{sb} \times (\dfrac{1+c_{a2}/c_{a1}}{4}) =
+                                        {{ check.Nsb_base|floatformat:"-2" }} \times
+                                        {{ check.modification_factor|floatformat:"-3" }} =
+                                        {{ check.Nsb|floatformat:"-2" }}
+                                        \text{ tf} $
+                                    {% else %}
+                                        <p>因 $c_{a2} = {{ check.ca2|floatformat:"2" }} \text{ in}\ge 3 c_{a1}
+                                            = 3 \times {{ check.ca1|floatformat:"2" }} \text{ in}$，毋需進行修正。</p>
+                                    {% endif %}
+
+                                    <p>設計強度 $\phi N_{sb} = \phi_{sfb} \times N_{sb,mod}
+                                        = {{ check.phi_sfb|floatformat:"-2" }} \times
+                                        {{ check.Nsb|floatformat:"-2" }} = {{ check.phi_Nsb|floatformat:"-2" }}
+                                        \text{
+                                        tf} $</p>
+
+                                    {% if check.dc_ratio > 1.0 %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,max}}{\phi N_{sb}} =
+                                            \dfrac{ {{ check.demand|to_tf:2 }}
+                                            }{
+                                            {{ check.phi_Nsb|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            > 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% else %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,max}}{\phi N_{sb}} =
+                                            \dfrac{ {{ check.demand|to_tf:2 }}
+                                            }{
+                                            {{ check.phi_Nsb|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            \le 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% endif %}
+                                {% else %}
+                                    <p> 控制錨栓中心距離墩柱邊緣最小距離 $c_{a1} = {{ check.ca1|floatformat:"-2" }}
+                                        \text{ in}$</p>
+                                    <p> $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ in} > 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ in}$，故須進行此檢核</p>
+                                    <p>需求拉力 $N_{ua,max} = {{ check.demand|floatformat:"-2" }} \text{ kips}$</p>
+
+                                    <p>基本標稱強度 $N_{sb} = 160 c_{a1} \sqrt{A_{brg}} \lambda_a \sqrt{f'_{c}}$</p>
+                                    $ N_{sb} = 160 \times {{ check.ca1|floatformat:"-2" }} \times \sqrt{
+                                    {{ check.Abrg|floatformat:"-3" }} } \times {{ check.lambda_a|floatformat:"-1" }}
+                                    \times
+                                    \sqrt{ {{ check.fc_orig|floatformat:"0" }} } /1000 =
+                                    {{ check.Nsb_base|floatformat:"2" }} \text{ kips} $
+
+                                    {% if check.is_modified %}
+                                        <p>因 $c_{a2} = {{ check.ca2|floatformat:"2" }} \text{ in} < 3 c_{a1}
+                                            = 3 \times {{ check.ca1|floatformat:"2" }} \text{ in}$，需進行修正：</p>
+                                        $ N_{sb,mod} = N_{sb} \times (\dfrac{1+c_{a2}/c_{a1}}{4}) =
+                                        {{ check.Nsb_base|floatformat:"-2" }} \times
+                                        {{ check.modification_factor|floatformat:"-3" }} =
+                                        {{ check.Nsb|floatformat:"-2" }}
+                                        \text{ kips} $
+                                    {% else %}
+                                        <p>因 $c_{a2} = {{ check.ca2|floatformat:"2" }} \text{ in}\ge 3 c_{a1}
+                                            = 3 \times {{ check.ca1|floatformat:"2" }} \text{ in}$，毋需進行修正。</p>
+                                    {% endif %}
+
+                                    <p>設計強度 $\phi N_{sb} = \phi_{sfb} \times N_{sb,mod}
+                                        = {{ check.phi_sfb|floatformat:"-2" }} \times
+                                        {{ check.Nsb|floatformat:"-2" }} = {{ check.phi_Nsb|floatformat:"-2" }}
+                                        \text{
+                                        kips} $</p>
+
+                                    {% if check.dc_ratio > 1.0 %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,max}}{\phi N_{sb}} =
+                                            \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                            }{
+                                            {{ check.phi_Nsb|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            > 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% else %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,max}}{\phi N_{sb}} =
+                                            \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                            }{
+                                            {{ check.phi_Nsb|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            \le 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                {% if unit_system == 'mks' %}
+                                    <p>因 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ cm} < 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$
+                                        ，故依據規範毋需檢核此項目。</p>
+                                {% else %}
+                                    <p> $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ in} < 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{
+                                        in}$，故依據規範毋需檢核此項目。</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endwith %}
+    {% endif %}
+{% endwith %}
+
+<div class="a4-page">
+    <div class="page-content">
+        <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+        <!-- 【核心新增】6.6 混凝土侧向胀破强度檢核 -->
+        <div class="report-section">
+            <div class="report-subtitle" style="margin-top: 0;">6.6 混凝土側向脹破強度檢核 (Side-Face Blowout)</div>
+            <!-- 6.6.2 錨栓群组 -->
+            <div class="report-subsection" style="margin-left: 15px; margin-top: 25px;">
+                {% with check_data=results.anchor_nsbg_group %}
+                    {% if check_data and check_data.details.result != 'N/A' %}
+                        {% with check=check_data.details %}
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群側向脹破強度檢核</h4>
+
+                            <!-- [核心新增] 應力圖與拉力表 -->
+                            {% if check.plot_base64 and check.tension_table_data %}
+                                <div class="report-flex-container">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                                 alt="應力分布圖"
+                                                 style="height: 100mm; width: auto; max-width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            <figcaption>圖 6.6.2-1 控制工況之應力分佈圖 (Combo
+                                                #{{ check_data.combo_id }})
+                                            </figcaption>
+                                        </figure>
+                                    </div>
+                                    <div class="table-container">
+                                        <p class="param-group-title"
+                                           style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
+                                            各錨栓拉力表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %})
+                                        </p>
+                                        <div style="flex-grow: 1; overflow-y: auto; border: 1px solid #f0f0f0;">
+                                            <table class="summary-table" style="font-size: 11px; margin-bottom: 0;">
+                                                <thead>
+                                                <tr>
+                                                    <th>錨栓 #</th>
+                                                    <th>拉力 N<sub>ua</sub></th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for row in check.tension_table_data %}
+                                                    <tr {% if row.tension_force > 0 %}class="critical-row"{% endif %}>
+                                                        <td>{{ row.index }}</td>
+                                                        <td>{% if unit_system == 'mks' %}
+                                                            {{ row.tension_force|to_tf:2 }}{% else %}
+                                                            {{ row.tension_force|floatformat:"-2" }}{% endif %}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                <tr>
+                                                    <td><b>總和</b></td>
+                                                    <td><b>{% if unit_system == 'mks' %}
+                                                        {{ check.total_tension|to_tf:2 }}{% else %}
+                                                        {{ check.total_tension|floatformat:"-2" }}{% endif %}</b>
+                                                    </td>
+                                                </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- [核心新增] Nsbg 幾何示意圖 -->
+                            {% if check.nsbg_plot_base64 %}
+                                <div class="report-flex-container" style="margin-top: 15px;">
+                                    <div class="figure-container">
+                                        <figure class="report-figure" style="margin: 0;">
+                                            <img src="data:image/png;base64,{{ check.nsbg_plot_base64|safe }}"
+                                                 alt="Nsb 示意圖"
+                                                 style="max-height: 100mm; width: auto; max-width: 100%; border: 1px solid #ccc;">
+                                            <figcaption>圖 6.6.2-2 Nsbg 幾何關係示意圖</figcaption>
+                                        </figure>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+
+
+                        {% endwith %}
+                    {% else %}
+                        <div class="report-subsection" style="margin-left: 0px; margin-top: 25px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群側向脹破強度檢核
+                                ($N_{sbg}$)</h4>
+                            <p class="check-message">
+                                <i>{{ check_data.details.message|default:"不適用或未計算" }}</i></p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% with check_data=results.anchor_nsbg_group %}
+    {% if check_data and check_data.details.result != 'N/A' %}
+        {% with check=check_data.details %}
+            <div class="a4-page">
+                <div class="page-content">
+                    <div class="chapter-title">第六章、鋼柱基礎版及錨栓設計檢核 (續)</div>
+                    <!-- 【核心新增】6.6 混凝土侧向胀破强度檢核 -->
+                    <div class="report-section">
+                        <div class="report-subsection" style="margin-left: 15px;">
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2
+                                錨栓群側向脹破強度檢核(續)</h4>
+                            <p>此檢核由載重组合 <b>#{{ check_data.combo_id }}</b> 控制，受拉錨栓群中最近墩柱邊緣之錨栓為
+                                <b>#{{ check.controlling_anchor_indices|join:", #" }}</b>。</p>
+                            {% if unit_system == 'mks' %}
+                                {% if check.cal_type == 3 %}
+                                    <p>因 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ cm} < 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$
+                                        ，故依據規範毋需檢核此項目。</p>
+                                {% elif check.cal_type == 2 %}
+                                    <p>因有效埋入深度 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ cm} <
+                                        2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$ </p>
+                                    <p>但錨栓間距 $s = {{ check.s_calculated|floatformat:"-2" }} \text{ cm} < 6.0
+                                        c_{a1} = 6.0
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$</p>
+                                    <p>故依據規範毋需檢核此項目。</p>
+
+                                {% else %}
+                                    <p>需求拉力 $N_{ua,g} = {{ check.demand|to_tf:2 }} \text{ tf}$</p>
+                                    <p>錨栓群距墩柱邊緣最小距離 $c_{a1} = {{ check.group_ca1|floatformat:"-2" }}
+                                        \text{ cm}$</p>
+                                    {% if check.special == 0 %}
+                                        <p>錨栓群最外緣錨栓沿邊緣方向間距 $s
+                                            = {{ check.s_calculated|floatformat:"-2" }}
+                                            \text{ cm}$</p>
+                                    {% else %}
+                                        <p>錨栓群最外緣錨栓並未沿墩柱邊緣方向分布，設 $s = 0 \text{ cm}$</p>
+                                    {% endif %}
+                                    <p>因 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ cm} >
+                                        2.5c_{a1} = 2.5 \times {{ check.ca1|floatformat:"-2" }} \text{ cm}$</p>
+                                    <p> 且 $s = {{ check.s_calculated|floatformat:"-2" }} \text{ cm} < 6.0
+                                        c_{a1} = 6.0 \times {{ check.ca1|floatformat:"-2" }} \text{
+                                        cm}$，故須進行此檢核</p>
+                                    <p>錨栓群之基礎標稱強度，同單根錨栓 $ N_{sb}
+                                        = {{ check.base_anchor_nsb|floatformat:"-2" }}
+                                        \text{ tf} $</p>
+
+                                    <p> 標稱强度 $N_{sbg} = N_{sb} \times (1 + \dfrac{s}{6 c_{a1}})
+                                        = {{ check.base_anchor_nsb|floatformat:"-2" }} \times (1 + \dfrac{
+                                        {{ check.s_calculated|floatformat:"-2" }} }{6 \times
+                                        {{ check.group_ca1|floatformat:"-2" }}}) =
+                                        {{ check.Nsbg|floatformat:"-2" }} \text{ tf} $</p>
+
+                                    <p>設計強度 $\phi N_{sbg} = \phi_{sfb} \times N_{sbg}
+                                        = {{ check.phi_sfb|floatformat:"-2" }} \times
+                                        {{ check.Nsbg|floatformat:"-2" }} = {{ check.capacity|floatformat:"-2" }}
+                                        \text{ tf}$</p>
+                                    {% if check.dc_ratio > 1.0 %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,g}}{\phi N_{sbg}} =
+                                            \dfrac{ {{ check.demand|to_tf:2 }}
+                                            }{
+                                            {{ check.capacity|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            > 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% else %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,g}}{\phi N_{sbg}} =
+                                            \dfrac{ {{ check.demand|to_tf:2 }}
+                                            }{
+                                            {{ check.capacity|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            \le 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% endif %}
+
+                                {% endif %}
+                            {% else %}
+                                {% if check.cal_type == 3 %}
+                                    <p>因 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ in} < 2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ in}$
+                                        ，故依據規範毋需檢核此項目。</p>
+                                {% elif check.cal_type == 2 %}
+                                    <p>因有效埋入深度 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ in} <
+                                        2.5c_{a1} = 2.5
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ in}$ </p>
+                                    <p>但錨栓間距 $s = {{ check.s_calculated|floatformat:"-2" }} \text{ in} < 6.0
+                                        c_{a1} = 6.0
+                                        \times {{ check.ca1|floatformat:"-2" }} \text{ in}$</p>
+                                    <p>故依據規範毋需檢核此項目。</p>
+
+                                {% else %}
+                                    <p>需求拉力 $N_{ua,g} = {{ check.demand|floatformat:"-2" }} \text{ kips}$</p>
+                                    <p>錨栓群距墩柱邊緣最小距離 $c_{a1} = {{ check.group_ca1|floatformat:"-2" }}
+                                        \text{ in}$</p>
+                                    {% if check.special == 0 %}
+                                        <p>錨栓群最外緣錨栓沿邊緣方向間距 $s
+                                            = {{ check.s_calculated|floatformat:"-2" }}
+                                            \text{ in}$</p>
+                                    {% else %}
+                                        <p>錨栓群最外緣錨栓並未沿墩柱邊緣方向分布，設 $s = 0 \text{ in}$</p>
+                                    {% endif %}
+                                    <p>因 $h_{ef} = {{ check.h_ef|floatformat:"-2" }} \text{ in} >
+                                        2.5c_{a1} = 2.5 \times {{ check.ca1|floatformat:"-2" }} \text{ in}$</p>
+                                    <p> 且 $s = {{ check.s_calculated|floatformat:"-2" }} \text{ in} < 6.0
+                                        c_{a1} = 6.0 \times {{ check.ca1|floatformat:"-2" }} \text{
+                                        in}$，故須進行此檢核</p>
+                                    <p>錨栓群之基礎標稱強度，同單根錨栓 $ N_{sb}
+                                        = {{ check.base_anchor_nsb|floatformat:"-2" }}
+                                        \text{ kips} $</p>
+
+                                    <p> 標稱强度 $N_{sbg} = N_{sb} \times (1 + \dfrac{s}{6 c_{a1}})
+                                        = {{ check.base_anchor_nsb|floatformat:"-2" }} \times (1 + \dfrac{
+                                        {{ check.s_calculated|floatformat:"-2" }} }{6 \times
+                                        {{ check.group_ca1|floatformat:"-2" }}}) =
+                                        {{ check.Nsbg|floatformat:"-2" }} \text{ kips} $</p>
+
+                                    <p>設計強度 $\phi N_{sbg} = \phi_{sfb} \times N_{sbg}
+                                        = {{ check.phi_sfb|floatformat:"-2" }} \times
+                                        {{ check.Nsbg|floatformat:"-2" }} = {{ check.capacity|floatformat:"-2" }}
+                                        \text{
+                                        kips}
+                                        $</p>
+                                    {% if check.dc_ratio > 1.0 %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,g}}{\phi N_{sbg}} =
+                                            \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                            }{
+                                            {{ check.capacity|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            > 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% else %}
+                                        <p>檢核：
+                                            $ \dfrac{N_{ua,g}}{\phi N_{sbg}} =
+                                            \dfrac{ {{ check.demand|floatformat:"-2" }}
+                                            }{
+                                            {{ check.capacity|floatformat:"-2" }} }
+                                            = {{ check.dc_ratio|floatformat:"-3" }}
+                                            \le 1.0
+                                            \rightarrow \textbf{ {{ check.result }} } $</p>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endwith %}
+    {% endif %}
+{% endwith %}

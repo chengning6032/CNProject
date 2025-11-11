@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}勤築工程實業有限公司{% endblock %}</title>
+    <!-- ===== 【核心新增】Favicon 宣告 ===== -->
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon_io/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon_io/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon_io/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon_io/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'img/favicon_io/site.webmanifest' %}">
+    <!-- ===== Favicon 宣告結束 ===== -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+
+    <style>
+        /* ===== 全局基礎與美化樣式 ===== */
+        html {
+            scroll-behavior: smooth; /* 平滑滾動 */
+        }
+        body, h1, h2, h3, p, ul, li {
+            margin: 0;
+            padding: 0;
+            font-family: '微軟正黑體', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased; /* 優化字體渲染 */
+            -moz-osx-font-smoothing: grayscale;
+        }
+        body {
+            line-height: 1.7;
+            color: #333;
+            background-color: #f4f7f9; /* 為整個網站設定一個柔和的底色 */
+        }
+        .container {
+            max-width: 1140px; /* 統一內容寬度 */
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        main {
+            background-color: #ffffff; /* 主要內容區塊使用白色背景 */
+        }
+
+        /* ===== 1. 導覽列 (Navbar) 質感升級 ===== */
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95); /* 半透明背景，增加層次感 */
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            padding: 15px 0; /* 增加垂直高度 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Logo 區域 */
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px; /* Logo 與文字的間距 */
+            font-size: 1.2rem; /* 稍微縮小文字，讓 Logo 更突出 */
+            font-weight: 700;
+            color: #1d3557;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+        .navbar .logo:hover {
+            opacity: 0.8;
+        }
+        .navbar .logo img {
+            height: 40px; /* 控制 Logo 圖片的高度 */
+            width: auto;
+        }
+
+        /* 導覽連結 (樣式不變) */
+        .navbar .nav-links { list-style: none; display: flex; align-items: center; gap: 15px; }
+        .navbar .nav-links li { position: relative; padding: 10px 15px; }
+        .navbar .nav-links a { text-decoration: none; color: #555; font-weight: bold; transition: color 0.3s ease; }
+        .navbar .nav-links li a:hover { color: #0056b3; }
+        .navbar .nav-links li.active a { color: #0056b3; }
+        .navbar .nav-links li::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 3px; background-color: #0056b3; transition: all 0.3s ease-in-out; }
+        .navbar .nav-links li:hover::after, .navbar .nav-links li.active::after { width: 80%; left: 10%; }
+        .navbar .nav-links .nav-btn-special { padding: 0; }
+        .navbar .nav-links .nav-btn-special a { background-color: #0056b3; color: #ffffff; padding: 8px 18px; border-radius: 50px; }
+        .navbar .nav-links .nav-btn-special a:hover { background-color: #1d3557; color: #ffffff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 86, 179, 0.3); }
+        .navbar .nav-links li.nav-btn-special::after { display: none; }
+
+
+        /* ===== 2. 頁尾 (Footer) 全面改造 ===== */
+        .footer {
+            background-color: #212529; /* 使用更深邃的炭黑色 */
+            color: #adb5bd; /* 使用柔和的灰色文字 */
+            padding: 60px 0 20px 0;
+            font-size: 0.95em;
+        }
+        .footer-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr; /* 三欄式佈局：公司簡介 | 快速連結 | 聯絡資訊 */
+            gap: 50px;
+            padding-bottom: 40px;
+        }
+        .footer-logo-area .logo-img {
+            height: 50px;
+            margin-bottom: 20px;
+        }
+        .footer-logo-area .tagline {
+            color: #ced4da;
+            line-height: 1.8;
+        }
+        .footer-col h3 {
+            color: #ffffff;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .footer-col h3::after { /* 標題下方的裝飾線 */
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30px;
+            height: 2px;
+            background-color: #0056b3;
+        }
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        .footer-links a {
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .footer-links a:hover {
+            color: #ffffff;
+            padding-left: 5px; /* 懸停時輕微右移 */
+        }
+        .footer-contact-info li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .footer-contact-info i {
+            color: #0056b3;
+            margin-top: 5px;
+        }
+
+        /* 版權區域 */
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #495057;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .footer-main {
+                grid-template-columns: 1fr; /* 手機版變為單欄 */
+            }
+        }
+
+        /* 子模板可以添加自己的額外樣式 */
+        {% block extra_style %}{% endblock %}
+    </style>
+</head>
+<body>
+
+<!-- 導覽列 (已整合 Logo) -->
+<nav class="navbar">
+    <div class="container">
+        <a href="{% url 'CZ_homepage' %}" class="logo">
+            <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo">
+            <span>勤築工程實業有限公司</span>
+        </a>
+        <ul class="nav-links">
+            <li class="{% if request.resolver_match.url_name == 'CZ_homepage' %}active{% endif %}"><a href="{% url 'CZ_homepage' %}">首頁</a></li>
+            <li class="{% if request.resolver_match.url_name == 'CZ_about' %}active{% endif %}"><a href="{% url 'CZ_about' %}">關於我們</a></li>
+            <li class="{% if request.resolver_match.url_name == 'CZ_process' %}active{% endif %}"><a href="{% url 'CZ_services' %}">服務流程</a></li>
+            <li class="{% if request.resolver_match.url_name == 'CZ_contact' %}active{% endif %}"><a href="{% url 'CZ_contact' %}">聯絡我們</a></li>
+            <li class="nav-btn-special {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}"><a href="{% url 'homepage' %}">OLi 平台</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- 這是主要內容區塊，將由子模板填充 -->
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<!-- 頁尾 (全新設計) -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-main">
+            <!-- Column 1: 公司簡介 -->
+            <div class="footer-col footer-logo-area">
+                <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo" class="logo-img">
+                <p class="tagline">我們以精湛的技術與誠信的態度，致力於提供最專業的工程規劃與顧問服務，將您的願景化為可行的卓越方案。</p>
+            </div>
+            <!-- Column 2: 快速連結 -->
+            <div class="footer-col">
+                <h3>快速連結</h3>
+                <ul class="footer-links">
+                    <li><a href="{% url 'CZ_about' %}">關於我們</a></li>
+                    <li><a href="{% url 'CZ_services' %}">服務流程</a></li>
+                    <li><a href="{% url 'homepage' %}">OLi 平台</a></li>
+                    <li><a href="{% url 'CZ_contact' %}">聯絡我們</a></li>
+                </ul>
+            </div>
+            <!-- Column 3: 聯絡資訊 -->
+            <div class="footer-col">
+                <h3>聯絡資訊</h3>
+                <ul class="footer-links footer-contact-info">
+                    <li><i class="ri-map-pin-2-line"></i><span>桃園市桃園區力行路317號13樓</span></li>
+                    <li><i class="ri-mail-send-line"></i><span>chinzhu0524@gmail.com</span></li>
+                    <!-- 電話號碼已根據您之前的程式碼移除，若要加回請取消註解 -->
+                    <!-- <li><i class="ri-phone-line"></i><span>(XX) XXXX-XXXX</span></li> -->
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; {% now "Y" %} 勤築工程實業有限公司. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
