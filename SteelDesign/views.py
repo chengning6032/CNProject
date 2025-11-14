@@ -5,28 +5,18 @@ import json
 import numpy as np
 from scipy.spatial.distance import pdist
 
-# 從您建立的 BPandAnchor 套件中匯入需要的模組
 from .BPandAnchor import bpN_mainAnalysis as analysis
 from .BPandAnchor import bpN_Axial_ConcCheck as conc_check
 from .BPandAnchor import bpN_tpCheck as tp_check
 from .BPandAnchor import bpN_AnchorTensionCheck as anchor_tension_check
 from .BPandAnchor import bpN_AnchorShearCheck as anchor_shear_check
 from .BPandAnchor.bpN_utils import safe_dc_ratio
-
-from datetime import datetime # 【核心新增】匯入 datetime 模組
+from datetime import datetime  # 【核心新增】匯入 datetime 模組
 from django.utils import timezone
-
 from accounts.models import Profile
-
-KIP_TO_TF = 0.453592
-KIP_IN_TO_TF_M = 0.453592 * 0.0254
 
 
 class NumpyEncoder(json.JSONEncoder):
-    """
-    一个自定义的 JSON Encoder，可以正确处理 NumPy 的数据类型。
-    """
-
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
@@ -37,6 +27,85 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, np.bool_):
             return bool(obj)
         return super(NumpyEncoder, self).default(obj)
+
+
+def find_loads_by_id(loads_list, combo_id):
+    """在荷載組合列表中，根據 ID 尋找特定的荷載組合。"""
+    if not loads_list or combo_id is None:
+        return None
+    return next((l for l in loads_list if l.get('id') == combo_id), None)
+
+
+# ===== 【核心修正】將所有單位轉換常數定義在檔案頂層 =====
+KIP_TO_TF = 0.453592
+KIP_IN_TO_TF_M = 0.453592 * 0.0254
+IN_TO_CM = 2.54
+IN2_TO_CM2 = 2.54 * 2.54
+KSI_TO_KGF_CM2 = 70.307
+PSI_TO_KGF_CM2 = 0.070307
+
+
+# ==========================================================
+
+
+def get_shear_details(loads_combo, plate_params_local, bolt_params_local, unit_system_local, bolt_coords_imperial):
+    VX_kips = loads_combo.get('vx_applied', 0)
+    VY_kips = loads_combo.get('vy_applied', 0)
+    TZ_kip_in = loads_combo.get('tz_applied', 0)
+
+    if bolt_coords_imperial is None or len(bolt_coords_imperial) == 0:
+        return None, None, None, None, None
+
+    num_bolts = len(bolt_coords_imperial)
+    J = float(np.sum(bolt_coords_imperial[:, 0] ** 2 + bolt_coords_imperial[:, 1] ** 2))
+
+    table_data, demands_for_plot = [], []
+    critical_bolt_info = {'index': -1, 'total_shear': -1.0}
+
+    for i in range(num_bolts):
+        xi, yi = bolt_coords_imperial[i, 0], bolt_coords_imperial[i, 1]
+
+        # --- 所有分量都先用 kips 計算 ---
+        v_direct_x_kips = VX_kips / num_bolts if num_bolts > 0 else 0
+        v_direct_y_kips = VY_kips / num_bolts if num_bolts > 0 else 0
+        v_torsion_x_kips = -TZ_kip_in * yi / J if J > 0 else 0
+        v_torsion_y_kips = TZ_kip_in * xi / J if J > 0 else 0
+        v_total_x_kips = v_direct_x_kips + v_torsion_x_kips
+        v_total_y_kips = v_direct_y_kips + v_torsion_y_kips
+        v_total_mag_kips = np.sqrt(v_total_x_kips ** 2 + v_total_y_kips ** 2)
+
+        # demands_for_plot 永遠儲存英制數據 (kips)
+        demands_for_plot.append({
+            'index': i,  # <--- 【核心修正】把索引加進去
+            'coord': [xi, yi],
+            'Vua_x': v_total_x_kips,
+            'Vua_y': v_total_y_kips,
+            'Vua_total': v_total_mag_kips
+        })
+
+        # --- [核心修正] 在此處進行單位轉換 ---
+        table_data.append({
+            'index': i,
+            'v_direct_x': v_direct_x_kips,
+            'v_direct_y': v_direct_y_kips,
+            'v_torsion_x': v_torsion_x_kips,
+            'v_torsion_y': v_torsion_y_kips,
+            'v_total_x': v_total_x_kips,
+            'v_total_y': v_total_y_kips,
+            'v_total_mag': v_total_mag_kips
+        })
+
+        if v_total_mag_kips > critical_bolt_info['total_shear']:
+            critical_bolt_info['index'] = i
+            critical_bolt_info['total_shear'] = v_total_mag_kips
+
+    # totals 的計算現在是基於已轉換單位的 table_data，所以也是正確的
+    totals = {
+        'sum_vx': sum(row['v_total_x'] for row in table_data),
+        'sum_vy': sum(row['v_total_y'] for row in table_data)
+    }
+
+    return bolt_coords_imperial, table_data, demands_for_plot, critical_bolt_info, totals
 
 
 # View 1: 渲染輸入頁面
@@ -78,72 +147,6 @@ def bp_anchor_calculate_api(request):
 
             has_any_tension = False
             has_any_shear = False
-
-            def get_shear_details(loads_combo, plate_params_local, bolt_params_local, unit_system_local):
-                # 1. 永遠使用英制 (kips, in) 進行內部計算
-                VX_kips = loads_combo.get('vx_applied', 0)
-                VY_kips = loads_combo.get('vy_applied', 0)
-                TZ_kip_in = loads_combo.get('tz_applied', 0)
-
-                # 2. 獲取錨栓幾何數據
-                temp_analysis = analysis.perform_analysis(plate_shape=plate_params_local.get('shape'), P_applied=0,
-                                                          Mx_applied=0, My_applied=0, Es=1, Ec=1,
-                                                          bolt_layout_mode=bolt_params_local.get('layout_mode'),
-                                                          plate_params=plate_params_local,
-                                                          bolt_params=bolt_params_local)
-                if not temp_analysis: return None, None, None, None, None
-
-                num_bolts = temp_analysis['num_bolts']
-                bolt_coords_imperial = np.array(temp_analysis['bolt_coords'])
-                J = float(np.sum(bolt_coords_imperial[:, 0] ** 2 + bolt_coords_imperial[:, 1] ** 2))
-
-                table_data, demands_for_plot = [], []
-                critical_bolt_info = {'index': -1, 'total_shear': -1.0}
-
-                # [核心修正] 決定轉換係數
-                force_conv = KIP_TO_TF if unit_system_local == 'mks' else 1.0
-
-                for i in range(num_bolts):
-                    xi, yi = bolt_coords_imperial[i, 0], bolt_coords_imperial[i, 1]
-
-                    # --- 所有分量都先用 kips 計算 ---
-                    v_direct_x_kips = VX_kips / num_bolts if num_bolts > 0 else 0
-                    v_direct_y_kips = VY_kips / num_bolts if num_bolts > 0 else 0
-                    v_torsion_x_kips = -TZ_kip_in * yi / J if J > 0 else 0
-                    v_torsion_y_kips = TZ_kip_in * xi / J if J > 0 else 0
-                    v_total_x_kips = v_direct_x_kips + v_torsion_x_kips
-                    v_total_y_kips = v_direct_y_kips + v_torsion_y_kips
-                    v_total_mag_kips = np.sqrt(v_total_x_kips ** 2 + v_total_y_kips ** 2)
-
-                    # demands_for_plot 永遠儲存英制數據 (kips)
-                    demands_for_plot.append({
-                        'coord': [xi, yi], 'Vua_x': v_total_x_kips,
-                        'Vua_y': v_total_y_kips, 'Vua_total': v_total_mag_kips
-                    })
-
-                    # --- [核心修正] 在此處進行單位轉換 ---
-                    table_data.append({
-                        'index': i,
-                        'v_direct_x': v_direct_x_kips,
-                        'v_direct_y': v_direct_y_kips,
-                        'v_torsion_x': v_torsion_x_kips,
-                        'v_torsion_y': v_torsion_y_kips,
-                        'v_total_x': v_total_x_kips,
-                        'v_total_y': v_total_y_kips,
-                        'v_total_mag': v_total_mag_kips
-                    })
-
-                    if v_total_mag_kips > critical_bolt_info['total_shear']:
-                        critical_bolt_info['index'] = i
-                        critical_bolt_info['total_shear'] = v_total_mag_kips
-
-                # totals 的計算現在是基於已轉換單位的 table_data，所以也是正確的
-                totals = {
-                    'sum_vx': sum(row['v_total_x'] for row in table_data),
-                    'sum_vy': sum(row['v_total_y'] for row in table_data)
-                }
-
-                return bolt_coords_imperial, table_data, demands_for_plot, critical_bolt_info, totals
 
             # --- 1. 提取固定的幾何與材料參數 ---
             materials = data.get('materials', {})
@@ -229,6 +232,8 @@ def bp_anchor_calculate_api(request):
                         'details': current_result,
                         'full_combo_results': all_combo_results
                     }
+
+            bolt_coords_for_shear_details = analysis.get_bolt_coordinates(plate_params, bolt_params)
 
             # --- 3. 第一階段：遍歷所有荷載組合 ---
             for combo_index, loads in enumerate(loads_combinations):
@@ -500,7 +505,7 @@ def bp_anchor_calculate_api(request):
                                 analysis_results_for_ncbg_plot,
                                 pedestal_params_for_ncbg_plot,
                                 ANCHOR_PARAMS_FOR_NCBG_PLOT,
-                                generate_plot=True
+                                generate_plot=False
                             )
                             if group_ncbg_res:
                                 total_tension_force = np.sum(bolt_forces[tension_indices])
@@ -552,7 +557,7 @@ def bp_anchor_calculate_api(request):
                                 ANCHOR_PARAMS_FOR_CHECKS,
                                 bolt_params,
                                 all_bolt_coords=analysis_results_for_checks['bolt_coords'],
-                                generate_plot=True
+                                generate_plot=False
                             ))
                             if nsb_res:
                                 nsb_applicable_at_all = True
@@ -761,7 +766,7 @@ def bp_anchor_calculate_api(request):
 
                                 # 呼叫 get_shear_details 獲取該工況下的詳細剪力數據
                                 bolt_coords_imperial, table_data, demands_imperial, _, totals = get_shear_details(
-                                    vcbx_loads, plate_params, bolt_params, unit_system)
+                                    vcbx_loads, plate_params, bolt_params, unit_system, all_bolt_coords_for_checks)
 
                                 if bolt_coords_imperial is not None:
                                     # [核心重構] 準備繪圖參數
@@ -784,11 +789,15 @@ def bp_anchor_calculate_api(request):
                                     plot_title = f"Vcb-X 控制工況剪力分佈圖 (Combo #{vcbx_combo_id})"
                                     shear_plot = analysis.generate_shear_vector_plot(
                                         plot_bolt_coords,
-                                        plot_demands,  # <--- 傳遞已轉換單位的 demands
+                                        plot_demands,
                                         plot_plate_params,
+                                        pedestal_params,  # <--- 新增
+                                        column_params,  # <--- 新增
+                                        critical_bolt_index=critical_vcbx_info.get('anchor_index'),  # <-- 正確
                                         title=plot_title,
                                         unit_system=unit_system,
-                                        vector_type='components'
+                                        vector_type='components',
+                                        display_direction='X'
                                     )
 
                                 # 將所有數據注入 critical_vcbx_info
@@ -844,10 +853,7 @@ def bp_anchor_calculate_api(request):
                                 vcby_loads = loads
 
                                 bolt_coords_imperial, table_data, demands_imperial, _, totals = get_shear_details(
-                                    vcby_loads,
-                                    plate_params,
-                                    bolt_params,
-                                    unit_system)
+                                    vcby_loads, plate_params, bolt_params, unit_system, all_bolt_coords_for_checks)
 
                                 plot_bolt_coords_for_shear_plot = bolt_coords_imperial.copy()
                                 plot_plate_params_for_shear_plot = plate_params.copy()
@@ -858,13 +864,18 @@ def bp_anchor_calculate_api(request):
                                             plot_plate_params_for_shear_plot[key] *= CONVERSION_FACTORS['IN_TO_CM']
 
                                 plot_title = f"Vcb-Y 控制工況剪力分佈圖 (Combo #{vcby_combo_id})"
+                                print(critical_vcby_info.get('anchor_index'))
                                 shear_plot = analysis.generate_shear_vector_plot(
                                     plot_bolt_coords_for_shear_plot,
                                     demands_imperial,
                                     plot_plate_params_for_shear_plot,
+                                    pedestal_params,
+                                    column_params,
+                                    critical_bolt_index=critical_vcby_info.get('anchor_index'),  # <-- 正確
                                     title=plot_title,
                                     unit_system=unit_system,
-                                    vector_type='components'
+                                    vector_type='components',
+                                    display_direction='Y'
                                 )
 
                                 critical_vcby_info['shear_distribution_plot'] = shear_plot
@@ -935,7 +946,7 @@ def bp_anchor_calculate_api(request):
                                     bolt_params_for_checks,
                                     all_bolt_coords_for_checks,
                                     bolt_shear_demands,
-                                    generate_plot=True  # <--- 新增此參數
+                                    generate_plot=True  # <--- 確保這裡永遠是 True
                                 )
                                 if vcbg_combinations_x:
                                     critical_vcbg_x_res = min(vcbg_combinations_x, key=lambda x: x['phi_Vcbg'])
@@ -966,11 +977,16 @@ def bp_anchor_calculate_api(request):
                                     vcbgx_combo_id = combo_id
                                     vcbgx_loads = loads
 
-                                    _, table_data, demands_imperial, _, totals = get_shear_details(vcbgx_loads,
-                                                                                                   plate_params,
-                                                                                                   bolt_params,
-                                                                                                   unit_system)
+                                    # 1. 呼叫 get_shear_details 獲取該工況下的詳細剪力數據
+                                    _, table_data, demands_imperial, _, totals = get_shear_details(
+                                        vcbgx_loads,
+                                        plate_params,
+                                        bolt_params,
+                                        unit_system,
+                                        bolt_coords_for_shear_details  # <--- 使用正確的純英制座標
+                                    )
 
+                                    # 2. 準備繪圖參數
                                     plot_bolt_coords_for_shear_plot = np.array(analysis_results['bolt_coords'])
                                     plot_plate_params_for_shear_plot = plate_params.copy()
                                     if unit_system == 'mks':
@@ -984,9 +1000,14 @@ def bp_anchor_calculate_api(request):
                                         plot_bolt_coords_for_shear_plot,
                                         demands_imperial,
                                         plot_plate_params_for_shear_plot,
+                                        pedestal_params,
+                                        column_params,
+                                        critical_bolt_index=None,
+                                        highlight_indices=anchor_indices,
                                         title=plot_title,
                                         unit_system=unit_system,
-                                        vector_type='components'
+                                        vector_type='components',
+                                        display_direction='X'
                                     )
 
                                     # 將所有數據注入 critical_vcbg_x_res
@@ -996,6 +1017,7 @@ def bp_anchor_calculate_api(request):
                                     if 'plot_base64' in critical_vcbg_x_res:
                                         critical_vcbg_x_res['avc_plot_base64'] = critical_vcbg_x_res.pop('plot_base64')
 
+                                    # 5. 將包含所有數據的字典存入 vcb_results
                                     vcb_results['group_x'] = {
                                         **critical_vcbg_x_res,
                                         'demand': demand_x,
@@ -1079,7 +1101,8 @@ def bp_anchor_calculate_api(request):
                                     # [核心新增] 為 critical_vcbg_y_res 準備附屬圖表
                                     _, table_data, demands_imperial, _, totals = get_shear_details(loads, plate_params,
                                                                                                    bolt_params,
-                                                                                                   unit_system)
+                                                                                                   unit_system,
+                                                                                                   all_bolt_coords_for_checks)
 
                                     plot_bolt_coords_for_shear_plot = np.array(analysis_results['bolt_coords'])
                                     plot_plate_params_for_shear_plot = plate_params.copy()
@@ -1089,14 +1112,21 @@ def bp_anchor_calculate_api(request):
                                             if key in plot_plate_params_for_shear_plot:
                                                 plot_plate_params_for_shear_plot[key] *= CONVERSION_FACTORS['IN_TO_CM']
 
+                                    critical_bolt_for_plot_y = max(demands_imperial, key=lambda d: d['Vua_total'])
+                                    critical_index_for_plot_y = critical_bolt_for_plot_y['index']
+
                                     plot_title = f"Vcbg-Y 控制工況剪力分佈圖 (Combo #{combo_id})"
                                     shear_plot = analysis.generate_shear_vector_plot(
                                         plot_bolt_coords_for_shear_plot,
                                         demands_imperial,
                                         plot_plate_params_for_shear_plot,
+                                        pedestal_params,
+                                        column_params,
+                                        critical_bolt_index=None,
                                         title=plot_title,
                                         unit_system=unit_system,
-                                        vector_type='components'
+                                        vector_type='components',
+                                        display_direction='Y'
                                     )
 
                                     critical_vcbg_y_res['shear_distribution_plot'] = shear_plot
@@ -1125,7 +1155,7 @@ def bp_anchor_calculate_api(request):
                         # 在 Vcp/Vcpg 檢核前，我們先用 get_shear_details 計算一次當前工況的詳細剪力數據
                         # 這樣可以確保數據結構與其他檢核項一致
                         _, table_data_for_pryout, _, critical_bolt_info_for_pryout, totals_for_pryout = get_shear_details(
-                            loads, plate_params, bolt_params, unit_system)
+                            loads, plate_params, bolt_params, unit_system, all_bolt_coords_for_checks)
 
                         # 檢核最不利角落錨栓的 Vcp
                         coords_for_pryout_check = np.array(analysis_results_for_checks['bolt_coords'])
@@ -1659,6 +1689,7 @@ def bp_anchor_calculate_api(request):
                             v_total_mag = np.sqrt(v_total_x ** 2 + v_total_y ** 2)  # <--- 補上計算
 
                             shear_demands_for_plot.append({
+                                'index': i,
                                 'coord': [xi, yi],
                                 'Vua_x': v_total_x,
                                 'Vua_y': v_total_y,
@@ -1677,8 +1708,15 @@ def bp_anchor_calculate_api(request):
 
                         # 生成剪力向量图
                         plot_title = f"錨栓剪力分布图 (Load Combo #{vcp_combo_id})"
-                        vcp_plot_base64 = analysis.generate_shear_vector_plot(bolt_coords, shear_demands_for_plot,
-                                                                              plate_params, title=plot_title)
+                        vcp_plot_base64 = analysis.generate_shear_vector_plot(
+                            bolt_coords,
+                            shear_demands_for_plot,
+                            plate_params,
+                            pedestal_params,
+                            column_params,
+                            critical_bolt_index=critical_bolt_info_for_pryout.get('index'),  # <-- 正確
+                            title=plot_title
+                        )
 
                         # 将图和表格数据附加到 envelope_results 中
                         envelope_results['anchor_vcp_single']['details']['shear_distribution_plot'] = vcp_plot_base64
@@ -1768,16 +1806,22 @@ def bp_anchor_calculate_api(request):
 
                 if vsa_loads:
                     bolt_coords_imperial, table_data, demands_imperial, critical_bolt_info, totals = (
-                        get_shear_details(vsa_loads, plate_params, bolt_params, unit_system))
+                        get_shear_details(vsa_loads, plate_params, bolt_params, unit_system,
+                                          bolt_coords_for_shear_details)  # <-- 使用正確的座標變數
+                    )
 
                     if bolt_coords_imperial is not None:
                         # [核心修正] 傳遞給繪圖函式的 plate_params 永遠是英制
                         plot_base64 = analysis.generate_shear_vector_plot(
-                            bolt_coords_imperial,
-                            demands_imperial,
-                            plate_params,  # <-- 直接傳遞英制的 plate_params
+                            bolt_coords_imperial,  # <-- 使用正確的變數
+                            demands_imperial,  # <-- 使用正確的變數
+                            plate_params,
+                            pedestal_params,
+                            column_params,
+                            critical_bolt_index=critical_bolt_info.get('index'),  # <-- 補上
                             title=plot_title,
                             unit_system=unit_system
+                            # vector_type 預設為 'components'，符合需求
                         )
 
                         # 將圖、表和最不利錨栓資訊注入 'anchor_vsa' 的 details
@@ -1790,14 +1834,27 @@ def bp_anchor_calculate_api(request):
             if critical_shear_combo_id != -1:
                 shear_loads = next((l for l in loads_combinations if l.get('id') == critical_shear_combo_id), None)
                 if shear_loads:
-                    bolt_coords, table_data, demands, _, totals = get_shear_details(shear_loads, plate_params,
-                                                                                    bolt_params, unit_system)
+                    bolt_coords_imperial, table_data, demands_imperial, critical_bolt_info, totals = get_shear_details(
+                        shear_loads,
+                        plate_params,
+                        bolt_params,
+                        unit_system,
+                        bolt_coords_for_shear_details  # <-- 使用正確的座標變數
+                    )
                     if bolt_coords is not None:
                         # plot_title = f"最不利總剪力分佈圖 (Combo #{critical_shear_combo_id})"
                         # 為 6.8 節生成 'resultant' 風格的圖
-                        plot_base64_resultant = analysis.generate_shear_vector_plot(bolt_coords, demands, plate_params,
-                                                                                    # title=plot_title,
-                                                                                    vector_type='resultant')
+                        plot_base64_resultant = analysis.generate_shear_vector_plot(
+                            bolt_coords_imperial,
+                            demands_imperial,
+                            plate_params,
+                            pedestal_params,
+                            column_params,
+                            critical_bolt_index=critical_bolt_info.get('index'),  # <-- 補上
+                            title=plot_title,
+                            vector_type='resultant',
+                            unit_system=unit_system  # <-- 補上 unit_system
+                        )
                         # [核心修正] 無論如何，都將數據賦值到頂層變數
                         envelope_results['critical_shear_plot_base64'] = plot_base64_resultant
                         envelope_results['critical_shear_table_data'] = table_data
@@ -1811,34 +1868,60 @@ def bp_anchor_calculate_api(request):
                             envelope_results['anchor_vsa']['details']['shear_table_totals'] = totals
 
             # --- 7b-3. 為 Vcb/Vcbg 各自的控制工況，生成 "Components" 風格的圖表 ---
-            shear_component_plot_keys = ['anchor_vcb_single_x', 'anchor_vcb_single_y', 'anchor_vcbg_group_x',
-                                         'anchor_vcbg_group_y']
+            shear_component_plot_keys = ['anchor_vcb_single_x', 'anchor_vcb_single_y',
+                                         'anchor_vcbg_group_x', 'anchor_vcbg_group_y']
+
             for key in shear_component_plot_keys:
-                if key in envelope_results and envelope_results[key].get('details'):
-                    check_data = envelope_results[key]
-                    combo_id = check_data['combo_id']
-                    loads = next((l for l in loads_combinations if l.get('id') == combo_id), None)
+                check_data = envelope_results.get(key)
+                if check_data and check_data.get('details'):
+                    combo_id = check_data.get('combo_id')
+                    loads = find_loads_by_id(loads_combinations, combo_id)
 
                     if loads:
-                        # [核心修正] 確保使用當前迴圈的 'loads' 變數
-                        bolt_coords, table_data, demands, _, totals = get_shear_details(loads, plate_params,
-                                                                                        bolt_params, unit_system)
+                        bolt_coords_imperial, table_data, demands_imperial, _, totals = get_shear_details(
+                            loads,
+                            plate_params,
+                            bolt_params,
+                            unit_system,
+                            bolt_coords_for_shear_details
+                        )
 
-                        if bolt_coords is not None:
+                        if bolt_coords_imperial is not None:
                             plot_title = f"{key} 控制工況剪力分佈圖 (Combo #{combo_id})"
-                            # 生成 'components' 風格的圖
-                            plot_base64_components = analysis.generate_shear_vector_plot(bolt_coords, demands,
-                                                                                         plate_params, title=plot_title,
-                                                                                         vector_type='components',
-                                                                                         unit_system=unit_system)
+
+                            # ===== 【核心修正】區分單根和群組的索引提取邏輯 =====
+                            critical_idx = None
+                            highlight_idxs = None
+
+                            if 'group' in key:
+                                # 這是群組檢核 (Vcbg)，提取 'controlling_anchor_indices'
+                                highlight_idxs = check_data.get('details', {}).get('controlling_anchor_indices')
+                                critical_idx = None
+                            else:
+                                # 這是單根檢核 (Vcb)，提取 'anchor_index'
+                                critical_idx = check_data.get('details', {}).get('anchor_index')
+                                highlight_idxs = None
+
+                            # 3. 傳入所有必要的參數
+                            plot_base64_components = analysis.generate_shear_vector_plot(
+                                bolt_coords_imperial,
+                                demands_imperial,
+                                plate_params,
+                                pedestal_params,
+                                column_params,
+                                critical_bolt_index=critical_idx,      # <-- 傳入單根索引
+                                highlight_indices=highlight_idxs,  # <-- 傳入群組索引列表
+                                title=plot_title,
+                                vector_type='components',
+                                unit_system=unit_system,
+                                show_background_geometry=False
+                            )
 
                             envelope_results[key]['details']['shear_distribution_plot'] = plot_base64_components
                             envelope_results[key]['details']['shear_table_data'] = table_data
                             envelope_results[key]['details']['shear_table_totals'] = totals
 
             # return JsonResponse({'status': 'success', 'results': envelope_results}, encoder=NumpyEncoder)
-
-            final_results_dict = {'status': 'success', 'results': envelope_results}
 
             # ==========================================================
             # ==== START: 【核心新增】權限檢查邏輯 ====
@@ -1895,14 +1978,13 @@ def bp_anchor_calculate_api(request):
                     print("    - 錯誤: 找不到使用者的 Profile。")
                     can_generate_report = False
 
-            final_results_dict['can_generate_report'] = can_generate_report
             print(f"--- 最終權限檢查結果: {can_generate_report} ---\n")
-            # ==========================================================
-            # ==== END: 最終修正版 ====
-            # ==========================================================
-            # ==========================================================
-            # ==== END: 權限檢查邏輯 ====
-            # ==========================================================
+
+            final_results_dict = {
+                'status': 'success',
+                'results': envelope_results,
+                'can_generate_report': can_generate_report  # 權限檢查邏輯保持不變
+            }
 
             results_json_str = json.dumps(final_results_dict, cls=NumpyEncoder)
             request.session['latest_bp_anchor_results'] = results_json_str
@@ -1918,60 +2000,452 @@ def bp_anchor_calculate_api(request):
 
 def generate_report_view(request):
     """
-    这个 view 函式负责生成并渲染报告书页面。
-    它会从 session 中读取最近一次的计算结果和输入参数。
+    【全新優化完整版 v2.0 - 無任何省略】
+    此 view 負責從 session 讀取純數據結果，然後按需重新計算並生成報告書所需的所有圖表，
+    最後將包含圖表的完整 context 渲染到報告書模板。
     """
-
     try:
-        # results_json_str = request.POST.get('results_data', '{}')
-        # inputs_json_str = request.POST.get('inputs_data', '{}')
-        # loads_json_str = request.POST.get('loads_data', '[]')
-        # 從 session 讀取結果
+        # 1. 從 session 讀取核心數據
+        inputs_json_str = request.session.get('latest_bp_anchor_inputs', '{}')
         results_json_str = request.session.get('latest_bp_anchor_results', '{}')
-        full_results_data = json.loads(results_json_str)
-        envelope_results = full_results_data.get('results', {})
-
-        # envelope_results = json.loads(results_json_str)
-        # inputs_data = json.loads(inputs_json_str)
-        # loads_data = json.loads(loads_json_str)
-
-        # [重要] 我們仍然需要輸入參數和荷載，所以也要把它們存入 session
-        # (這部分會在第 1 步的修改中補充)
-        # 為了向下相容，我們先嘗試從 POST 獲取，如果沒有，再從 session 獲取
-        inputs_json_str = request.POST.get('inputs_data', request.session.get('latest_bp_anchor_inputs', '{}'))
-        loads_json_str = request.POST.get('loads_data', request.session.get('latest_bp_anchor_loads', '[]'))
-
         inputs_data = json.loads(inputs_json_str)
-        loads_data = json.loads(loads_json_str)
+        envelope_results = json.loads(results_json_str).get('results', {})
 
-        # [核心修改] 從輸入數據中提取 unit_system
+        if not inputs_data or not envelope_results:
+            return HttpResponse("計算資料已過期或不存在，請返回計算頁面重新分析。", status=400)
+
+        # 2. 提取常用參數
         unit_system = inputs_data.get('unit_system', 'imperial')
+        plate_params = inputs_data.get('plate_params', {})
+        pedestal_params = inputs_data.get('pedestal_params', {})
+        bolt_params = inputs_data.get('bolt_params', {})
+        column_params = inputs_data.get('column_params', {})
+        anchor_check_params = inputs_data.get('anchor_check_params', {})
+        materials = inputs_data.get('materials', {})
+        loads_combinations = inputs_data.get('loads_combinations', [])
 
-        # [核心新增] 呼叫新的繪圖函式來生成幾何示意圖
+        # 準備 ANCHOR_PARAMS (與 bp_anchor_calculate_api 中的版本保持一致)
+        ANCHOR_PARAMS = {
+            'unit_system': unit_system,
+            'anchor_type': anchor_check_params.get('anchor_install_type'),
+            'anchor_structural_type': anchor_check_params.get('anchor_structural_type'),
+            'Abrg': bolt_params.get('Abrg_in2'),
+            'is_headed': anchor_check_params.get('anchor_structural_type') == 'headed',
+            'hook_type': 'J' if anchor_check_params.get('anchor_structural_type') == 'hooked' else None,
+            'longitudinal_rebar_size': pedestal_params.get('longitudinal_rebar_size'),
+            'bolt_layout_mode': bolt_params.get('layout_mode'),
+            'phi_cb': 0.70, 'phi_st': 0.75, 'phi_pn': 0.70, 'phi_sfb': 0.70, 'phi_sv': 0.65, 'phi_cv': 0.70,
+            'h_ef': anchor_check_params.get('h_ef'),
+            'is_cracked': anchor_check_params.get('is_cracked'),
+            'has_supplementary_reinf': anchor_check_params.get('has_supplementary_reinf'),
+            'supplementary_rebar_size': anchor_check_params.get('supplementary_rebar_size'),
+            'supplementary_rebar_spacing': anchor_check_params.get('supplementary_rebar_spacing'),
+            'reinf_condition_shear': anchor_check_params.get('reinf_condition_shear'),
+            'reinf_condition_tension': anchor_check_params.get('reinf_condition_shear', 0),
+            'is_lightweight': anchor_check_params.get('is_lightweight'),
+            'lambda_a': anchor_check_params.get('lambda_a', 1.0),
+            'fc_psi': materials.get('fc_psi'),
+            'fya_ksi': materials.get('bolt_fya_ksi'),
+            'futa_ksi': materials.get('bolt_futa_ksi'),
+        }
+
+        # ==========================================================
+        # ==== START: 優化核心：快取與輔助函式 ====
+        # ==========================================================
+        print("\n--- [Report Generation] Starting plot generation with Caching ---")
+
+        analysis_cache = {}
+        plot_data_cache = {}
+
+        # 預先計算一次英制錨栓座標，供 get_shear_details 使用
+        bolt_coords_imperial_global = analysis.get_bolt_coordinates(plate_params, bolt_params)
+
+        def get_analysis_results(combo_id, generate_plot=False):
+            cache_key = (combo_id, generate_plot)
+            if cache_key in analysis_cache:
+                return analysis_cache[cache_key]
+
+            loads = find_loads_by_id(loads_combinations, combo_id)
+            if not loads: return None
+
+            print(f"    - ANALYSIS CACHE MISS: Running analysis for Combo #{combo_id} (plot={generate_plot})")
+            results = analysis.perform_analysis(
+                plate_shape=plate_params.get('shape'), P_applied=loads.get('p_applied'),
+                Mx_applied=loads.get('mx_applied'), My_applied=loads.get('my_applied'),
+                Es=materials.get('es_ksi'), Ec=materials.get('ec_ksi'),
+                bolt_layout_mode=bolt_params.get('layout_mode'), plate_params=plate_params,
+                bolt_params=bolt_params, generate_plot_data=generate_plot, unit_system=unit_system
+            )
+            analysis_cache[cache_key] = results
+            return results
+
+        def get_plot_data(combo_id):
+            if combo_id in plot_data_cache:
+                return plot_data_cache[combo_id]
+
+            print(f"    - PLOT DATA CACHE MISS: Generating plot data for Combo #{combo_id}")
+            data = {
+                'stress_plot': None,
+                'tension_table': [],
+                'total_tension': 0,
+                'shear_plot': None,
+                'shear_table': [],
+                'shear_totals': {}
+            }
+
+            # --- 生成應力圖和拉力數據 ---
+            analysis_res = get_analysis_results(combo_id, generate_plot=True)
+            if analysis_res:
+                data['stress_plot'] = analysis_res.get('plot_base64')
+                forces = np.array(analysis_res.get('bolt_forces', []))
+                if forces.size > 0:
+                    data['tension_table'] = [{'index': i, 'tension_force': f if f > 1e-9 else 0.0} for i, f in
+                                             enumerate(forces)]
+                    data['total_tension'] = np.sum(forces[forces > 1e-9])
+
+            # --- 生成剪力圖和表格數據 ---
+            loads = find_loads_by_id(loads_combinations, combo_id)
+            if loads:
+                # 注意：這裡的第五個參數 bolt_coords_imperial_global 是我們在 view 函式開頭就計算好的純英制座標
+                bolt_coords_imperial, table_data, demands_imperial, critical_bolt_info, totals = get_shear_details(
+                    loads,
+                    plate_params,
+                    bolt_params,
+                    unit_system,
+                    bolt_coords_imperial_global
+                )
+
+                if table_data:
+                    plot_title = f"剪力分佈圖 (Combo #{combo_id})"
+                    shear_plot = analysis.generate_shear_vector_plot(
+                        bolt_coords_imperial_global,
+                        demands_imperial,
+                        plate_params,
+                        pedestal_params,
+                        column_params,
+                        critical_bolt_index=critical_bolt_info.get('index'),
+                        title=plot_title,
+                        vector_type='components',
+                        unit_system=unit_system,
+                        show_background_geometry=False  # <--- 【核心新增】
+                    )
+                    data.update({
+                        'shear_plot': shear_plot,
+                        'shear_table': table_data,
+                        'shear_totals': totals
+                    })
+
+            plot_data_cache[combo_id] = data
+            return data
+
+        # ===== 【2. prepare_check_params 完整內容】 =====
+        def prepare_check_params(unit_system_local):
+            """
+            準備一套適用於當前單位制的、用於檢核的參數字典副本。
+            """
+            # 從最外層作用域複製基礎參數
+            anchor_params_check = ANCHOR_PARAMS.copy()
+            pedestal_params_check = pedestal_params.copy()
+            bolt_params_check = bolt_params.copy()
+
+            # get_bolt_coordinates 永遠返回英制座標
+            all_bolt_coords_check = analysis.get_bolt_coordinates(plate_params, bolt_params)
+
+            if unit_system_local == 'mks':
+                print("    - Preparing MKS parameters for geometry plots...")
+                # 轉換長度相關的參數
+                if anchor_params_check.get('h_ef') is not None:
+                    anchor_params_check['h_ef'] *= IN_TO_CM
+                if anchor_params_check.get('supplementary_rebar_spacing') is not None:
+                    anchor_params_check['supplementary_rebar_spacing'] *= IN_TO_CM
+
+                # 轉換面積相關的參數
+                if anchor_params_check.get('Abrg') is not None:
+                    anchor_params_check['Abrg'] *= IN2_TO_CM2
+
+                # 轉換應力相關的參數
+                if anchor_params_check.get('fc_psi') is not None:
+                    anchor_params_check['fc_psi'] *= PSI_TO_KGF_CM2
+                if anchor_params_check.get('fya_ksi') is not None:
+                    anchor_params_check['fya_ksi'] *= KSI_TO_KGF_CM2
+                if anchor_params_check.get('futa_ksi') is not None:
+                    anchor_params_check['futa_ksi'] *= KSI_TO_KGF_CM2
+
+                # 轉換墩柱幾何參數
+                for key in ['N', 'B', 'D', 'h']:
+                    if pedestal_params_check.get(key) is not None:
+                        pedestal_params_check[key] *= IN_TO_CM
+
+                # 轉換錨栓座標
+                all_bolt_coords_check = all_bolt_coords_check * IN_TO_CM
+
+            return anchor_params_check, pedestal_params_check, bolt_params_check, all_bolt_coords_check
+
+        # ==========================================================
+        # ==== START: 按需生成圖表 (Plot Generation on Demand) ====
+        # ==========================================================
+        print("\n--- [Report Generation] Starting plot generation ---")
+
+        # --- 圖表 1: 幾何關係示意圖 (固定生成) ---
         geometry_plot_base64 = analysis.generate_geometry_plot(
-            plate_params=inputs_data.get('plate_params', {}),
-            pedestal_params=inputs_data.get('pedestal_params', {}),
-            bolt_params=inputs_data.get('bolt_params', {}),
-            column_params=inputs_data.get('column_params', {}),
-            unit_system=unit_system
+            plate_params=plate_params, pedestal_params=pedestal_params,
+            bolt_params=bolt_params, column_params=column_params, unit_system=unit_system
         )
 
-        # ==========================================================
-        # ==== START: 【核心修正】在 View 中准备 JSON 字符串 ====
-        # ==========================================================
+        # --- 圖表 2 & 3: 為「混凝土承壓」和「基礎版彎曲」生成應力圖 ---
+        plot_generating_keys = ['concrete_bearing', 'plate_bending']
+        for key in plot_generating_keys:
+            check_data = envelope_results.get(key)
+            if check_data and check_data.get('details', {}).get('result') != 'N/A':
+
+                # ===== 【核心修正】在這裡明確地定義 combo_id 變數 =====
+                combo_id = check_data.get('combo_id')
+                if not combo_id:
+                    continue  # 如果沒有 combo_id，就跳過這個檢核項
+
+                loads = find_loads_by_id(loads_combinations, combo_id)
+                # =======================================================
+
+                if loads:
+                    print(f"    - Generating plot for '{key}' (Combo #{combo_id})")  # <-- 現在可以安全使用 combo_id
+                    analysis_res_for_plot = get_analysis_results(combo_id, generate_plot=True)  # <-- 紅線消失
+
+                    if analysis_res_for_plot and analysis_res_for_plot.get('plot_base64'):
+                        envelope_results[key]['details']['plot_base64'] = analysis_res_for_plot.get('plot_base64')
+
+        # --- 圖表 4: 為所有「拉力控制」的檢核項準備「應力圖」和「拉力表」 ---
+        tension_check_keys = ['anchor_nsa', 'anchor_npn', 'anchor_ncb_single', 'anchor_ncbg_group', 'anchor_nsb_single',
+                              'anchor_nsbg_group']
+        tension_plot_cache = {}
+
+        for key in tension_check_keys:
+            check_data = envelope_results.get(key)
+            combo_id = check_data.get('combo_id') if check_data else None
+            if combo_id:
+                if combo_id not in tension_plot_cache:
+                    print(f"    - Generating tension plot/table for Combo #{combo_id} (triggered by '{key}')")
+                    loads = find_loads_by_id(loads_combinations, combo_id)
+                    plot_data = {'plot_base64': None, 'tension_table_data': [], 'total_tension': 0}
+                    if loads:
+                        plot_analysis_results = get_analysis_results(combo_id, generate_plot=True)
+                        if plot_analysis_results:
+                            forces = np.array(plot_analysis_results['bolt_forces'])
+                            coords = np.array(plot_analysis_results['bolt_coords'])
+                            table_data = [{'index': i, 'tension_force': f if f > 1e-9 else 0.0} for i, f in
+                                          enumerate(forces)]
+                            plot_data.update({
+                                'plot_base64': plot_analysis_results.get('plot_base64'),
+                                'tension_table_data': table_data,
+                                'total_tension': np.sum(forces[forces > 1e-9])
+                            })
+                    tension_plot_cache[combo_id] = plot_data
+
+                if 'details' in check_data:
+                    check_data['details'].update(tension_plot_cache[combo_id])
+
+        # --- 圖表 5: 為 Ncb, Ncbg, Nsb, Vcb, Vcbg 等生成專屬「幾何示意圖」 ---
+
+        anchor_params_for_plot, pedestal_params_for_plot, bolt_params_for_plot, all_bolt_coords_for_plot = prepare_check_params(
+            unit_system)
+
+        # 5a. Ncb_single 的 ANc 圖
+        check_data = envelope_results.get('anchor_ncb_single')
+        if check_data and check_data.get('details', {}).get('result') != 'N/A':
+            critical_anchor_index = check_data['details'].get('anchor_index')
+            if critical_anchor_index is not None:
+                critical_anchor_coord = all_bolt_coords_for_plot[critical_anchor_index]
+                ncb_res = anchor_tension_check.calculate_single_anchor_breakout_Ncb(
+                    critical_anchor_coord, pedestal_params_for_plot, anchor_params_for_plot,
+                    all_bolt_coords=all_bolt_coords_for_plot.tolist(), generate_plot=True
+                )
+                if ncb_res and ncb_res.get('plot_base64'):
+                    check_data['details']['anc_plot_base64'] = ncb_res['plot_base64']
+
+        # 5b. Ncbg_group 的 ANcg 圖
+        check_data = envelope_results.get('anchor_ncbg_group')
+        if check_data and check_data.get('details', {}).get('result') != 'N/A':
+            combo_id = check_data.get('combo_id')
+            analysis_res_imperial = get_analysis_results(combo_id, generate_plot=False)  # 從快取獲取英制基礎數據
+            if analysis_res_imperial:
+                # 建立一個副本用於傳遞，避免修改快取中的原始數據
+                analysis_res_for_plot = analysis_res_imperial.copy()
+                if unit_system == 'mks':
+                    # 如果是 MKS，手動轉換座標
+                    analysis_res_for_plot['bolt_coords'] = (
+                            np.array(analysis_res_for_plot['bolt_coords']) * IN_TO_CM).tolist()
+
+                ncbg_res = anchor_tension_check.calculate_group_breakout_Ncbg(
+                    analysis_res_for_plot,  # <--- 傳遞單位制正確的 analysis 結果
+                    pedestal_params_for_plot,
+                    anchor_params_for_plot,
+                    generate_plot=True
+                )
+                if ncbg_res and ncbg_res.get('plot_base64'):
+                    check_data['details']['ancg_plot_base64'] = ncbg_res['plot_base64']
+
+        # 5c. Nsb_single 的幾何圖
+        check_data = envelope_results.get('anchor_nsb_single')
+        if check_data and check_data.get('details', {}).get('result') != 'N/A':
+            critical_anchor_index = check_data['details'].get('anchor_index')
+
+            if critical_anchor_index is not None:
+                critical_anchor_coord = all_bolt_coords_for_plot[critical_anchor_index]
+                nsb_res = anchor_tension_check.calculate_side_face_blowout_for_single_anchor(
+                    critical_anchor_coord, pedestal_params_for_plot, anchor_params_for_plot,
+                    bolt_params_for_plot, all_bolt_coords=all_bolt_coords_for_plot.tolist(), generate_plot=True
+                )
+                if nsb_res and nsb_res.get('plot_base64'):
+                    check_data['details']['nsb_plot_base64'] = nsb_res['plot_base64']
+
+        # 5d. Nsbg_group 的幾何圖
+        check_data = envelope_results.get('anchor_nsbg_group')
+        if check_data and check_data.get('details', {}).get('result') != 'N/A':
+            combo_id = check_data.get('combo_id')
+            loads = find_loads_by_id(loads_combinations, combo_id)  # <--- 補上
+            if loads:
+                analysis_res = get_analysis_results(combo_id, generate_plot=True)
+                if unit_system == 'mks':
+                    analysis_res['bolt_coords'] = (np.array(analysis_res['bolt_coords']) * IN_TO_CM).tolist()
+
+                nsbg_res = anchor_tension_check.calculate_side_face_blowout_for_group(
+                    analysis_res, pedestal_params_for_plot, anchor_params_for_plot,
+                    bolt_params_for_plot, generate_plot=True
+                )
+                if nsbg_res and nsbg_res.get('plot_base64'):
+                    check_data['details']['nsbg_plot_base64'] = nsbg_res['plot_base64']
+
+            # --- 圖表 6: 為「剪力控制」的檢核項準備「剪力分佈圖」和「剪力分量表」 ---
+            shear_check_keys = [
+                'anchor_vsa', 'anchor_vcp_single', 'anchor_vcpg_group',  # 總合力檢核
+                'anchor_vcb_single_x', 'anchor_vcb_single_y',  # 單根分量檢核
+                'anchor_vcbg_group_x', 'anchor_vcbg_group_y'  # 群組分量檢核
+            ]
+
+            for key in shear_check_keys:
+                check_data = envelope_results.get(key)
+                if not (check_data and check_data.get('details') and check_data.get('details', {}).get(
+                        'result') != 'N/A'):
+                    continue  # 如果沒有這個檢核項或不適用，就跳過
+
+                combo_id = check_data.get('combo_id')
+                loads = find_loads_by_id(loads_combinations, combo_id)
+
+                if loads:
+                    print(f"    - Generating shear plot/table for '{key}' (Combo #{combo_id})")
+
+                    bolt_coords_imperial, table_data, demands_imperial, critical_bolt_info, totals = get_shear_details(
+                        loads,
+                        plate_params,
+                        bolt_params,
+                        unit_system,
+                        bolt_coords_imperial_global  # <-- 使用在 view 開頭計算好的純英制座標
+                    )
+
+                    if bolt_coords_imperial is not None:
+                        plot_title = f"{key.replace('_', ' ').title()} 控制工況剪力分佈圖 (Combo #{combo_id})"
+
+                        # 2. 【核心修正】在這裡，我們根據檢核項的類型，從正確的來源提取索引
+                        critical_idx = None
+                        highlight_idxs = None
+                        display_dir = None
+
+                        if 'group' in key:
+                            # 這是群組檢核 (Vcbg, Vcpg)
+                            highlight_idxs = check_data.get('details', {}).get('controlling_anchor_indices')
+                        else:
+                            if key in ['anchor_vsa', 'anchor_vcp_single']:
+                                critical_idx = critical_bolt_info.get('index')
+                            # Vcb 是基於該檢核自身算出的最不利錨栓
+                            else:
+                                critical_idx = check_data.get('details', {}).get('anchor_index')
+
+                        # 根據 key 決定是否只顯示特定方向
+                        if '_x' in key:
+                            display_dir = 'X'
+                        elif '_y' in key:
+                            display_dir = 'Y'
+
+                        # 傳入所有必要的參數
+                        plot_base64_components = analysis.generate_shear_vector_plot(
+                            bolt_coords_imperial,
+                            demands_imperial,
+                            plate_params,
+                            pedestal_params,
+                            column_params,
+                            critical_bolt_index=critical_idx,  # <-- 傳入單根索引 (可能是 None)
+                            highlight_indices=highlight_idxs,  # <-- 傳入群組索引列表 (可能是 None)
+                            title=plot_title,
+                            vector_type='components',
+                            unit_system=unit_system,
+                            show_background_geometry=False,  # 在報告書中顯示完整背景
+                            display_direction=display_dir
+                        )
+
+                        # 將圖表和表格數據注入到對應的檢核項中
+                        envelope_results[key]['details']['shear_distribution_plot'] = plot_base64_components
+                        envelope_results[key]['details']['shear_table_data'] = table_data
+                        envelope_results[key]['details']['shear_table_totals'] = totals
+
+        # --- 圖表 7: 為 Vcb 和 Vcbg 生成 AVc 幾何示意圖 ---
+        vcb_keys = ['anchor_vcb_single_x', 'anchor_vcb_single_y', 'anchor_vcbg_group_x', 'anchor_vcbg_group_y']
+        for key in vcb_keys:
+            check_data = envelope_results.get(key)
+            if check_data and check_data.get('details', {}).get('result') != 'N/A':
+                combo_id = check_data.get('combo_id')
+                loads = find_loads_by_id(loads_combinations, combo_id)
+                if loads:
+                    _, _, demands_imperial, _, _ = get_shear_details(loads, plate_params, bolt_params, unit_system,
+                                                                     bolt_coords_imperial_global)
+                    if 'single' in key:
+                        direction = (1, 0) if '_x' in key else (0, 1)
+                        anchor_index = check_data['details'].get('anchor_index')
+                        if anchor_index is not None:
+                            anchor_coord = all_bolt_coords_for_plot[anchor_index]
+                            vcb_res = anchor_shear_check.calculate_single_anchor_shear_breakout_Vcb(
+                                anchor_coord, direction, pedestal_params_for_plot, anchor_params_for_plot,
+                                bolt_params_for_plot, all_bolt_coords=all_bolt_coords_for_plot.tolist(),
+                                generate_plot=True
+                            )
+                            if vcb_res and vcb_res.get('plot_base64'):
+                                check_data['details']['avc_plot_base64'] = vcb_res['plot_base64']
+                        elif 'group' in key:
+                            # 【核心修正】為 Vcbg 準備正確單位的 demands
+                            demands_for_plot = demands_imperial
+                            if unit_system == 'mks':
+                                # 雖然 get_shear_details 返回的 demands 內部值是 kips，但座標是英制 in
+                                # 我們需要將座標轉換為 cm 以匹配 _for_plot 參數
+                                demands_for_plot = json.loads(json.dumps(demands_imperial))  # 深拷貝
+                                for d in demands_for_plot:
+                                    d['coord'] = (np.array(d['coord']) * IN_TO_CM).tolist()
+
+                            direction = (1, 0) if '_x' in key else (0, 1)
+                            vcbg_combinations = anchor_shear_check.calculate_group_shear_breakout_Vcbg(
+                                direction, pedestal_params_for_plot, anchor_params_for_plot,
+                                bolt_params_for_plot, all_bolt_coords_for_plot,
+                                demands_for_plot,  # <--- 傳遞單位制正確的 demands
+                                generate_plot=True
+                            )
+                            if vcbg_combinations:
+                                critical_vcbg_res = min(vcbg_combinations, key=lambda x: x['phi_Vcbg'])
+                                if critical_vcbg_res.get('plot_base64'):
+                                    check_data['details']['avc_plot_base64'] = critical_vcbg_res['plot_base64']
+
+        print("--- [Report Generation] Plot generation finished ---")
+
+        # 準備最終傳遞給模板的 context
         context = {
             'inputs': inputs_data,
             'results': envelope_results,
-            'loads': loads_data,
+            'loads': loads_combinations,
             'geometry_plot_base64': geometry_plot_base64,
-            'results_json_for_debug': json.dumps(envelope_results, indent=2),
-            'unit_system': unit_system  # <-- [核心修改] 將 unit_system 傳遞給模板
+            'results_json_for_debug': json.dumps(envelope_results, indent=2, cls=NumpyEncoder),
+            'unit_system': unit_system
         }
-        # ==========================================================
-        # ==== END: 修正 ====
-        # ==========================================================
-        context['results_json_for_debug'] = json.dumps(envelope_results, indent=2, cls=NumpyEncoder)
+
         return render(request, 'SteelDesign/BPandAnchor/steel_BPandAnchor_Report.html', context)
 
-    except json.JSONDecodeError:
-        return HttpResponse("無效的報告數據。", status=400)
+    except (json.JSONDecodeError, KeyError) as e:
+        import traceback
+        print(traceback.format_exc())
+        return HttpResponse(
+            f"生成報告時發生嚴重錯誤，可能是 session 資料已過期或格式不符。請返回重新計算。<br>錯誤詳情: {e}", status=400)

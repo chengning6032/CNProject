@@ -1006,6 +1006,8 @@
                 {% if check_data and check_data.details.result != 'N/A' %}
                     {% with check=check_data.details %}
                         <p>{{ check.full_description|safe }}</p>
+
+                <!-- =============================== -->
                         {% if check.shear_distribution_plot and check.avc_plot_base64 and check.shear_table_data %}
                             <div class="report-flex-container" style="margin-bottom: 10px;">
                                 <div class="figure-container">

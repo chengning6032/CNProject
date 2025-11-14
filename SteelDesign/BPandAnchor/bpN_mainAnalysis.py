@@ -1,13 +1,15 @@
 import warnings
 import matplotlib
 from matplotlib.ticker import MaxNLocator
+import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import matplotlib.patches as patches  # 確保匯入 patches
 
 matplotlib.use('Agg')
 import numpy as np
-import matplotlib.pyplot as plt
+
 from scipy.optimize import fsolve
-from matplotlib.path import Path
-import matplotlib.patches as patches  # 確保匯入 patches
+
 import io
 import base64
 
@@ -517,88 +519,206 @@ def perform_analysis(plate_shape, P_applied, Mx_applied, My_applied, Es, Ec, bol
     }
 
 
-def generate_shear_vector_plot(bolt_coords, bolt_shear_demands, plate_params, title="錨栓剪力分布圖",
-                               vector_type='resultant', unit_system='imperial'):
+def generate_shear_vector_plot(
+        bolt_coords_imperial,
+        bolt_shear_demands_imperial,
+        plate_params,
+        pedestal_params,
+        column_params,
+        critical_bolt_index=None,  # <--- 【恢復】明確接收最不利錨栓的索引
+        highlight_indices=None,
+        title="錨栓剪力分布圖",
+        vector_type='components',
+        unit_system='imperial',
+        show_background_geometry=True,
+        display_direction=None  # <--- 【核心新增
+):
     """
     一个专门用于绘制锚栓剪力向量图的辅助函式。
     返回图片的 Base64 编码字符串。
     """
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    # [核心修正] 移除 length_conv，因為傳入的數據已經是正確的單位
-    length_unit = 'cm' if unit_system == 'mks' else 'in'
+    # --- 1. 準備繪圖單位 ---
+    unit_label = 'cm' if unit_system == 'mks' else 'in'
+    conv = IN_TO_CM if unit_system == 'mks' else 1.0
     force_conv = KIP_TO_TF if unit_system == 'mks' else 1.0
-    length_conv = IN_TO_CM if unit_system == 'mks' else 1.0
 
+    # --- 1. 繪製墩柱 (Pedestal) ---
+    if show_background_geometry and pedestal_params:  # <--- 【核心新增】
+        pedestal_shape = pedestal_params.get('shape', 'rectangle')
+        if pedestal_shape == 'rectangle':
+            ped_B, ped_N = pedestal_params.get('B', 0) * conv, pedestal_params.get('N', 0) * conv
+            ax.add_patch(
+                patches.Rectangle((-ped_B / 2, -ped_N / 2), ped_B, ped_N, fill=True, color='#E9ECEF', ec='#adb5bd',
+                                  lw=1.5, label='Pedestal'))
+        else:  # circle
+            ped_D = pedestal_params.get('D', 0) * conv
+            ax.add_patch(
+                patches.Circle((0, 0), ped_D / 2, fill=True, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal'))
+
+    # --- 2. 繪製基礎版 (Base Plate) ---
+    e_x, e_y = plate_params.get('e_x', 0) * conv, plate_params.get('e_y', 0) * conv
     plate_shape = plate_params.get('shape', 'rectangle')
+    base_plate_fill_color = (2 / 255, 117 / 255, 216 / 255, 0.1)
+
     if plate_shape == 'rectangle':
-        B = plate_params.get('B', 0) * length_conv
-        N = plate_params.get('N', 0) * length_conv
-        ax.add_patch(
-            patches.Polygon(np.array([[-B / 2, -N / 2], [B / 2, -N / 2], [B / 2, N / 2], [-B / 2, N / 2]]), fill=None,
-                            edgecolor='black', lw=2.0))
+        plate_B, plate_N = plate_params.get('B', 0) * conv, plate_params.get('N', 0) * conv
+        ax.add_patch(patches.Rectangle((-plate_B / 2 + e_x, -plate_N / 2 + e_y), plate_B, plate_N, fill=True,
+                                       color=base_plate_fill_color, ec='#0275d8', lw=2, label='Base Plate'))
     else:  # Circle or Octagon
-        outer_radius = plate_params.get('outer_radius', 0) * length_conv
+        outer_radius = plate_params.get('outer_radius', 0) * conv
         if plate_shape == 'circle':
-            ax.add_patch(patches.Circle((0, 0), outer_radius, fill=None, edgecolor='black', lw=2.0))
+            ax.add_patch(
+                patches.Circle((e_x, e_y), outer_radius, fill=True, color=base_plate_fill_color, ec='#0275d8', lw=2,
+                               label='Base Plate'))
+        else:  # Octagon
+            angles = np.linspace(np.pi / 8, 2 * np.pi + np.pi / 8, 9, endpoint=True)
+            verts = np.array([[outer_radius * np.cos(a) + e_x, outer_radius * np.sin(a) + e_y] for a in angles])
+            ax.add_patch(
+                patches.Polygon(verts, fill=True, color=base_plate_fill_color, ec='#0275d8', lw=2, label='Base Plate'))
 
-    # 2. 繪製錨栓位置 (現在 bolt_coords 的單位是正確的)
-    bolt_coords_np = np.array(bolt_coords) * length_conv
-    ax.scatter(bolt_coords_np[:, 0], bolt_coords_np[:, 1], edgecolor='black', facecolor='cornflowerblue', s=120,
-               zorder=5)
+    # --- 3. 繪製開孔 (Hole) ---
+    if plate_params.get('has_hole', False):
+        hole_shape = plate_params.get('hole_shape', 'rectangle')
+        if hole_shape == 'rectangle':
+            h_b, h_n = plate_params.get('b', 0) * conv, plate_params.get('n', 0) * conv
+            ax.add_patch(
+                patches.Rectangle((-h_b / 2 + e_x, -h_n / 2 + e_y), h_b, h_n, fill=True, color='white', ec='#adb5bd',
+                                  lw=1, linestyle='--'))
+        else:  # Circle or Octagon for hole
+            inner_radius = plate_params.get('inner_radius', 0) * conv
+            if hole_shape == 'circle':
+                ax.add_patch(patches.Circle((e_x, e_y), inner_radius, fill=True, color='white', ec='#adb5bd', lw=1,
+                                            linestyle='--'))
+            else:  # Octagon
+                angles = np.linspace(np.pi / 8, 2 * np.pi + np.pi / 8, 9, endpoint=True)
+                verts = np.array([[inner_radius * np.cos(a) + e_x, inner_radius * np.sin(a) + e_y] for a in angles])
+                ax.add_patch(patches.Polygon(verts, fill=True, color='white', ec='#adb5bd', lw=1, linestyle='--'))
 
-    # 在每個錨栓旁邊添加編號
-    ax.autoscale_view()
+    # --- 4. 繪製鋼柱 (Column) ---
+    if show_background_geometry and column_params:  # <--- 【核心新增】
+        col_type = column_params.get('type', 'H-Shape').lower()
+        col_props = {'fill': False, 'ec': '#343a40', 'lw': 2, 'zorder': 10}
+        if col_type == 'h-shape':
+            d, bf = column_params.get('d', 0) * conv, column_params.get('bf', 0) * conv
+            ax.add_patch(patches.Rectangle((-bf / 2, -d / 2), bf, d, **col_props))
+        elif col_type == 'tube':
+            B, H = column_params.get('B', 0) * conv, column_params.get('H', 0) * conv
+            ax.add_patch(patches.Rectangle((-B / 2, -H / 2), B, H, **col_props))
+        elif col_type == 'pipe':
+            D = column_params.get('D', 0) * conv
+            ax.add_patch(patches.Circle((0, 0), D / 2, **col_props))
+
+    # --- 5. 繪製錨栓位置和剪力向量 ---
+    # 預先轉換所有錨栓的繪圖座標
+    bolt_coords_plot = np.array(bolt_coords_imperial)*conv
+    e_x_plot, e_y_plot = plate_params.get('e_x', 0), plate_params.get('e_y', 0)
+
+    ax.scatter(bolt_coords_plot[:, 0] + e_x_plot, bolt_coords_plot[:, 1] + e_y_plot,
+               edgecolor='black', facecolor='cornflowerblue', s=120, zorder=15)
+
     x_range_plot = ax.get_xlim()[1] - ax.get_xlim()[0]
-    for i, (x, y) in enumerate(bolt_coords_np):
-        ax.text(x + x_range_plot * 0.02, y, str(i), color='black', fontsize=15, ha='left', va='center', weight='bold',
-                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', boxstyle='round,pad=0.2'))
+    # 為了讓位移更穩定，我們使用一個絕對的偏移量，而不是基於 x_range_plot
+    offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.02  # 保持一個小的偏移量
 
-    # 3. 繪製剪力向量
-    max_shear_val_imperial = max(d['Vua_total'] for d in bolt_shear_demands) if bolt_shear_demands else 1.0
-    if max_shear_val_imperial == 0: max_shear_val_imperial = 1.0
+    for i, (x, y) in enumerate(bolt_coords_plot):
+        ax.text(
+            x + e_x_plot + offset,  # 在 X 方向上稍微向右偏移
+            y + e_y_plot - offset,  # 在 Y 方向上稍微向下偏移
+            str(i),  # 要顯示的文字 (編號)
+            color='black',
+            fontsize=12,  # 略微縮小字體，使其更精緻
+            ha='left',  # 水平對齊：文字的左邊緣對齊到指定的 (x, y) 點
+            va='top',  # 垂直對齊：文字的頂部邊緣對齊到指定的 (x, y) 點
+            weight='bold',
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', boxstyle='round,pad=0.1')
+        )
 
-    ax.autoscale_view()
+    if not bolt_shear_demands_imperial:
+        return None
+
+    max_shear_val = max(d['Vua_total'] for d in bolt_shear_demands_imperial)
+    if max_shear_val == 0: max_shear_val = 1.0
     x_range_plot = ax.get_xlim()[1] - ax.get_xlim()[0]
-    scale_val = max_shear_val_imperial / (x_range_plot / 8.0)
+    scale_val = max_shear_val / (x_range_plot / 4.0)
 
-    for demand in bolt_shear_demands:
-        # [核心修正] demand['coord'] 已經是正確單位，直接使用
-        x, y = demand['coord']
-        x = x * length_conv
-        y = y * length_conv
+    # --- 階段一：為所有錨栓繪製剪力向量箭頭 ---
+    for i, demand_imperial in enumerate(bolt_shear_demands_imperial):
+        x_plot, y_plot = (np.array(bolt_coords_imperial[i]) * conv) + [e_x_plot, e_y_plot]
+        vx, vy = demand_imperial['Vua_x'], demand_imperial['Vua_y']
 
-        # 剪力分量 vx, vy 仍然是英制，用於計算箭頭方向和長度比例
-        vx_imperial, vy_imperial = demand['Vua_x'], demand['Vua_y']
+        vec_to_plot_x, vec_to_plot_y = 0, 0
+        if display_direction == 'X':
+            vec_to_plot_x = vx
+        elif display_direction == 'Y':
+            vec_to_plot_y = vy
+        else:
+            vec_to_plot_x, vec_to_plot_y = vx, vy
 
-        ax.quiver(x, y, vx_imperial, vy_imperial, angles='xy', scale_units='xy', scale=scale_val, color='r',
-                  width=0.008, headwidth=4, headlength=6)
+        if abs(vec_to_plot_x) > 1e-6 or abs(vec_to_plot_y) > 1e-6:
+            ax.quiver(x_plot, y_plot, vec_to_plot_x, vec_to_plot_y, angles='xy', scale_units='xy',
+                      scale=scale_val, color='r', width=0.006, headwidth=8, headlength=8, zorder=20)
 
-        # [核心修正] 文字標註位置計算
-        norm = np.sqrt(vx_imperial ** 2 + vy_imperial ** 2)
-        if norm < 1e-6: continue
+    # --- 階段二：只為指定的 critical 錨栓標示剪力值 ---
+    # 決定要標示哪些錨栓的索引列表
+    indices_to_label = []
+    if highlight_indices is not None:
+        # 群組模式：標示列表中的所有錨栓
+        indices_to_label = highlight_indices
+    elif critical_bolt_index is not None:
+        # 單根模式：只標示那一根最不利的錨栓
+        indices_to_label = [critical_bolt_index]
 
-        text_x = x + (vx_imperial / norm) * (x_range_plot * 0.1)
-        text_y = y + (vy_imperial / norm) * (x_range_plot * 0.1)
+    # 遍歷這個需要標示的列表
+    for i in indices_to_label:
+        # 從 demands 列表中獲取對應的數據
+        if i < len(bolt_shear_demands_imperial):
+            demand_imperial = bolt_shear_demands_imperial[i]
+            x_plot, y_plot = (np.array(bolt_coords_imperial[i])*conv) + [e_x_plot, e_y_plot]
+            vx, vy = demand_imperial['Vua_x'], demand_imperial['Vua_y']
 
-        if vector_type == 'components':
-            vx_display = demand['Vua_x']
-            vy_display = demand['Vua_y']
-            label = f"Vx: {vx_display:.2f}\nVy: {vy_display:.2f}"
-            fontsize = 12
-        else:  # 'resultant' or default
-            display_val = demand['Vua_total']
-            label = f"{display_val:.2f}"
-            fontsize = 15
+            vec_to_plot_x, vec_to_plot_y = 0, 0
+            if display_direction == 'X':
+                vec_to_plot_x = vx
+            elif display_direction == 'Y':
+                vec_to_plot_y = vy
+            else:
+                vec_to_plot_x, vec_to_plot_y = vx, vy
 
-        ax.text(text_x, text_y, label, fontsize=fontsize, ha='center', va='center',
-                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
+            norm = np.sqrt(vx ** 2 + vy ** 2)
+            if norm < 1e-6 and display_direction is None:
+                continue
+
+            text_vec_x, text_vec_y = vec_to_plot_x, vec_to_plot_y
+            if abs(text_vec_x) < 1e-6 and abs(text_vec_y) < 1e-6:
+                text_vec_x, text_vec_y = vx, vy
+
+            norm_text = np.sqrt(text_vec_x ** 2 + text_vec_y ** 2)
+            if norm_text < 1e-6: continue
+
+            text_x = x_plot + (text_vec_x / norm_text) * (x_range_plot * 0.12)
+            text_y = y_plot + (text_vec_y / norm_text) * (x_range_plot * 0.12)
+
+            vx_display = demand_imperial['Vua_x']
+            vy_display = demand_imperial['Vua_y']
+
+            label = ""
+            if display_direction == 'X':
+                label = f"Vx: {vx_display:.2f}"
+            elif display_direction == 'Y':
+                label = f"Vy: {vy_display:.2f}"
+            else:
+                label = f"Vx: {vx_display:.2f}\nVy: {vy_display:.2f}"
+
+            ax.text(text_x, text_y, label, fontsize=15, ha='center', va='center',
+                    bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', pad=1), zorder=21)
 
     # 5. 圖表設定
     ax.set_aspect('equal')
     ax.set_title(title, fontsize=14, weight='bold')
-    ax.set_xlabel(f'X-axis ({length_unit})')
-    ax.set_ylabel(f'Y-axis ({length_unit})')
+    ax.set_xlabel(f'X-axis ({unit_label})')  # <-- 現在這裡的 unit_label 是有定義的
+    ax.set_ylabel(f'Y-axis ({unit_label})')  # <-- 現在這裡的 unit_label 是有定義的
     ax.grid(True, linestyle=':', linewidth=0.7)
 
     # 手動設定刻度，確保它們是 "漂亮" 的整數
@@ -734,10 +854,3 @@ def generate_geometry_plot(plate_params, pedestal_params, bolt_params, column_pa
     plt.close(fig)
 
     return plot_base64
-
-
-# [核心新增] 需要一個輔助函式來計算錨栓座標，我們可以從 perform_analysis 中提取
-def get_bolt_coordinates_for_plot(plate_params, bolt_params):
-    # ... (此處需要複製/貼上 perform_analysis 函式中 B. 螺栓佈置產生器 的所有邏輯) ...
-    # ... 為了簡潔，這裡先省略，但在您的實際檔案中需要貼上 ...
-    return []  # 暫時返回空列表

@@ -2,25 +2,37 @@ from pathlib import Path
 import os
 import dj_database_url
 import pymysql
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env(
+    # 設定變數的類型和預設值
+    DEBUG=(bool, False)
+)
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-6hn#)n)vpg%*q6xm1eseq##u$*wu@z23u)428$=so28+ebts5q'
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY')
+# SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+# DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+# DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = [
     'cnproject-s1v9.onrender.com',
     'chinzhu.com.tw',
     'www.chinzhu.com.tw',
 ]
+# 如果是在本地開發模式 (DEBUG=True)，就把本地網址加進去
+if DEBUG:
+    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
 
 # Application definition
 
@@ -98,12 +110,7 @@ pymysql.install_as_MySQLdb()
 #     }
 # }
 DATABASES = {
-    'default': dj_database_url.config(
-        # 如果 Render 提供了 DATABASE_URL，就用它
-        conn_max_age=600,
-        # 如果沒有，就用我們本地的設定作為備用
-        default='postgres://root:root@localhost:5432/cndb'
-    )
+    'default': env.db(),
 }
 
 # Password validation
@@ -137,7 +144,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 STATIC_URL = '/static/'
 if not DEBUG:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -157,8 +164,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'chengning6032@gmail.com'  # 您的 Gmail 地址
-EMAIL_HOST_PASSWORD = 'njih toze bufh ntme'  # 您的 16 位應用程式密碼
+EMAIL_HOST_USER = 'chengning6032@gmail.com'
+# 從 .env 讀取 EMAIL_HOST_PASSWORD
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ADMIN_EMAIL = 'chengning6032@gmail.com'

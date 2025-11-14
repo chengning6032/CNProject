@@ -5,46 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}勤築工程實業有限公司{% endblock %}</title>
-    <!-- ===== 【核心新增】Favicon 宣告 ===== -->
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon_io/favicon.ico' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon_io/favicon-32x32.png' %}">
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon_io/favicon-16x16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon_io/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'img/favicon_io/site.webmanifest' %}">
-    <!-- ===== Favicon 宣告結束 ===== -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 
     <style>
         /* ===== 全局基礎與美化樣式 ===== */
         html {
-            scroll-behavior: smooth; /* 平滑滾動 */
+            scroll-behavior: smooth;
         }
         body, h1, h2, h3, p, ul, li {
             margin: 0;
             padding: 0;
             font-family: '微軟正黑體', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif;
-            -webkit-font-smoothing: antialiased; /* 優化字體渲染 */
+            -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
         body {
             line-height: 1.7;
             color: #333;
-            background-color: #f4f7f9; /* 為整個網站設定一個柔和的底色 */
+            background-color: #f4f7f9;
         }
         .container {
-            max-width: 1140px; /* 統一內容寬度 */
+            max-width: 1140px;
             margin: 0 auto;
             padding: 0 20px;
         }
         main {
-            background-color: #ffffff; /* 主要內容區塊使用白色背景 */
+            background-color: #ffffff;
         }
 
         /* ===== 1. 導覽列 (Navbar) 質感升級 ===== */
         .navbar {
-            background-color: rgba(255, 255, 255, 0.95); /* 半透明背景，增加層次感 */
-            backdrop-filter: blur(10px); /* 毛玻璃效果 */
-            padding: 15px 0; /* 增加垂直高度 */
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             position: sticky;
             top: 0;
@@ -55,12 +53,11 @@
             justify-content: space-between;
             align-items: center;
         }
-        /* Logo 區域 */
         .navbar .logo {
             display: flex;
             align-items: center;
-            gap: 12px; /* Logo 與文字的間距 */
-            font-size: 1.2rem; /* 稍微縮小文字，讓 Logo 更突出 */
+            gap: 12px;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #1d3557;
             text-decoration: none;
@@ -70,11 +67,10 @@
             opacity: 0.8;
         }
         .navbar .logo img {
-            height: 40px; /* 控制 Logo 圖片的高度 */
+            height: 40px;
             width: auto;
         }
 
-        /* 導覽連結 (樣式不變) */
         .navbar .nav-links { list-style: none; display: flex; align-items: center; gap: 15px; }
         .navbar .nav-links li { position: relative; padding: 10px 15px; }
         .navbar .nav-links a { text-decoration: none; color: #555; font-weight: bold; transition: color 0.3s ease; }
@@ -87,82 +83,90 @@
         .navbar .nav-links .nav-btn-special a:hover { background-color: #1d3557; color: #ffffff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 86, 179, 0.3); }
         .navbar .nav-links li.nav-btn-special::after { display: none; }
 
+        /* ===== 【核心新增】手機版漢堡選單按鈕 ===== */
+        .mobile-nav-toggle {
+            display: none; /* 預設隱藏 */
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #1d3557;
+            cursor: pointer;
+            z-index: 1001; /* 確保在最上層 */
+        }
 
         /* ===== 2. 頁尾 (Footer) 全面改造 ===== */
         .footer {
-            background-color: #212529; /* 使用更深邃的炭黑色 */
-            color: #adb5bd; /* 使用柔和的灰色文字 */
-            padding: 60px 0 20px 0;
-            font-size: 0.95em;
+            background-color: #212529; color: #adb5bd; padding: 60px 0 20px 0; font-size: 0.95em;
         }
         .footer-main {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr; /* 三欄式佈局：公司簡介 | 快速連結 | 聯絡資訊 */
-            gap: 50px;
-            padding-bottom: 40px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 50px; padding-bottom: 40px;
         }
-        .footer-logo-area .logo-img {
-            height: 50px;
-            margin-bottom: 20px;
-        }
-        .footer-logo-area .tagline {
-            color: #ced4da;
-            line-height: 1.8;
-        }
+        .footer-logo-area .logo-img { height: 50px; margin-bottom: 20px; }
+        .footer-logo-area .tagline { color: #ced4da; line-height: 1.8; }
         .footer-col h3 {
-            color: #ffffff;
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            position: relative;
-            padding-bottom: 10px;
+            color: #ffffff; font-size: 1.1rem; margin-bottom: 25px; position: relative; padding-bottom: 10px;
         }
-        .footer-col h3::after { /* 標題下方的裝飾線 */
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 30px;
-            height: 2px;
-            background-color: #0056b3;
+        .footer-col h3::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 30px; height: 2px; background-color: #0056b3;
         }
-        .footer-links {
-            list-style: none;
-            padding: 0;
-        }
-        .footer-links li {
-            margin-bottom: 12px;
-        }
-        .footer-links a {
-            color: #adb5bd;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .footer-links a:hover {
-            color: #ffffff;
-            padding-left: 5px; /* 懸停時輕微右移 */
-        }
-        .footer-contact-info li {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        .footer-contact-info i {
-            color: #0056b3;
-            margin-top: 5px;
+        .footer-links { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 12px; }
+        .footer-links a { color: #adb5bd; text-decoration: none; transition: all 0.3s ease; }
+        .footer-links a:hover { color: #ffffff; padding-left: 5px; }
+        .footer-contact-info li { display: flex; align-items: flex-start; gap: 10px; }
+        .footer-contact-info i { color: #0056b3; margin-top: 5px; }
+        .copyright {
+            text-align: center; padding-top: 30px; border-top: 1px solid #495057; font-size: 0.9em; color: #6c757d;
         }
 
-        /* 版權區域 */
-        .copyright {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid #495057;
-            font-size: 0.9em;
-            color: #6c757d;
+        /*
+         * ===== 【核心新增】響應式設計 (Responsive Design) =====
+        */
+        @media (max-width: 992px) {
+            /* 手機版導覽列 */
+            .mobile-nav-toggle {
+                display: block; /* 在小螢幕顯示漢堡按鈕 */
+            }
+            .navbar .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%; /* 預設藏在右邊 */
+                width: 100%;
+                height: 100vh;
+                background-color: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 20px;
+                transition: right 0.4s ease-in-out;
+                padding-top: 60px; /* 避開頂部 */
+            }
+            .navbar.nav-open .nav-links {
+                right: 0; /* 當 .nav-open class 被加入時，滑入畫面 */
+            }
+            .navbar .nav-links li {
+                padding: 15px 0;
+                font-size: 1.5rem;
+            }
+             .navbar .nav-links .nav-btn-special a {
+                padding: 12px 30px;
+                font-size: 1.2rem;
+            }
         }
 
         @media (max-width: 768px) {
+            /* 手機版頁尾 */
             .footer-main {
-                grid-template-columns: 1fr; /* 手機版變為單欄 */
+                grid-template-columns: 1fr; /* 變為單欄 */
+                text-align: center; /* 文字置中 */
+            }
+            .footer-col h3::after {
+                left: 50%; /* 裝飾線置中 */
+                transform: translateX(-50%);
+            }
+            .footer-contact-info li {
+                justify-content: center; /* 聯絡資訊置中 */
             }
         }
 
@@ -172,38 +176,42 @@
 </head>
 <body>
 
-<!-- 導覽列 (已整合 Logo) -->
-<nav class="navbar">
+<!-- 【核心修改】在 navbar 加入 id 以便 JS 選取 -->
+<nav class="navbar" id="navbar">
     <div class="container">
         <a href="{% url 'CZ_homepage' %}" class="logo">
             <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo">
-            <span>勤築工程實業有限公司</span>
+            <!-- 在手機上可以考慮隱藏文字，讓 logo 更簡潔 -->
+            <span class="logo-text">勤築工程實業有限公司</span>
         </a>
-        <ul class="nav-links">
+
+        <!-- 【核心修改】ul 加上 id 以便 JS 選取 -->
+        <ul class="nav-links" id="nav-links">
             <li class="{% if request.resolver_match.url_name == 'CZ_homepage' %}active{% endif %}"><a href="{% url 'CZ_homepage' %}">首頁</a></li>
             <li class="{% if request.resolver_match.url_name == 'CZ_about' %}active{% endif %}"><a href="{% url 'CZ_about' %}">關於我們</a></li>
             <li class="{% if request.resolver_match.url_name == 'CZ_process' %}active{% endif %}"><a href="{% url 'CZ_services' %}">服務流程</a></li>
             <li class="{% if request.resolver_match.url_name == 'CZ_contact' %}active{% endif %}"><a href="{% url 'CZ_contact' %}">聯絡我們</a></li>
             <li class="nav-btn-special {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}"><a href="{% url 'homepage' %}">OLi 平台</a></li>
         </ul>
+
+        <!-- 【核心新增】漢堡選單按鈕 -->
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation">
+            <i class="ri-menu-line"></i>
+        </button>
     </div>
 </nav>
 
-<!-- 這是主要內容區塊，將由子模板填充 -->
 <main>
     {% block content %}{% endblock %}
 </main>
 
-<!-- 頁尾 (全新設計) -->
 <footer class="footer">
     <div class="container">
         <div class="footer-main">
-            <!-- Column 1: 公司簡介 -->
             <div class="footer-col footer-logo-area">
                 <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo" class="logo-img">
                 <p class="tagline">我們以精湛的技術與誠信的態度，致力於提供最專業的工程規劃與顧問服務，將您的願景化為可行的卓越方案。</p>
             </div>
-            <!-- Column 2: 快速連結 -->
             <div class="footer-col">
                 <h3>快速連結</h3>
                 <ul class="footer-links">
@@ -213,14 +221,11 @@
                     <li><a href="{% url 'CZ_contact' %}">聯絡我們</a></li>
                 </ul>
             </div>
-            <!-- Column 3: 聯絡資訊 -->
             <div class="footer-col">
                 <h3>聯絡資訊</h3>
                 <ul class="footer-links footer-contact-info">
                     <li><i class="ri-map-pin-2-line"></i><span>桃園市桃園區力行路317號13樓</span></li>
                     <li><i class="ri-mail-send-line"></i><span>chinzhu0524@gmail.com</span></li>
-                    <!-- 電話號碼已根據您之前的程式碼移除，若要加回請取消註解 -->
-                    <!-- <li><i class="ri-phone-line"></i><span>(XX) XXXX-XXXX</span></li> -->
                 </ul>
             </div>
         </div>
@@ -229,6 +234,40 @@
         </div>
     </div>
 </footer>
+
+<!-- 【核心新增】漢堡選單的 JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const navbar = document.getElementById('navbar');
+        const navToggle = document.getElementById('mobile-nav-toggle');
+        const navLinks = document.getElementById('nav-links');
+
+        if (navToggle) {
+            navToggle.addEventListener('click', function() {
+                navbar.classList.toggle('nav-open');
+                // 切換漢堡圖示
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('ri-menu-line')) {
+                    icon.classList.remove('ri-menu-line');
+                    icon.classList.add('ri-close-line');
+                } else {
+                    icon.classList.remove('ri-close-line');
+                    icon.classList.add('ri-menu-line');
+                }
+            });
+        }
+        
+        // 點擊手機選單中的連結後，自動關閉選單
+        navLinks.addEventListener('click', function(event) {
+            if (navbar.classList.contains('nav-open') && event.target.tagName === 'A') {
+                 navbar.classList.remove('nav-open');
+                 const icon = navToggle.querySelector('i');
+                 icon.classList.remove('ri-close-line');
+                 icon.classList.add('ri-menu-line');
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

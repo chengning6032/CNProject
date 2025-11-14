@@ -4,7 +4,6 @@
 {% block title %}關於我們 - 勤築工程實業有限公司{% endblock %}
 
 {% block extra_style %}
-    /* ... 通用樣式與頁首橫幅樣式不變 ... */
     .section { padding: 80px 0; overflow-x: hidden; }
     .container { max-width: 1100px; }
     .page-header { background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("{% static 'images/about-us-banner.jpg' %}"); background-size: cover; background-position: center; padding: 80px 0; text-align: center; color: #fff; }
@@ -31,114 +30,55 @@
     .mission-card h3 { font-size: 1.5rem; margin-bottom: 15px; color: #1d3557; }
     .mission-card p { color: #666; line-height: 1.7; }
     .founder-section { background-color: #fff; }
-    .founder-container {
-        display: flex;
-        align-items: center;
-        gap: 60px;
-    }
-.founder-photo {
-        flex-shrink: 0;
-        width: 200px;   /* 稍微加大圓框 */
-        height: 257px;  /* 稍微加大圓框 */
-        border-radius: 8%;
+    .founder-container { display: flex; align-items: center; gap: 60px; }
+    .founder-photo {
+        flex-shrink: 0; width: 200px; height: 257px; border-radius: 8%;
         box-shadow: 0 10px 40px rgba(0, 86, 179, 0.2);
-
-        /* 使用背景圖片屬性 */
         background-image: url("{% static 'img/headshot/founder-photo.png' %}");
-        background-size: contain;     /* 完整顯示圖片，不裁剪 */
-        background-position: center;  /* 圖片居中 */
-        background-repeat: no-repeat;
-        background-color: #e9ecef; /* 添加一個柔和的背景色，以防圖片透明 */
+        background-size: contain; background-position: center; background-repeat: no-repeat;
+        background-color: #e9ecef;
     }
     .founder-bio { flex-grow: 1; }
     .founder-bio h2 { font-size: 2.5rem; color: #1d3557; margin-bottom: 10px; }
     .founder-bio .title { color: #0056b3; font-size: 1.2rem; font-weight: bold; margin-bottom: 25px; }
     .founder-bio p { color: #555; line-height: 1.8; margin-bottom: 20px; }
-
-    /* ===== 【核心修改】列表樣式，實現完美對齊 ===== */
-.bio-list {
-        list-style: none;
-        padding-left: 0;
-    }
-
-    .bio-list > li { /* 主列表項目 (學歷, 證照, 經歷) */
-        display: flex; /* 使用 Flexbox 佈局 */
-        align-items: flex-start; /* 讓圖示和右側內容塊頂部對齊 */
-        margin-bottom: 20px; /* 加大主項目間距 */
-    }
-
-    /* 主圖示樣式 */
+    .bio-list { list-style: none; padding-left: 0; }
+    .bio-list > li { display: flex; align-items: flex-start; margin-bottom: 20px; }
     .bio-list > li::before {
-        content: '\ec5c'; /* Remix Icon Check */
-        font-family: 'remixicon';
-        color: #457b9d;
-        font-size: 1.2em; /* 稍微加大圖示 */
-        margin-right: 12px; /* 圖示與文字的間距 */
-        margin-top: 4px; /* 關鍵：向下微調，使其與粗體標題的視覺中心對齊 */
-        flex-shrink: 0;
+        content: '\ec5c'; font-family: 'remixicon'; color: #457b9d;
+        font-size: 1.2em; margin-right: 12px; margin-top: 4px; flex-shrink: 0;
     }
-
-    .bio-list > li > div {
-        flex-grow: 1; /* 讓右側內容區塊填滿剩餘空間 */
-    }
-
-    .bio-list .item-header {
-        display: flex; /* 讓標題和單行內容可以水平排列 */
-        align-items: center; /* 垂直居中 */
-    }
-
-    .bio-list strong {
-        font-size: 1.1em;
-        color: #333;
-    }
-
-    /* 單行內容的樣式 (例如學歷) */
-    .bio-list .single-item-content {
-        margin-left: 10px;
-        color: #555;
-    }
-
-    /* 多行內容 (子列表) 的樣式 */
-    .bio-list ul {
-        list-style: none;
-        padding-left: 5px;  /* 子列表的縮排 */
-        margin-top: 10px;
-    }
-
-    .bio-list ul li {
-        color: #555;
-        margin-bottom: 8px;
-        padding-left: 0; /* 確保沒有額外縮排 */
-    }
-
-    /* 【核心修正】徹底移除子列表項目的圖示 */
-    .bio-list ul li::before {
-        display: none;
-    }
-
-    /* 「合作夥伴網絡」區塊樣式 (已修正) */
+    .bio-list > li > div { flex-grow: 1; }
+    .bio-list .item-header { display: flex; align-items: center; }
+    .bio-list strong { font-size: 1.1em; color: #333; }
+    .bio-list .single-item-content { margin-left: 10px; color: #555; }
+    .bio-list ul { list-style: none; padding-left: 5px; margin-top: 10px; }
+    .bio-list ul li { color: #555; margin-bottom: 8px; padding-left: 0; }
+    .bio-list ul li::before { display: none; }
     .partners-section { background-color: #f9f9f9; }
-    .partners-section .section-title {
-        font-size: 2.5rem;
-        color: #1d3557;
-        margin-bottom: 20px; /* 【核心修正】減少標題下方間距 */
-    }
+    .partners-section .section-title { font-size: 2.5rem; color: #1d3557; margin-bottom: 20px; }
     .partners-intro {
-        text-align: center;
-        max-width: 700px;
-        margin: 0 auto 60px auto; /* 【核心修正】移除負的上邊距 */
-        font-size: 1.1rem;
-        color: #555;
+        text-align: center; max-width: 700px; margin: 0 auto 60px auto; font-size: 1.1rem; color: #555;
     }
     .partners-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
     .partner-card { background-color: #fff; padding: 30px; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center; }
     .partner-card i { font-size: 3rem; color: #0056b3; margin-bottom: 20px; }
     .partner-card h3 { font-size: 1.3rem; color: #333; }
 
-    /* 響應式調整 */
-    @media (max-width: 992px) { .founder-container { flex-direction: column; text-align: center; } .founder-photo { width: 250px; height: 250px; margin-bottom: 30px; } }
-    @media (max-width: 768px) { .impact-stats { grid-template-columns: 1fr; } }
+    /* ===== 【核心修改】響應式調整 ===== */
+    @media (max-width: 992px) {
+        .founder-container { flex-direction: column; text-align: center; }
+        .founder-photo { width: 200px; height: 257px; /* 維持比例 */ margin-bottom: 30px; }
+        .bio-list > li { justify-content: center; } /* 讓列表內容在中間 */
+        .bio-list > li > div { text-align: left; } /* 保持列表文字靠左 */
+    }
+    @media (max-width: 768px) {
+        .section { padding: 60px 0; }
+        h2, .page-header h1 { font-size: 2rem; }
+        .impact-stats { grid-template-columns: 1fr; }
+    }
 {% endblock %}
+<!-- HTML 內容不變 -->
 
 {% block content %}
     <!-- ... 頁首橫幅, 故事, 數據, 理念區塊不變 ... -->

@@ -526,6 +526,95 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /**
+     * 【核心新增】
+     * 專門為即時預覽圖，直接從 UI 讀取當前顯示的值，不做任何單位轉換。
+     */
+    function getDisplayValuesForPlotting() {
+        const getValue = (id) => {
+            const el = document.getElementById(id);
+            if (!el || el.value === '') return null;
+            return parseFloat(el.value);
+        };
+
+        const plate_shape = uiControls.plateShapeSelect.value;
+        let plate_params = {
+            shape: plate_shape,
+            e_x: getValue('plate-ex-input'),
+            e_y: getValue('plate-ey-input'),
+            has_hole: document.querySelector('input[name="has_hole"]:checked').value === 'true'
+        };
+        if (plate_shape === 'rectangle') {
+            plate_params.N = getValue('plate-n-input');
+            plate_params.B = getValue('plate-b-input');
+        } else {
+            plate_params.outer_radius = getValue('plate-radius-input');
+        }
+        if (plate_params.has_hole) {
+            plate_params.hole_shape = uiControls.holeShapeSelect.value;
+            if (plate_params.hole_shape === 'rectangle') {
+                plate_params.n = getValue('hole-n-input');
+                plate_params.b = getValue('hole-b-input');
+            } else {
+                plate_params.inner_radius = getValue('hole-radius-input');
+            }
+        }
+
+        const pedestal_shape = uiControls.pedestalShapeSelect.value;
+        let pedestal_params = {shape: pedestal_shape};
+        if (pedestal_shape === 'rectangle') {
+            pedestal_params.N = getValue('pedestal-n-input');
+            pedestal_params.B = getValue('pedestal-b-input');
+        } else {
+            pedestal_params.D = getValue('pedestal-d-input');
+        }
+
+        const bolt_layout_mode = uiControls.boltLayoutSelect.value;
+        let bolt_params = {
+            layout_mode: bolt_layout_mode,
+            // 【核心修正】直接在這裡讀取 grid 和 circular 的參數
+            edge_dist_X: getValue('bolt-edge-x-input'),
+            edge_dist_Y: getValue('bolt-edge-y-input'),
+            num_inserted_X: getValue('bolt-num-x-input'),
+            num_inserted_Y: getValue('bolt-num-y-input'),
+            count: getValue('bolt-count-input'),
+            radius: getValue('bolt-radius-input'),
+            start_angle: getValue('bolt-start-angle-input')
+        };
+
+        if (bolt_layout_mode === 'custom') {
+            let coords = [];
+            tableControls.customBoltTableBody.querySelectorAll('tr').forEach(row => {
+                const x_val = parseFloat(row.querySelector('.custom-bolt-x').value);
+                const y_val = parseFloat(row.querySelector('.custom-bolt-y').value);
+                if (!isNaN(x_val) && !isNaN(y_val)) {
+                    coords.push([x_val, y_val]);
+                }
+            });
+            bolt_params.coordinates = coords;
+        }
+
+        const col_shape = uiControls.colShapeSelect.value;
+        let column_params = {type: col_shape};
+        if (col_shape === 'H-Shape') {
+            column_params.d = getValue('col-d-input');
+            column_params.bf = getValue('col-bf-input');
+            column_params.tf = getValue('col-tf-input');
+            column_params.tw = getValue('col-tw-input');
+        } else if (col_shape === 'Tube') {
+            column_params.H = getValue('col-h-tube-input');
+            column_params.B = getValue('col-b-tube-input');
+            column_params.t = getValue('col-t-tube-input');
+        } else if (col_shape === 'Pipe') {
+            column_params.D = getValue('col-d-pipe-input');
+            column_params.t = getValue('col-t-pipe-input');
+        }
+
+
+        return {plate_params, pedestal_params, bolt_params, column_params};
+    }
+
+
     // ==========================================================
     // ==== B. 即時預覽繪圖核心函式 ====
     // ==========================================================
@@ -542,37 +631,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePreview() {
-        // 【核心修正】在函数内部重新获取一次容器，确保它存在
         const previewContainer = document.getElementById('realtime-preview-container');
         if (!previewContainer) return;
 
-        const inputs = collectAllInputs();
-        if (!inputs || !inputs.pedestal_params) {
-            previewContainer.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">输入数据不完整，无法生成预览。</p>';
+        // 【核心修正】將變數名稱統一為 "inputs"
+        const inputs = getDisplayValuesForPlotting();
+
+        if (!inputs || !inputs.plate_params || !inputs.pedestal_params || !inputs.bolt_params) {
+            previewContainer.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">資料不完整，無法預覽。</p>';
             return;
         }
 
-        // --- A. 准备 Plotly 需要的数据 (Data) 和布局 (Layout) ---
+        const boltCoords = getBoltCoordinates(inputs.plate_params, inputs.bolt_params);
 
         const shapes = [];
-        const {e_x = 0, e_y = 0} = inputs.plate_params; // 提前获取偏心值
+        // 【核心修正】使用正確的變數 "inputs"
+        const {e_x = 0, e_y = 0} = inputs.plate_params;
 
-        // 1a. 墩柱 (Pedestal)
+        // 1a. 墩柱 (Pedestal) - 【核心修正】使用 "inputs"
         if (inputs.pedestal_params.shape === 'rectangle') {
             const {B = 30, N = 50} = inputs.pedestal_params;
             shapes.push({
-                type: 'rect',
-                x0: -B / 2, y0: -N / 2, x1: B / 2, y1: N / 2,
-                fillcolor: '#E9ECEF', line: {color: '#adb5bd', width: 1.5},
-                layer: 'below' // 确保墩柱在最底层
+                type: 'rect', x0: -B / 2, y0: -N / 2, x1: B / 2, y1: N / 2,
+                fillcolor: '#E9ECEF', line: {color: '#adb5bd', width: 1.5}, layer: 'below'
             });
         } else {
             const {D = 40} = inputs.pedestal_params;
             shapes.push({
-                type: 'circle',
-                x0: -D / 2, y0: -D / 2, x1: D / 2, y1: D / 2,
-                fillcolor: '#E9ECEF', line: {color: '#adb5bd', width: 1.5},
-                layer: 'below'
+                type: 'circle', x0: -D / 2, y0: -D / 2, x1: D / 2, y1: D / 2,
+                fillcolor: '#E9ECEF', line: {color: '#adb5bd', width: 1.5}, layer: 'below'
             });
         }
 
@@ -653,23 +740,50 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===== END: 核心新增区域 =====
         }
 
-        // 2. 定义锚栓数据 (Traces)
-        const boltCoords = getBoltCoordinates(inputs.plate_params, inputs.bolt_params);
+        const col_type = inputs.column_params.type;
+        const col_props = {
+            type: 'path', // 統一使用 path 類型以便繪製複雜圖形
+            fillcolor: 'rgba(52, 58, 64, 0.1)',
+            line: { color: '#343a40', width: 2 },
+            layer: 'above'
+        };
+        if (col_type === 'H-Shape') {
+            const { d = 0, bf = 0, tf = 0, tw = 0 } = inputs.column_params;
+            if (d > 0 && bf > 0 && tf > 0 && tw > 0) {
+                const half_d = d / 2;
+                const half_bf = bf / 2;
+                const half_tw = tw / 2;
+
+                // 使用 SVG Path "d" 屬性的語法來描繪 H 型鋼輪廓
+                // M = MoveTo, L = LineTo, Z = ClosePath
+                const path =
+                    // 繪製外輪廓
+                    `M ${-half_bf},${half_d} L ${half_bf},${half_d} L ${half_bf},${half_d - tf} ` +
+                    `L ${half_tw},${half_d - tf} L ${half_tw},${-half_d + tf} L ${half_bf},${-half_d + tf} ` +
+                    `L ${half_bf},${-half_d} L ${-half_bf},${-half_d} L ${-half_bf},${-half_d + tf} ` +
+                    `L ${-half_tw},${-half_d + tf} L ${-half_tw},${half_d - tf} L ${-half_bf},${half_d - tf} Z`;
+
+                shapes.push({ ...col_props, path: path });
+            }
+        } else if (col_type === 'Tube') {
+            const {B = 0, H = 0} = inputs.column_params;
+            shapes.push({...col_props, x0: -B / 2, y0: -H / 2, x1: B / 2, y1: H / 2});
+        } else if (col_type === 'Pipe') {
+            const {D = 0} = inputs.column_params;
+            shapes.push({...col_props, type: 'circle', x0: -D / 2, y0: -D / 2, x1: D / 2, y1: D / 2});
+        }
+
+        // 2. 定義錨栓數據 (Traces)
         const boltsTrace = {
             x: boltCoords.map(c => c[0] + e_x),
             y: boltCoords.map(c => c[1] + e_y),
-            mode: 'markers',
-            type: 'scatter',
-            marker: {
-                color: '#f0ad4e',
-                size: 10,
-                line: {color: '#d9534f', width: 1.5}
-            },
+            mode: 'markers', type: 'scatter',
+            marker: {color: '#f0ad4e', size: 10, line: {color: '#d9534f', width: 1.5}},
             name: 'Anchors'
         };
         const data = [boltsTrace];
 
-        // 3. 定义布局 (Layout)
+        // 【步驟 3】定義佈局，並根據 currentUnitSystem 動態設定座標軸標籤
         let viewWidth, viewHeight;
         if (inputs.pedestal_params.shape === 'rectangle') {
             viewWidth = inputs.pedestal_params.B || 30;
@@ -677,33 +791,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             viewWidth = viewHeight = inputs.pedestal_params.D || 40;
         }
-        // 确保 viewWidth/Height 不是 NaN
         if (isNaN(viewWidth) || isNaN(viewHeight)) return;
 
-        const range_x = [-viewWidth * 0.6, viewWidth * 0.6];
-        const range_y = [-viewHeight * 0.6, viewHeight * 0.6];
+        const padding = Math.max(viewWidth, viewHeight) * 0.1;
+        const range_x = [-viewWidth / 2 - padding, viewWidth / 2 + padding];
+        const range_y = [-viewHeight / 2 - padding, viewHeight / 2 + padding];
 
         const layout = {
-            margin: {l: 20, r: 20, b: 20, t: 40},
-            xaxis: {range: range_x, showgrid: true, zeroline: true, gridcolor: '#eee', zerolinecolor: '#ccc'},
+            margin: {l: 40, r: 20, b: 40, t: 40},
+            xaxis: {
+                title: `X-axis (${currentUnitSystem === 'mks' ? 'cm' : 'in'})`, // 動態標籤
+                range: range_x, showgrid: true, zeroline: true, gridcolor: '#eee', zerolinecolor: '#ccc'
+            },
             yaxis: {
-                range: range_y,
-                scaleanchor: "x",
-                scaleratio: 1,
-                showgrid: true,
-                zeroline: true,
-                gridcolor: '#eee',
-                zerolinecolor: '#ccc'
+                title: `Y-axis (${currentUnitSystem === 'mks' ? 'cm' : 'in'})`, // 動態標籤
+                range: range_y, scaleanchor: "x", scaleratio: 1,
+                showgrid: true, zeroline: true, gridcolor: '#eee', zerolinecolor: '#ccc'
             },
             shapes: shapes,
             showlegend: false,
-            paper_bgcolor: '#FFFFFF', // 设置图表背景为白色
-            plot_bgcolor: '#FFFFFF', // 设置绘图区域背景为白色
-            // title: {text: '即時幾何預覽', font: {size: 16, color: '#1d3557'}}
+            paper_bgcolor: '#FFFFFF',
+            plot_bgcolor: '#FFFFFF',
         };
 
-        // B. 绘制或更新图形
-        Plotly.newPlot(mainActions.previewContainer, data, layout, {responsive: true, displayModeBar: false});
+        Plotly.newPlot(previewContainer, data, layout, {responsive: true, displayModeBar: false});
     }
 
     const debouncedUpdatePreview = debounce(updatePreview, 250); // 延迟 250毫秒
@@ -1281,91 +1392,110 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================
     // ==== E. 程式初始化與事件綁定 ====
     // ==========================================================
-    // 绑定所有 UI 控制元素的 change 事件
-    Object.values(uiControls).forEach(elOrNodeList => {
-        if (NodeList.prototype.isPrototypeOf(elOrNodeList)) {
-            elOrNodeList.forEach(el => el.addEventListener('change', updateDynamicSections));
-        } else if (elOrNodeList) {
-            elOrNodeList.addEventListener('change', updateDynamicSections);
-        }
-    });
 
-    // 【核心修正】绑定所有输入框的 input 事件到 debounced 版本的函式
-    document.querySelectorAll('.main-layout-grid input, .main-layout-grid select').forEach(el => {
-        if (el.id === 'bolt-diameter-input' || el.id === 'anchor-eh-input') {
-            el.addEventListener('input', validateEh);
-        }
+    // --- 1. 綁定所有會影響「即時預覽圖」的輸入事件 ---
+    const previewInputs = document.querySelectorAll(
+        // 選擇所有幾何尺寸相關的 input 和 select
+        '#col-shape-select, .col-params-group input, ' +
+        '#plate-shape-select, .plate-params-group input, ' +
+        '#hole-options-container input, #hole-options-container select, ' +
+        '#pedestal-shape-select, .pedestal-params-group input, ' +
+        '#bolt-layout-select, .bolt-layout-group input'
+    );
+
+    previewInputs.forEach(el => {
+        // 對於下拉選單和 radio，我們希望立即更新
         if (el.tagName === 'SELECT' || el.type === 'radio') {
-            el.addEventListener('change', updatePreview); // 切换时立即更新
+            el.addEventListener('change', updatePreview);
         }
-        el.addEventListener('input', debouncedUpdatePreview); // 输入时防抖更新
+        // 對於數字輸入框，我們使用防抖（debounce）來避免過於頻繁的重繪
+        el.addEventListener('input', debouncedUpdatePreview);
     });
 
-    // [核心新增] 綁定輕質混凝土選項的 change 事件
-    uiControls.isLightweightRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            updateConcreteWeight();
+    // --- 2. 綁定所有會影響「計算邏輯」但不影響「即時預覽」的輸入事件 ---
+    // 這些輸入只在值改變後觸發驗證或重新計算，不需要重繪預覽圖
+    [
+        'plate-fy-input', 'bolt-fya-input', 'bolt-futa-input', 'es-input',
+        'fc-input', 'ec-input', 'concrete-wc-input', 'lambda-a-input',
+        'bolt-diameter-input', 'anchor-hef-input', 'bolt-tpi-input',
+        'anchor-abrg-input', 'anchor-eh-input',
+        'pedestal-rebar-size-select', 'supplementary-rebar-spacing-input',
+        'supplementary-rebar-size-select', 'anchor-install-type-select'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', () => {
+                validateEh();
+                calculateEc();
+                calculateLambdaA();
+                validateFc();
+            });
+        }
+    });
+
+    // --- 3. 【核心修正】為「單位制切換」 radio 按鈕綁定專門的事件監聽器 ---
+    unitSystemRadios.forEach(radio => {
+        // 我們使用 'click' 事件來確保最即時的反應
+        radio.addEventListener('click', (e) => {
+            const newUnitSystem = e.target.value;
+            // 如果點擊的單位制已經是當前的單位制，則不做任何事
+            if (newUnitSystem === currentUnitSystem) {
+                return;
+            }
+
+            // 呼叫單位切換函式來更新所有 input 的值
+            switchUnitSystem(newUnitSystem);
+
+            // 【關鍵】在所有值都更新完成後，手動呼叫一次 updatePreview 來重繪圖形
+            updatePreview();
+
+            // 同時，也觸發一次相關的驗證和計算
             calculateEc();
-            calculateLambdaA(); // 在更新 wc 後計算 Lambda_a
+            calculateLambdaA();
+            validateFc();
         });
     });
 
-    uiControls.concreteWcInput.addEventListener('input', () => {
-        calculateEc();
-        calculateLambdaA(); // wc 變動時計算 Lambda_a
-    });
 
-    uiControls.fcInput.addEventListener('input', () => {
-        calculateEc();
-        validateFc(); // f'c 變動時進行驗證
-    });
-    // 錨栓安裝方式改變時，也要驗證 f'c
-    uiControls.anchorInstallTypeSelect.addEventListener('change', validateFc);
-
-
-    // 绑定按钮点击事件
-    tableControls.addLoadComboBtn.addEventListener('click', () => {
-        addLoadComboRow();
-        debouncedUpdatePreview();
-    });
+    // --- 4. 綁定其他按鈕和互動元素的事件 ---
+    tableControls.addLoadComboBtn.addEventListener('click', () => addLoadComboRow());
     tableControls.addBoltRowBtn.addEventListener('click', () => {
         addBoltRow();
         debouncedUpdatePreview();
     });
     mainActions.calculateButton.addEventListener('click', handleCalculateClick);
-    // 【核心新增】頁面載入時，根據登入狀態設定按鈕的初始樣式
-    if (!isUserAuthenticated) {
-        mainActions.calculateButton.style.backgroundColor = '#adb5bd'; // 灰色
-        mainActions.calculateButton.style.cursor = 'pointer'; // 保持可點擊的鼠標樣式
-        mainActions.calculateButton.title = '請先登入以使用分析功能';
-    }
-    if (mainActions.reportButtonModal) mainActions.reportButtonModal.addEventListener('click', handleReportClick);
 
-    // 表格的事件代理
-    tableControls.loadsTableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-row-btn') && tableControls.loadsTableBody.rows.length > 1) {
-            e.target.closest('tr').remove();
-            tableControls.loadsTableBody.querySelectorAll('tr').forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
-            });
-            debouncedUpdatePreview();
-        }
-    });
-    tableControls.customBoltTableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-row-btn')) {
-            e.target.closest('tr').remove();
-            tableControls.customBoltTableBody.querySelectorAll('tr').forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
-            });
-            debouncedUpdatePreview();
-        }
-    });
+    if (mainActions.reportButtonModal) {
+        mainActions.reportButtonModal.addEventListener('click', handleReportClick);
+    }
 
     if (mainActions.excelFileInput) {
         mainActions.excelFileInput.addEventListener('change', handleExcelFileSelect);
     }
 
-    // Modal 关闭逻辑
+    // 表格的事件代理 (用於移除按鈕)
+    tableControls.loadsTableBody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-row-btn') && tableControls.loadsTableBody.rows.length > 1) {
+            e.target.closest('tr').remove();
+            // 重新編號
+            tableControls.loadsTableBody.querySelectorAll('tr').forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+            // 注意：移除荷載組合不需要重繪預覽圖
+        }
+    });
+    tableControls.customBoltTableBody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-row-btn')) {
+            e.target.closest('tr').remove();
+            // 重新編號
+            tableControls.customBoltTableBody.querySelectorAll('tr').forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+            debouncedUpdatePreview(); // 移除錨栓需要重繪預覽圖
+        }
+    });
+
+    // Modal 關閉邏輯
     if (mainActions.closeResultsModalBtn && mainActions.resultsModal) {
         const closeModal = () => {
             mainActions.resultsModal.style.display = 'none';
@@ -1377,61 +1507,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    uiControls.boltDiameterInput.addEventListener('input', validateEh);
-    uiControls.anchorEhInput.addEventListener('input', validateEh);
+    // --- 5. 頁面初始載入 (Initialization) ---
 
-    // 【核心新增】為所有與開孔驗證相關的輸入框，綁定 input 事件
-    const validationInputs = [
-        'col-h-tube-input', 'col-b-tube-input', 'col-t-tube-input',
-        'col-d-pipe-input', 'col-t-pipe-input',
-        'hole-n-input', 'hole-b-input', 'hole-radius-input'
-    ];
-    validationInputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', validateHoleInTube);
-        }
-    });
-    // 當切換開孔形狀時，也要觸發驗證
-    if (uiControls.holeShapeSelect) {
-        uiControls.holeShapeSelect.addEventListener('change', validateHoleInTube);
-    }
-
-    // 1. 讀取 HTML 中預設選中的單位制
+    // 讀取 HTML 中預設選中的單位制
     const defaultUnitSystem = document.querySelector('input[name="unit-system"]:checked').value;
 
-
-    // 2. 根據預設值，手動呼叫一次 switchUnitSystem 來更新整個頁面
+    // 根據預設值，呼叫一次 switchUnitSystem 來更新整個頁面
     switchUnitSystem(defaultUnitSystem);
 
-
-    // --- 页面初始载入 ---
+    // 呼叫一次 updateDynamicSections 來設定區塊的顯示/隱藏
     updateDynamicSections();
+
+    // 添加預設的荷載和錨栓行
     addLoadComboRow(-90.0, 300, 440.04, 63.0, 30.0, 30.0);
     addBoltRow(6.25, 8.75);
     addBoltRow(6.25, -8.75);
     addBoltRow(-6.25, 8.75);
     addBoltRow(-6.25, -8.75);
 
-
+    // 延遲執行，確保所有元素都已渲染完成
     setTimeout(() => {
         updatePreview();
-        // calculateEc();
-        // calculateLambdaA(); // 頁面載入時計算一次 Lambda_a
-        // validateFc();     // 頁面載入時驗證一次 f'c
-    }, 0);
+        calculateEc();
+        calculateLambdaA();
+        validateFc();
+    }, 100);
 
-    if (mainActions.reportButtonModal) mainActions.reportButtonModal.disabled = true;
-
-    // 4. [可選但建議] 稍微調整單位制切換的事件監聽器
-    unitSystemRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            // switchUnitSystem 內部已經更新了 currentUnitSystem
-            switchUnitSystem(e.target.value);
-            // 這些函式現在會使用最新的 currentUnitSystem 來計算
-            calculateEc();
-            calculateLambdaA();
-            validateFc();
-        });
-    });
+    if (mainActions.reportButtonModal) {
+        mainActions.reportButtonModal.disabled = true;
+    }
 });

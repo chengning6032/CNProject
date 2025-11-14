@@ -5,8 +5,8 @@
 
 {% block extra_style %}
     /* ===== 全局與通用樣式 ===== */
-    .section { padding: 100px 0; overflow-x: hidden; /* 增加間距並防止動畫溢出 */ }
-    .section-title { text-align: center; margin-bottom: 60px; font-size: 2.8rem; color: #1d3557; font-weight: 800; }
+    .section { padding: 80px 0; /* 減少一點垂直間距 */ overflow-x: hidden; }
+    .section-title { text-align: center; margin-bottom: 60px; font-size: 2.5rem; /* 略微縮小字體 */ color: #1d3557; font-weight: 800; }
     .container { max-width: 1140px; }
     
     /* ===== 動畫基礎樣式 ===== */
@@ -15,17 +15,16 @@
     .feature-list-item:nth-child(2), .service-card:nth-child(2) { transition-delay: 0.1s; }
     .feature-list-item:nth-child(3), .service-card:nth-child(3) { transition-delay: 0.2s; }
 
-
-    /* ===== 1. 主視覺區塊 (Hero) 優化 ===== */
+    /* ===== 1. 主視覺區塊 (Hero) ===== */
     .hero {
         background-image: linear-gradient(rgba(29, 53, 87, 0.6), rgba(29, 53, 87, 0.6)), url("{% static 'images/hero-background.jpg' %}");
-        background-size: cover; background-position: center; height: 70vh;
+        background-size: cover; background-position: center; height: 60vh; /* 調整高度 */
         display: flex; justify-content: center; align-items: center; text-align: center; color: #fff;
     }
-    .hero-content h1 { font-size: 3.8rem; margin-bottom: 1rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.7); }
-    .hero-content p { font-size: 1.3rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); max-width: 650px; margin: 0 auto; }
+    .hero-content h1 { font-size: 3.2rem; margin-bottom: 1rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.7); }
+    .hero-content p { font-size: 1.2rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); max-width: 650px; margin: 0 auto; }
 
-    /* ===== 2. 核心價值 (Features) 優化 ===== */
+    /* ===== 2. 核心價值 (Features) ===== */
     .features { background-color: #ffffff; }
     .features-container { display: flex; align-items: center; gap: 60px; }
     .features-intro { flex: 1; max-width: 400px; }
@@ -39,10 +38,9 @@
     .feature-list-item h3 { margin-bottom: 8px; color: #0056b3; }
     .feature-list-item p { color: #666; line-height: 1.7; }
 
-    /* ===== 3. 服務項目 (Services) 卡片再進化 ===== */
-    .services {
-        background: linear-gradient(180deg, #f9f9f9 0%, #ffffff 100%); /* 新增漸層背景 */
-    }
+    /* ===== 3. 服務項目 (Services) ===== */
+    .services { background: linear-gradient(180deg, #f9f9f9 0%, #ffffff 100%); }
+    /* 【核心修改】這裡的 auto-fit + minmax 已經是響應式了，無需修改 */
     .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
     .service-card {
         background-color: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
@@ -56,18 +54,17 @@
     .service-card-content { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
     .service-card-content h3 { margin-bottom: 15px; color: #1d3557; font-size: 1.4rem; }
     .service-card-content p { color: #555; flex-grow: 1; margin-bottom: 20px; }
-    .service-card::after { /* 卡片底部的裝飾條 */
+    .service-card::after {
         content: ''; position: absolute; bottom: 0; left: 0;
         width: 100%; height: 5px; background-color: #457b9d;
         transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease-in-out;
     }
     .service-card:hover::after { transform: scaleX(1); }
 
-    /* ===== 4. OLi 平台介紹區塊 (非對稱佈局) ===== */
+    /* ===== 4. OLi 平台介紹區塊 ===== */
     .oli-feature-section { padding: 80px 0; background-color: #ffffff; }
     .oli-feature-container { display: flex; align-items: center; gap: 60px; }
     .oli-feature-content { flex: 1; }
-    /* 【核心修改】圖片在左，文字在右 */
     .layout-reversed .oli-feature-image { order: 1; }
     .layout-reversed .oli-feature-content { order: 2; }
     .oli-feature-content .tagline { color: #0056b3; font-weight: bold; margin-bottom: 10px; display: block; }
@@ -77,27 +74,57 @@
     .oli-feature-list li { padding-left: 30px; position: relative; margin-bottom: 15px; font-size: 1.05em; }
     .oli-feature-list li::before { content: '\ec5c'; font-family: 'remixicon'; position: absolute; left: 0; top: 2px; color: #28a745; font-size: 1.2em; }
     .oli-feature-image { flex: 1; }
-    .oli-feature-image img { width: 100%; border-radius: 12px; box-shadow: 0 15px 40px rgba(0, 86, 179, 0.2); }
+    .oli-feature-image img, .oli-feature-image video { /* 應用到 video */ width: 100%; border-radius: 12px; box-shadow: 0 15px 40px rgba(0, 86, 179, 0.2); }
     .btn-secondary { background-color: #fff; color: #0056b3; border: 2px solid #0056b3; padding: 13px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; }
     .btn-secondary:hover { background-color: #0056b3; color: #fff; }
 
     /* ===== 5. 行動呼籲區塊 (CTA) ===== */
-    .cta-section { background-color: #1d3557; color: #fff; padding: 100px 0; text-align: center; }
-    .cta-section h2 { font-size: 2.8rem; margin-bottom: 20px; }
-    .cta-section p { font-size: 1.2rem; color: #e0e0e0; max-width: 600px; margin: 0 auto F40px auto; }
+    .cta-section { background-color: #1d3557; color: #fff; padding: 80px 0; text-align: center; }
+    .cta-section h2 { font-size: 2.5rem; margin-bottom: 20px; }
+    .cta-section p { font-size: 1.1rem; color: #e0e0e0; max-width: 600px; margin: 0 auto 40px auto; }
     .btn-primary { background-color: #fca311; color: #1d3557; padding: 18px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(252, 163, 17, 0.3); }
     .btn-primary:hover { background-color: #ffb703; transform: translateY(-5px); box-shadow: 0 8px 20px rgba(252, 163, 17, 0.4); }
 
-    /* 響應式調整 */
+    /* ===== 【核心修改】響應式調整 ===== */
     @media (max-width: 992px) {
-        .features-container, .oli-feature-container { flex-direction: column; text-align: center; }
-        .features-intro, .oli-feature-content { max-width: 100%; }
-        .layout-reversed .oli-feature-image, .layout-reversed .oli-feature-content { order: 0; }
-        .oli-feature-image { margin-bottom: 40px; }
+        .section { padding: 60px 0; }
+        .section-title, .features-intro h2, .oli-feature-content h2, .cta-section h2 { font-size: 2rem; }
+        .hero { height: 50vh; }
+        .hero-content h1 { font-size: 2.5rem; }
+        .hero-content p { font-size: 1.1rem; }
+
+        .features-container, .oli-feature-container {
+            flex-direction: column;
+            text-align: center;
+        }
+        .features-intro {
+            max-width: 100%;
+            margin-bottom: 40px;
+        }
+        .feature-list-item {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .layout-reversed .oli-feature-image, .layout-reversed .oli-feature-content {
+            order: 0; /* 恢復預設順序 */
+        }
+        .oli-feature-image {
+             margin-bottom: 40px;
+        }
+         .oli-feature-list li {
+            text-align: left; /* 保持列表文字靠左 */
+        }
     }
+     @media (max-width: 576px) {
+        .container { padding: 0 15px; }
+        .hero-content h1 { font-size: 2rem; }
+        .services-grid { grid-template-columns: 1fr; } /* 確保在更小的螢幕上也是單欄 */
+     }
 {% endblock %}
 
 {% block content %}
+    <!-- HTML 內容完全不變，因為響應式是透過 CSS 實現的 -->
     <header class="hero">
         <div class="hero-content"><h1>勤於專業，築就未來</h1><p>您的信賴，是我們最堅實的基石。我們致力於提供最高品質的工程服務，實現您的願景。</p></div>
     </header>

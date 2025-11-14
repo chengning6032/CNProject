@@ -4,139 +4,84 @@
 {% block title %}服務流程 - 勤築工程實業有限公司{% endblock %}
 
 {% block extra_style %}
-    /* ... 通用樣式與頁首橫幅樣式不變 ... */
     .section { padding: 80px 0; }
     .container { max-width: 1000px; }
     .page-header { background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("{% static 'images/process-banner.jpg' %}"); background-size: cover; background-position: center; padding: 80px 0; text-align: center; color: #fff; }
     .page-header h1 { font-size: 2.8rem; margin-bottom: 10px; }
     .page-header p { font-size: 1.2rem; color: #e0e0e0; }
     .intro-text { text-align: center; max-width: 800px; margin: 0 auto 80px auto; font-size: 1.1rem; color: #555; line-height: 1.8; }
-
-    /*
-     * ===== 垂直時間軸 (Vertical Timeline) - 全新美化版 =====
-    */
-    .timeline-container {
-        position: relative;
-    }
-
-    /* 中間的垂直線 (改為虛線) */
+    .timeline-container { position: relative; }
     .timeline-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 3px; /* 變細一點 */
-        height: 100%;
-        background-image: linear-gradient(to bottom, #dbeaf4 40%, transparent 0%); /* 使用漸層創建虛線效果 */
-        background-size: 1px 15px; /* 線段長度與間距 */
+        content: ''; position: absolute; top: 0; left: 50%;
+        transform: translateX(-50%); width: 3px; height: 100%;
+        background-image: linear-gradient(to bottom, #dbeaf4 40%, transparent 0%);
+        background-size: 1px 15px;
     }
-
     .timeline-item {
-        padding: 10px 40px;
-        position: relative;
-        width: 50%;
-        box-sizing: border-box;
-        /* 【核心新增】動畫預設狀態 */
-        opacity: 0;
-        transform: translateY(50px);
+        padding: 10px 40px; position: relative; width: 50%; box-sizing: border-box;
+        opacity: 0; transform: translateY(50px);
         transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
-    
-    /* 【核心新增】當 is-visible class 被加上時的狀態 */
-    .timeline-item.is-visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* 左右交錯佈局 */
-    .timeline-item:nth-child(odd) {
-        left: 0;
-        padding-right: 70px;
-        /* 【核心新增】動畫的初始平移方向 */
-        transform: translateX(-50px);
-    }
-    .timeline-item:nth-child(even) {
-        left: 50%;
-        padding-left: 70px;
-        /* 【核心新增】動畫的初始平移方向 */
-        transform: translateX(50px);
-    }
-
-    .timeline-item.is-visible {
-        transform: translateX(0); /* 恢復到正常位置 */
-        opacity: 1;
-    }
-
-
-    /* 步驟內容的卡片 (增加 hover 效果) */
+    .timeline-item.is-visible { opacity: 1; transform: translateY(0); }
+    .timeline-item:nth-child(odd) { left: 0; padding-right: 70px; transform: translateX(-50px); }
+    .timeline-item:nth-child(even) { left: 50%; padding-left: 70px; transform: translateX(50px); }
+    .timeline-item.is-visible { transform: translateX(0); opacity: 1; }
     .timeline-content {
-        background-color: #fff;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        position: relative;
-        transition: transform 0.3s ease, box-shadow 0.3s ease; /* 新增過渡效果 */
+        background-color: #fff; padding: 25px; border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    
-    .timeline-content:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 86, 179, 0.1);
-    }
-
+    .timeline-content:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0, 86, 179, 0.1); }
     .step-number { color: #457b9d; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
     .timeline-content h3 { color: #1d3557; font-size: 1.5rem; margin-top: 0; margin-bottom: 10px; }
     .timeline-content p { color: #666; line-height: 1.7; }
-
-    /* 中間的圖示 (增加陰影) */
     .timeline-icon {
-        position: absolute;
-        top: 20px;
-        z-index: 10;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: #457b9d;
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 4px solid #f4f7f9;
-        font-size: 1.5rem;
-        box-shadow: 0 0 0 4px #457b9d;
-        box-sizing: border-box; /* 【核心修正】確保邊框包含在寬度內 */
+        position: absolute; top: 20px; z-index: 10; width: 50px; height: 50px;
+        border-radius: 50%; background-color: #457b9d; color: #fff;
+        display: flex; justify-content: center; align-items: center;
+        border: 4px solid #f4f7f9; font-size: 1.5rem; box-shadow: 0 0 0 4px #457b9d;
+        box-sizing: border-box;
     }
-
     .timeline-item:nth-child(odd) .timeline-icon { right: -25px; }
     .timeline-item:nth-child(even) .timeline-icon { left: -25px; }
-
-    /* 小箭頭樣式不變 */
     .timeline-content::before { content: ''; position: absolute; top: 28px; width: 0; height: 0; border-style: solid; }
     .timeline-item:nth-child(odd) .timeline-content::before { right: -15px; border-width: 10px 0 10px 15px; border-color: transparent transparent transparent #fff; }
     .timeline-item:nth-child(even) .timeline-content::before { left: -15px; border-width: 10px 15px 10px 0; border-color: transparent #fff transparent transparent; }
-    
-    /* ... CTA 與響應式設計樣式不變 ... */
     .cta-section { background-color: #1d3557; color: #fff; padding: 80px 0; text-align: center; }
     .cta-section h2 { font-size: 2.5rem; margin-bottom: 20px; }
     .cta-section p { font-size: 1.2rem; color: #e0e0e0; max-width: 600px; margin: 0 auto 30px auto; }
     .btn-primary { background-color: #fca311; color: #1d3557; padding: 15px 35px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(252, 163, 17, 0.3); }
     .btn-primary:hover { background-color: #ffb703; transform: translateY(-5px); box-shadow: 0 8px 20px rgba(252, 163, 17, 0.4); }
+
+    /* ===== 【核心修改】響應式調整 ===== */
     @media (max-width: 768px) {
-        .timeline-container::before { left: 25px; }
+        .page-header h1, .cta-section h2 { font-size: 2rem; }
+        .timeline-container::before { left: 25px; } /* 將垂直線移到左側 */
         .timeline-item,
         .timeline-item:nth-child(odd),
         .timeline-item:nth-child(even) {
-            width: 100%; padding-left: 70px; padding-right: 15px; left: 0;
-            /* 手機版直接顯示，不加動畫 */
-            opacity: 1; transform: none;
+            width: 100%;
+            padding-left: 80px; /* 為圖示留出空間 */
+            padding-right: 15px;
+            left: 0;
+            opacity: 1; transform: none; /* 手機版直接顯示，移除動畫 */
         }
-        .timeline-icon { left: 0; }
+        .timeline-icon,
+        .timeline-item:nth-child(odd) .timeline-icon,
+        .timeline-item:nth-child(even) .timeline-icon {
+            left: 0; /* 所有圖示都對齊到左側 */
+        }
+        .timeline-content::before,
         .timeline-item:nth-child(odd) .timeline-content::before,
         .timeline-item:nth-child(even) .timeline-content::before {
-            left: -15px; right: auto; border-width: 10px 15px 10px 0; border-color: transparent #fff transparent transparent;
+            left: -15px; /* 所有箭頭都從左側指出 */
+            right: auto;
+            border-width: 10px 15px 10px 0;
+            border-color: transparent #fff transparent transparent;
         }
     }
 {% endblock %}
+<!-- HTML 內容不變 -->
 
 {% block content %}
     <!-- 頁首橫幅 -->
