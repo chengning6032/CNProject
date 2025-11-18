@@ -1,0 +1,139 @@
+<!-- ======================================================= -->
+<!-- ====   第 4.4.5 節 最大考量地震垂直力係數 (模板片段)   ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h5>4.4.5 最大考量地震垂直力係數 (C<sub>z,M</sub>)</h5>
+    <div class="content-block">
+        <div class="formula-group">
+            <h5>X 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:</span>
+                <span class="calculation">$\displaystyle{ \dfrac{S_{aM,V,X}}{F_{uM,V,X}} = \dfrac{ {{ results.SaMVX|floatformat:4 }} }{ {{ results.FuMVX|floatformat:4 }} } = {{ results.ratio_SaMVX_FuMVX|floatformat:4 }} }$</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依規範修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    {% if results.is_near_fault %}
+                        $$ \left( \dfrac{S_{aM,V}}{F_{uv}} \right)_m =
+                        \begin{cases}
+                        \displaystyle \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \le 0.2 \\
+                        \displaystyle 0.52 \dfrac{S_{aM,V}}{F_{uv}} + 0.096 & ; 0.2 < \dfrac{S_{aM,V}}{F_{uv}} < 0.53 \\
+                        \displaystyle 0.70 \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \ge 0.53
+                        \end{cases}
+                        $$
+                    {% else %}
+                        $$ \left( \dfrac{S_{aM,V}}{F_{uv}} \right)_m =
+                        \begin{cases}
+                        \displaystyle \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \le 0.15 \\
+                        \displaystyle 0.52 \dfrac{S_{aM,V}}{F_{uv}} + 0.072 & ; 0.15 < \dfrac{S_{aM,V}}{F_{uv}} < 0.4 \\
+                        \displaystyle 0.70 \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \ge 0.4
+                        \end{cases}
+                        $$
+                    {% endif %}
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$\displaystyle{\left( \dfrac{S_{aM,V,X}}{F_{uM,V,X}} \right)_m = \mathbf{ {{ results.SaMV_over_FuvM_m_X|floatformat:4 }} } }$</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaMVX_FuMVX %}
+                    {% if results.is_near_fault %}
+                        {% if ratio <= 0.2 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.2，故修正值 = 比值。
+                        {% elif ratio < 0.53 %}因 0.2 < 比值 {{ ratio|floatformat:4 }} < 0.53，故修正值 = 0.52 ×
+                            {{ ratio|floatformat:4 }} + 0.096 = {{ results.SaMV_over_FuvM_m_X|floatformat:4 }}。
+                        {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.53，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                            {{ results.SaMV_over_FuvM_m_X|floatformat:4 }}。
+                        {% endif %}
+                    {% else %}
+                        {% if ratio <= 0.15 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.15，故修正值 = 比值。
+                        {% elif ratio < 0.4 %}因 0.15 < 比值 {{ ratio|floatformat:4 }} < 0.4，故修正值 = 0.52 ×
+                            {{ ratio|floatformat:4 }} + 0.072 = {{ results.SaMV_over_FuvM_m_X|floatformat:4 }}。
+                        {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.4，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                            {{ results.SaMV_over_FuvM_m_X|floatformat:4 }}。
+                        {% endif %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{z,MX}$:</span>
+                <span class="calculation">$\displaystyle{\dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,V,X}}{F_{uM,V,X}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaMV_over_FuvM_m_X|floatformat:4 }} = \mathbf{ {{ results.C_VMZX|floatformat:4 }} } }$</span>
+            </div>
+        </div>
+
+        <div class="formula-group">
+            <h5>Y 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:</span>
+                <span class="calculation">$\displaystyle{\dfrac{S_{aM,V,Y}}{F_{uM,V,Y}} = \dfrac{ {{ results.SaMVY|floatformat:4 }} }{ {{ results.FuMVY|floatformat:4 }} } = {{ results.ratio_SaMVY_FuMVY|floatformat:4 }} }$</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依規範修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    {% if results.is_near_fault %}
+                        $$ \left( \dfrac{S_{aM,V}}{F_{uv}} \right)_m =
+                        \begin{cases}
+                        \displaystyle \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \le 0.2 \\
+                        \displaystyle 0.52 \dfrac{S_{aM,V}}{F_{uv}} + 0.096 & ; 0.2 < \dfrac{S_{aM,V}}{F_{uv}} < 0.53 \\
+                        \displaystyle 0.70 \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \ge 0.53
+                        \end{cases}
+                        $$
+                    {% else %}
+                        $$ \left( \dfrac{S_{aM,V}}{F_{uv}} \right)_m =
+                        \begin{cases}
+                        \displaystyle \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \le 0.15 \\
+                        \displaystyle 0.52 \dfrac{S_{aM,V}}{F_{uv}} + 0.072 & ; 0.15 < \dfrac{S_{aM,V}}{F_{uv}} < 0.4 \\
+                        \displaystyle 0.70 \dfrac{S_{aM,V}}{F_{uv}} & ; \dfrac{S_{aM,V}}{F_{uv}} \ge 0.4
+                        \end{cases}
+                        $$
+                    {% endif %}
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$\displaystyle{ \left( \dfrac{S_{aM,V,Y}}{F_{uM,V,Y}} \right)_m = \mathbf{ {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }} } }$</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaMVY_FuMVY %}
+                    {% if results.is_near_fault %}
+                        {% if ratio <= 0.2 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.2，故修正值 = 比值。
+                        {% elif ratio < 0.53 %}因 0.2 < 比值 {{ ratio|floatformat:4 }} < 0.53，故修正值 = 0.52 ×
+                            {{ ratio|floatformat:4 }} + 0.096 = {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }}。
+                        {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.53，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                            {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }}。
+                        {% endif %}
+                    {% else %}
+                        {% if ratio <= 0.15 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.15，故修正值 = 比值。
+                        {% elif ratio < 0.4 %}因 0.15 < 比值 {{ ratio|floatformat:4 }} < 0.4，故修正值 = 0.52 ×
+                            {{ ratio|floatformat:4 }} + 0.072 = {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }}。
+                        {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.4，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                            {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }}。
+                        {% endif %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{z,MY}$:</span>
+                <span class="calculation">$\displaystyle{\dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,V,Y}}{F_{uM,V,Y}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaMV_over_FuvM_m_Y|floatformat:4 }} = \mathbf{ {{ results.C_VMZY|floatformat:4 }} } }$</span>
+            </div>
+        </div>
+
+        <div class="formula-group" style="border-style: dashed; border-color: #005a9e; background-color: #f8f9fa;">
+            <h5>最終最大考量垂直力係數 (C<sub>z,M</sub>)</h5>
+            <div class="formula-step" style="align-items: center;">
+                <span class="label">採計值:</span>
+                <span class="calculation">
+                $\displaystyle{
+                    C_{z,M} = \max(C_{z,MX}, C_{z,MY}) = \max({{ results.C_VMZX|floatformat:4 }}, {{ results.C_VMZY|floatformat:4 }}) = \mathbf{ {% if results.C_VMZX > results.C_VMZY %}
+                    {{ results.C_VMZX|floatformat:4 }}{% else %}{{ results.C_VMZY|floatformat:4 }}{% endif %} }
+                }$
+            </span>
+            </div>
+        </div>
+    </div>
+</div>

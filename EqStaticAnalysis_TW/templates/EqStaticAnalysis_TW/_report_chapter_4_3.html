@@ -1,0 +1,89 @@
+<!-- ======================================================= -->
+<!-- ====   第 4.3 節 最大考量地震力係數 (模板片段)      ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h3>4. 地震力係數(續)</h3>
+    <h4>4.3 最大考量地震力係數<span class="chapter-ref">(2.10.2節)</span></h4>
+    <div class="content-block">
+        <div class="formula-group">
+            <h5>X 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:</span>
+                <span class="calculation">$ \dfrac{S_{aM,X}}{F_{uM,X}} = \dfrac{ {{ results.SaMX|floatformat:4 }} }{ {{ results.FuMX|floatformat:4 }} } = {{ results.ratio_SaMX_FuMX|floatformat:4 }} $</span>
+            </div>
+
+            <div class="formula-step">
+                <span class="label">B. 依式(2-13d)修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aM}}{F_{uM}} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aM}}{F_{uM}} & ; \dfrac{S_{aM}}{F_{uM}} \le 0.3 \\
+                         \displaystyle 0.52 \dfrac{S_{aM}}{F_{uM}} + 0.144 & ; 0.3 < \dfrac{S_{aM}}{F_{uM}} < 0.8 \\
+                         \displaystyle 0.70 \dfrac{S_{aM}}{F_{uM}} & ; \dfrac{S_{aM}}{F_{uM}} \ge 0.8
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$ \left( \dfrac{S_{aM,X}}{F_{uM,X}} \right)_m = \mathbf{ {{ results.SaM_over_FuM_m_X|floatformat:4 }} } $</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaMX_FuMX %}{% if ratio <= 0.3 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.3，故修正值
+                    = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 ×
+                    {{ ratio|floatformat:4 }} + 0.144 = {{ results.SaM_over_FuM_m_X|floatformat:4 }}。{% else %}因比值
+                    {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                    {{ results.SaM_over_FuM_m_X|floatformat:4 }}。{% endif %}{% endwith %}
+            </div>
+
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{M,X}$:</span>
+                <span class="calculation">$ \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,X}}{F_{uM,X}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaM_over_FuM_m_X|floatformat:4 }} = \mathbf{ {{ results.C_VMX|floatformat:4 }} } $</span>
+            </div>
+        </div>
+
+        <div class="formula-group">
+            <h5>Y 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:</span>
+                <span class="calculation">$ \dfrac{S_{aM,Y}}{F_{uM,Y}} = \dfrac{ {{ results.SaMY|floatformat:4 }} }{ {{ results.FuMY|floatformat:4 }} } = {{ results.ratio_SaMY_FuMY|floatformat:4 }} $</span>
+            </div>
+
+            <div class="formula-step">
+                <span class="label">B. 依式(2-13d)修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aM}}{F_{uM}} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aM}}{F_{uM}} & ; \dfrac{S_{aM}}{F_{uM}} \le 0.3 \\
+                         \displaystyle 0.52 \dfrac{S_{aM}}{F_{uM}} + 0.144 & ; 0.3 < \dfrac{S_{aM}}{F_{uM}} < 0.8 \\
+                         \displaystyle 0.70 \dfrac{S_{aM}}{F_{uM}} & ; \dfrac{S_{aM}}{F_{uM}} \ge 0.8
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$ \left( \dfrac{S_{aM,Y}}{F_{uM,Y}} \right)_m = \mathbf{ {{ results.SaM_over_FuM_m_Y|floatformat:4 }} } $</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaMY_FuMY %}{% if ratio <= 0.3 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.3，故修正值
+                    = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值 {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 ×
+                    {{ ratio|floatformat:4 }} + 0.144 = {{ results.SaM_over_FuM_m_Y|floatformat:4 }}。{% else %}因比值
+                    {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                    {{ results.SaM_over_FuM_m_Y|floatformat:4 }}。{% endif %}{% endwith %}
+            </div>
+
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{M,Y}$:</span>
+                <span class="calculation">$ \dfrac{I}{1.4 \alpha_y} \left( \dfrac{S_{aM,Y}}{F_{uM,Y}} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} }{1.4 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaM_over_FuM_m_Y|floatformat:4 }} = \mathbf{ {{ results.C_VMY|floatformat:4 }} } $</span>
+            </div>
+        </div>
+    </div>
+</div>

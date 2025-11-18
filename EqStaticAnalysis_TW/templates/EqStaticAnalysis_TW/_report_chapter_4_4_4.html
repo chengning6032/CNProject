@@ -1,0 +1,109 @@
+<!-- ======================================================= -->
+<!-- ====   第 4.4.4 節 中小度地震垂直力係數 (模板片段)   ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h5>4.4.4 中小度地震垂直力係數 (C<sub>z</sub>*)</h5>
+    <div class="content-block">
+        <div class="formula-group">
+            <h5>X 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:<br><span class="label-note">(不考慮近斷層)</span></span>
+                <span class="calculation">$\displaystyle{ \dfrac{S_{aD,V,X}^*}{F_{uD,V,X}^*} = \dfrac{ {{ results.SaDVX_no_fault|floatformat:4 }} }{ {{ results.FuvX_no_fault|floatformat:4 }} } = {{ results.ratio_SaDVX_no_fault_FuDVX_no_fault|floatformat:4 }} }$</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依規範修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aD,V}}{F_{uv}} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aD,V}}{F_{uv}} & ; \dfrac{S_{aD,V}}{F_{uv}} \le 0.15 \\
+                         \displaystyle 0.52 \dfrac{S_{aD,V}}{F_{uv}} + 0.072 & ; 0.15 < \dfrac{S_{aD,V}}{F_{uv}} < 0.4 \\
+                         \displaystyle 0.70 \dfrac{S_{aD,V}}{F_{uv}} & ; \dfrac{S_{aD,V}}{F_{uv}} \ge 0.4
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$\displaystyle{\left( \dfrac{S_{aD,V,X}^*}{F_{uD,V,X}^*} \right)_m = \mathbf{ {{ results.SaDV_over_Fuv_m_X_no_fault|floatformat:4 }} } }$</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaDVX_no_fault_FuDVX_no_fault %}
+                    {% if ratio <= 0.15 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.15，故修正值 = 比值。
+                    {% elif ratio < 0.4 %}因 0.15 < 比值 {{ ratio|floatformat:4 }} < 0.4，故修正值 = 0.52 ×
+                        {{ ratio|floatformat:4 }} + 0.072 = {{ results.SaDV_over_Fuv_m_X_no_fault|floatformat:4 }}。
+                    {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.4，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                        {{ results.SaDV_over_Fuv_m_X_no_fault|floatformat:4 }}。
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{z,X}^*$:</span>
+                {% if results.is_taipei_basin %}
+                    <span class="calculation">$\displaystyle{\dfrac{I \cdot F_{uD,V,X}^*}{3.5 \alpha_y} \left( \dfrac{S_{aD,V,X}^*}{F_{uD,V,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuvX_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaDV_over_Fuv_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_ZX|floatformat:4 }} } }$</span>
+                {% else %}
+                    <span class="calculation">$\displaystyle{\dfrac{I \cdot F_{uD,V,X}^*}{4.2 \alpha_y} \left( \dfrac{S_{aD,V,X}^*}{F_{uD,V,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuvX_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaDV_over_Fuv_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_ZX|floatformat:4 }} } }$</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="formula-group">
+            <h5>Y 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:<br><span class="label-note">(不考慮近斷層)</span></span>
+                <span class="calculation">$\displaystyle{\dfrac{S_{aD,V,Y}^*}{F_{uD,V,Y}^*} = \dfrac{ {{ results.SaDVY_no_fault|floatformat:4 }} }{ {{ results.FuvY_no_fault|floatformat:4 }} } = {{ results.ratio_SaDVY_no_fault_FuDVY_no_fault|floatformat:4 }} }$</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依規範修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aD,V}}{F_{uv}} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aD,V}}{F_{uv}} & ; \dfrac{S_{aD,V}}{F_{uv}} \le 0.15 \\
+                         \displaystyle 0.52 \dfrac{S_{aD,V}}{F_{uv}} + 0.072 & ; 0.15 < \dfrac{S_{aD,V}}{F_{uv}} < 0.4 \\
+                         \displaystyle 0.70 \dfrac{S_{aD,V}}{F_{uv}} & ; \dfrac{S_{aD,V}}{F_{uv}} \ge 0.4
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$\displaystyle{ \left( \dfrac{S_{aD,V,Y}^*}{F_{uD,V,Y}^*} \right)_m = \mathbf{ {{ results.SaDV_over_Fuv_m_Y_no_fault|floatformat:4 }} } }$</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaDVY_no_fault_FuDVY_no_fault %}
+                    {% if ratio <= 0.15 %}因比值 {{ ratio|floatformat:4 }} ≤ 0.15，故修正值 = 比值。
+                    {% elif ratio < 0.4 %}因 0.15 < 比值 {{ ratio|floatformat:4 }} < 0.4，故修正值 = 0.52 ×
+                        {{ ratio|floatformat:4 }} + 0.072 = {{ results.SaDV_over_Fuv_m_Y_no_fault|floatformat:4 }}。
+                    {% else %}因比值 {{ ratio|floatformat:4 }} ≥ 0.4，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                        {{ results.SaDV_over_Fuv_m_Y_no_fault|floatformat:4 }}。
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C_{z,Y}^*$:</span>
+                {% if results.is_taipei_basin %}
+                    <span class="calculation">$\displaystyle{\dfrac{I \cdot F_{uD,V,Y}^*}{3.5 \alpha_y} \left( \dfrac{S_{aD,V,Y}^*}{F_{uD,V,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuvY_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaDV_over_Fuv_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_ZY|floatformat:4 }} } }$</span>
+                {% else %}
+                    <span class="calculation">$\displaystyle{\dfrac{I \cdot F_{uD,V,Y}^*}{4.2 \alpha_y} \left( \dfrac{S_{aD,V,Y}^*}{F_{uD,V,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuvY_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaDV_over_Fuv_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_ZY|floatformat:4 }} } }$</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="formula-group" style="border-style: dashed; border-color: #005a9e; background-color: #f8f9fa;">
+            <h5>最終中小度垂直力係數 (C<sub>z</sub>*)</h5>
+            <div class="formula-step" style="align-items: center;">
+                <span class="label">採計值:</span>
+                <span class="calculation">
+                $\displaystyle{
+                    C_{z}^* = \max(C_{z,X}^*, C_{z,Y}^*) = \max({{ results.C_V_star_ZX|floatformat:4 }}, {{ results.C_V_star_ZY|floatformat:4 }}) = \mathbf{ {% if results.C_V_star_ZX > results.C_V_star_ZY %}
+                    {{ results.C_V_star_ZX|floatformat:4 }}{% else %}{{ results.C_V_star_ZY|floatformat:4 }}{% endif %} }
+                }$
+            </span>
+            </div>
+        </div>
+    </div>
+</div>

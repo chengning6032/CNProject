@@ -1,0 +1,44 @@
+<!-- ======================================================= -->
+<!-- ====    第 2.2 節 工址放大係數 (共用模板片段)       ==== -->
+<!-- ======================================================= -->
+<h4>2.2 工址放大係數<span class="chapter-ref">(2.5節)</span></h4>
+<div class="content-block">
+        <p>
+        本工址地盤分類：
+        <b>
+            {% if results.ground_type == 1.0 %}
+                第一類地盤 (堅實地盤)
+            {% elif results.ground_type == 3.0 %}
+                第三類地盤 (軟弱地盤)
+            {% else %}
+                第二類地盤 (普通地盤)
+            {% endif %}
+        </b>
+    </p>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>地震情境</th>
+            <th>$F_a$</th>
+            <th>$F_v$</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>設計地震</td>
+            <td>{{ results.FaD|floatformat:2 }}</td>
+            <td>{{ results.FvD|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td>中小度地震</td>
+            <td>{{ results.FaD_no_fault|floatformat:2 }}</td>
+            <td>{{ results.FvD_no_fault|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td>最大考量地震</td>
+            <td>{{ results.FaM|floatformat:2 }}</td>
+            <td>{{ results.FvM|floatformat:2 }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

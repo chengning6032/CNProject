@@ -1,0 +1,112 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block title %}付款成功 | OLI{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .success-container {
+        max-width: 600px;
+        margin: 60px auto;
+        padding: 40px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        border-top: 5px solid #28a745;
+    }
+
+    .success-icon {
+        font-size: 60px;
+        color: #28a745;
+        margin-bottom: 20px;
+        /* 一個簡單的動畫效果 */
+        animation: pop-in 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    @keyframes pop-in {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-container h2 {
+        font-size: 2rem;
+        color: #1d3557;
+        margin-bottom: 15px;
+    }
+
+    .success-container p {
+        font-size: 1.1rem;
+        color: #6c757d;
+        line-height: 1.8;
+        margin-bottom: 30px;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .action-btn {
+        display: inline-block;
+        padding: 12px 30px;
+        border-radius: 50px; /* 膠囊形狀 */
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    /* 主要按鈕 (前往會員中心) */
+    .action-btn.primary {
+        background-color: #0056b3;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(0, 86, 179, 0.2);
+    }
+
+    .action-btn.primary:hover {
+        background-color: #1d3557;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 86, 179, 0.3);
+    }
+
+    /* 次要按鈕 (返回首頁) */
+    .action-btn.secondary {
+        background-color: #fff;
+        color: #6c757d;
+        border-color: #ced4da;
+    }
+
+    .action-btn.secondary:hover {
+        background-color: #f8f9fa;
+        color: #212529;
+        border-color: #adb5bd;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="success-container">
+    <!-- 引入 Remix Icon -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+    
+    <div class="success-icon">
+        <i class="ri-checkbox-circle-fill"></i>
+    </div>
+
+    <h2>付款成功！</h2>
+    
+    <p>
+        感謝您的購買！<br>
+        您訂閱的模組權限已經成功開通。現在您可以立即開始使用它們來提升您的工作效率。
+    </p>
+
+    <div class="action-buttons">
+        <a href="{% url 'profile' %}" class="action-btn primary">查看會員資訊</a>
+        <a href="{% url 'homepage' %}" class="action-btn secondary">返回 OLI 首頁</a>
+    </div>
+</div>
+{% endblock %}

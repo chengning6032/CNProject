@@ -1,0 +1,111 @@
+<!-- ======================================================= -->
+<!-- ====   第三章 建築物參數 (可重複使用之模板片段)   ==== -->
+<!-- ======================================================= -->
+<div class="section">
+    <h3>3. 建築物參數</h3>
+
+    <!--
+    ================================================================
+    ====   【核心修改】將基本參數表格移至章節最頂端           ====
+    ================================================================
+    -->
+    <div class="content-block">
+        <table class="table">
+            <tbody>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">建築物高度 ($h_n$)</td>
+                <td>{{ results.hn|floatformat:2 }} 公尺</td>
+            </tr>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">結構系統</td>
+                <td>{% if results.structure_type == 2.0 %}鋼筋混凝土造{% elif results.structure_type == 1.0 %}
+                    鋼構造{% else %}其他{% endif %}</td>
+            </tr>
+            <!--
+            ================================================================
+            ====   【核心新增】新增兩個關於週期的資料列               ====
+            ================================================================
+            -->
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">規範理論週期 ($T_A$)</td>
+                <td>{{ results.T_empirical|floatformat:3 }} 秒</td>
+            </tr>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">設計輸入週期 ($T_x, T_y$)</td>
+                <td>X: {{ results.Tx|floatformat:3 }}s / Y: {{ results.Ty|floatformat:3 }}s</td>
+            </tr>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">用途係數 (I)</td>
+                <td>{{ results.I|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">設計方法</td>
+                <td>{% if results.structure_type == 1.0 %}{% if results.alpha_y_choice == "asd" %}鋼構造 - 容許應力設計法
+                    (ASD){% else %}鋼構造 - 極限強度設計法 (LRFD){% endif %}{% elif results.structure_type == 2.0 %}
+                    {% if results.alpha_y_choice == "general" %}鋼筋混凝土造 - 極限強度設計法 (一般情況){% else %}鋼筋混凝土造
+                        - 極限強度設計法 (地震力載重因子=1.0){% endif %}{% else %}其他 (使用者自行輸入){% endif %}</td>
+            </tr>
+            <tr>
+                <td style="width:30%; font-weight:500; background-color: #f8f9fa;">起始降伏力放大倍數 ($\alpha_y$)</td>
+                <td>{{ results.alpha_y|floatformat:2 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content-block">
+        <p class="reasoning" style="margin-left: 0; padding-left: 0; border: none;">
+            依據規範 2.6 節，若基本振動週期 T 採用其他結構力學方法計算，所得之 T 值不得大於經驗公式週期 ($T_A$) 之 1.4 倍。
+        </p>
+        <div class="formula-group" style="border-style: none; padding: 0 0;">
+            <p style="margin-bottom: 0.5rem; font-family: monospace; font-size: 1.0em;">$T_{X,use} = \min(1.4 \times
+                T_A, T_X) = \min(1.4
+                \times {{ results.T_empirical|floatformat:3 }}, {{ request.POST.Tx|default_if_none:results.T_empirical|floatformat:3 }})
+                = \mathbf{ {{ results.Tx|floatformat:3 }} }$ 秒</p>
+            <p style="margin-bottom: 0.5rem; font-family: monospace; font-size: 1.0em;">$T_{Y,use} = \min(1.4 \times
+                T_A, T_Y) = \min(1.4
+                \times {{ results.T_empirical|floatformat:3 }}, {{ request.POST.Ty|default_if_none:results.T_empirical|floatformat:3 }})
+                = \mathbf{ {{ results.Ty|floatformat:3 }} }$ 秒</p>
+        </div>
+    </div>
+
+    {% if results.is_taipei_basin %}
+        <h4>3.1 水平譜加速度係數 <span class="chapter-ref">(表2-7(a)及表2-7(b))</span></h4>
+    {% else %}
+        <h4>3.1 水平譜加速度係數 <span class="chapter-ref">(表2-5(a)及表2-5(b))</span></h4>
+    {% endif %}
+    {% include 'EqStaticAnalysis_TW/_report_snippet_Sa_table.html' %}
+
+
+    <h4>3.2 韌性容量與折減係數 <span class="chapter-ref">(2.9節)</span></h4>
+    <div class="content-block">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>方向</th>
+                <th>韌性容量<br>($R$)</th>
+                <th>容許韌性容量<br>($R_a$)</th>
+                <th>設計地震折減係數<br>($F_{uD}$)</th>
+                <th>最大考量地震折減係數<br>($F_{uM}$)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>X 方向</td>
+                <td>{{ results.Rx|floatformat:2 }}</td>
+                <td>{{ results.RaX|floatformat:3 }}</td>
+                <td>{{ results.FuDX|floatformat:3 }}</td>
+                <td>{{ results.FuMX|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>Y 方向</td>
+                <td>{{ results.Ry|floatformat:2 }}</td>
+                <td>{{ results.RaY|floatformat:3 }}</td>
+                <td>{{ results.FuDY|floatformat:3 }}</td>
+                <td>{{ results.FuMY|floatformat:3 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>

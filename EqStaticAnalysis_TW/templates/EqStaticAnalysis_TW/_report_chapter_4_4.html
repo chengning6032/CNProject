@@ -1,0 +1,85 @@
+<!-- ======================================================= -->
+<!-- ====    第 4.4 節 垂直地震力係數 (模板片段)         ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h3>4. 地震力係數(續)</h3>
+    <h4>4.4 垂直地震力 <span class="chapter-ref">(2.18節)</span></h4>
+
+    <h5>4.4.1 垂直向設計譜加速係數</h5>
+    <div class="content-block">
+        <p class="reasoning" style="margin-left: 0; padding-left: 0; border: none;">
+            依據規範 2.18 節，垂直向設計譜加速度係數 $S_{aD,V}$ 由水平向設計譜加速度係數 $S_{aD}$ 定義。此原則亦適用於中小度地震與最大考量地震。
+            {% if results.is_near_fault %}
+                本工址屬近斷層區域，採 $\displaystyle S_{aD,V} = \frac{2}{3} S_{aD}$ 計算。
+            {% else %}
+                本工址為一般區域或臺北盆地，採 $\displaystyle S_{aD,V} = \frac{1}{2} S_{aD}$ 計算。
+            {% endif %}
+        </p>
+        <table class="table" style="table-layout: fixed; margin-top: 1rem;">
+            <thead>
+            <tr>
+                <th>方向</th>
+                <th>設計地震 $S_{aD,V}$</th>
+                <th>中小度地震 $S_{aD,V}^*$</th>
+                <th>最大考量地震 $S_{aM,V}$</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>X 方向</td>
+                <td>{{ results.SaDVX|floatformat:4 }}</td>
+                <td>{{ results.SaDVX_no_fault|floatformat:4 }}</td>
+                <td>{{ results.SaMVX|floatformat:4 }}</td>
+            </tr>
+            <tr>
+                <td>Y 方向</td>
+                <td>{{ results.SaDVY|floatformat:4 }}</td>
+                <td>{{ results.SaDVY_no_fault|floatformat:4 }}</td>
+                <td>{{ results.SaMVY|floatformat:4 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!--
+    ================================================================
+    ====   【核心修改】將此節修正為 4.4.2                       ====
+    ================================================================
+    -->
+    <h5>4.4.2 垂直向韌性容量與折減係數</h5>
+    <div class="content-block">
+        <p class="reasoning" style="margin-left: 0; padding-left: 0; border: none;">
+            依據規範第2.18節解說暫訂韌性容量 $R$ 值為 3.0，並依此進一步求解 $R_a$ 及 $F_u$ 值。
+        </p>
+        <table class="table" style="margin-top: 1rem;">
+            <thead>
+            <tr>
+                <th>方向<br><span class="label-note">(沿用水平週期)</span></th>
+                <th>韌性容量<br>($R_v$)</th>
+                <th>容許韌性容量<br>($R_{av}$)</th>
+                <th>設計地震折減係數<br>($F_{uD,V}$)</th>
+                <th>最大考量地震折減係數<br>($F_{uM,V}$)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>X 方向</td>
+                <td>{{ results.Rv|floatformat:1 }}</td>
+                <td>{{ results.RavX|floatformat:3 }}</td>
+                <td>{{ results.FuDVX|floatformat:3 }}</td>
+                <td>{{ results.FuMVX|floatformat:3 }}</td>
+            </tr>
+            <tr>
+                <td>Y 方向</td>
+                <td>{{ results.Rv|floatformat:1 }}</td>
+                <td>{{ results.RavY|floatformat:3 }}</td>
+                <td>{{ results.FuDVY|floatformat:3 }}</td>
+                <td>{{ results.FuMVY|floatformat:3 }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="height: 5cm;"></div>
+</div>

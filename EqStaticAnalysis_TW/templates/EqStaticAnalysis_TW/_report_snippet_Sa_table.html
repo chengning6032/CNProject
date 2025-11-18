@@ -1,0 +1,29 @@
+<!-- ======================================================= -->
+<!-- ====  設計譜加速度 Sa 表格 (可重複使用之模板片段)   ==== -->
+<!-- ======================================================= -->
+<div class="content-block">
+    <table class="table" style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>方向</th>
+            <th>設計地震 $S_{aD}$</th>
+            <th>中小度地震 $S_{aD}^*$</th>
+            <th>最大考量地震 $S_{aM}$</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>X ($T_{X,use}={{ results.Tx|floatformat:3 }}s$)</td>
+            <td>{{ results.SaDX|floatformat:4 }}</td>
+            <td>{{ results.SaDX_no_fault|floatformat:4 }}</td>
+            <td>{{ results.SaMX|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Y ($T_{Y,use}={{ results.Ty|floatformat:3 }}s$)</td>
+            <td>{{ results.SaDY|floatformat:4 }}</td>
+            <td>{{ results.SaDY_no_fault|floatformat:4 }}</td>
+            <td>{{ results.SaMY|floatformat:4 }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

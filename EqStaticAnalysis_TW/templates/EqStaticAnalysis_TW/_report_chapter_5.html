@@ -1,0 +1,60 @@
+<!-- ======================================================= -->
+<!-- ====           第五章 結論 (模板片段)             ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h3>5. 結論</h3>
+    <div class="content-block">
+        <p>假設建築物重量為 W，水平主軸向及垂直向地震力係數總結如下表：</p>
+        <table class="table" style="text-align: center;">
+            <thead>
+                <tr>
+                    <th>方向</th>
+                    <th>最小設計總橫力<br>$C_D$</th>
+                    <th>中小度地震力<br>$C^*$</th>
+                    <th>最大考量地震力<br>$C_M$</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>X 向</td>
+                    <td><b>{{ results.C_VX|floatformat:4 }}</b></td>
+                    <td><b>{{ results.C_V_star_X|floatformat:4 }}</b></td>
+                    <td><b>{{ results.C_VMX|floatformat:4 }}</b></td>
+                </tr>
+                <tr>
+                    <td>Y 向</td>
+                    <td><b>{{ results.C_VY|floatformat:4 }}</b></td>
+                    <td><b>{{ results.C_V_star_Y|floatformat:4 }}</b></td>
+                    <td><b>{{ results.C_VMY|floatformat:4 }}</b></td>
+                </tr>
+                <tr>
+                    <td>Z 向 (垂直)</td>
+                    <td><b>{{ results.final_CzD|floatformat:4 }}</b></td>
+                    <td><b>{{ results.final_Cz_star|floatformat:4 }}</b></td>
+                     <td><b>{{ results.final_CzM|floatformat:4 }}</b></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="formula-group" style="border-style: none; padding: 1rem 0;">
+            <p style="margin-bottom: 0.5rem;"><b>建議設計係數 (用於強度設計):</b></p>
+            <p style="margin-bottom: 0.5rem; font-family: monospace; font-size: 1.0em;">$C_{design,X} = \max(C_{D,X}, C^*_{X}, C_{M,X}) = \max({{ results.C_VX|floatformat:4 }}, {{ results.C_V_star_X|floatformat:4 }}, {{ results.C_VMX|floatformat:4 }}) = \mathbf{ {{ results.C_design_X|floatformat:4 }} }$</p>
+
+            <!--
+            ================================================================
+            ====   【核心修正】移除 C_design_Y 前方的單引號             ====
+            ================================================================
+            -->
+            <p style="margin-bottom: 0.5rem; font-family: monospace; font-size: 1.0em;">$C_{design,Y} = \max(C_{D,Y}, C^*_{Y}, C_{M,Y}) = \max({{ results.C_VY|floatformat:4 }}, {{ results.C_V_star_Y|floatformat:4 }}, {{ results.C_VMY|floatformat:4 }}) = \mathbf{ {{ results.C_design_Y|floatformat:4 }} }$</p>
+
+            <p style="margin-bottom: 0.5rem; font-family: monospace; font-size: 1.0em;">$C_{design,Z} = \max(C_{z,D}, C^*_{z}, C_{z,M}) = \max({{ results.final_CzD|floatformat:4 }}, {{ results.final_Cz_star|floatformat:4 }}, {{ results.final_CzM|floatformat:4 }}) = \mathbf{ {{ results.C_design_Z|floatformat:4 }} }$</p>
+        </div>
+
+        <div class="formula-group" style="border-style: none; padding: 1rem 0;">
+            <p style="margin-bottom: 0.5rem;"><b>柱之垂直地震力係數:</b></p>
+            <p style="font-family: monospace; font-size: 1.1em;">$C_{column} = \mathbf{ {{ results.C_column|floatformat:4 }} }$</p>
+        </div>
+
+    </div>
+</div>

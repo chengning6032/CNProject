@@ -1,0 +1,25 @@
+<!-- ======================================================= -->
+<!-- ====   第 4.4.6 節 柱之垂直地震力係數 (模板片段)     ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+<h5>4.4.6 柱之垂直地震力係數 (C<sub>column</sub>)</h5>
+<div class="content-block">
+    <p class="reasoning" style="margin-left: 0; padding-left: 0; border: none;">
+        根據規範解說，柱因與地表一起上下運動，其垂直地震力效應可等效為將其單位長度重量乘以一個額外係數。此係數依地區而異，計算如下：
+    </p>
+    <div class="formula-group">
+        {% if results.is_near_fault %}
+            <div class="formula-step">
+                <span class="label">近斷層工址:</span>
+                <span class="calculation">$\displaystyle{ C_{column} = \dfrac{0.80 S_{DS} I}{3 \alpha_y} = \dfrac{0.80 \times {{ results.SDS|floatformat:4 }} \times {{ results.I|floatformat:2 }} }{3 \times {{ results.alpha_y|floatformat:2 }} } = \mathbf{ {{ results.C_column|floatformat:4 }} } }$</span>
+            </div>
+        {% else %}
+            <div class="formula-step">
+                <span class="label">一般區域與臺北盆地:</span>
+                <span class="calculation">$\displaystyle{ C_{column} = \dfrac{0.40 S_{DS} I}{2 \alpha_y} = \dfrac{0.40 \times {{ results.SDS|floatformat:4 }} \times {{ results.I|floatformat:2 }} }{2 \times {{ results.alpha_y|floatformat:2 }} } = \mathbf{ {{ results.C_column|floatformat:4 }} } }$</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</div>

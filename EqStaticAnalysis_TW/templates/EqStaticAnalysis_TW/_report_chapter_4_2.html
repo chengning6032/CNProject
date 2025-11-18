@@ -1,0 +1,98 @@
+<!-- ======================================================= -->
+<!-- ====    第 4.2 節 中小度地震力係數 (模板片段)       ==== -->
+<!-- ======================================================= -->
+{% load static %}
+<div class="section">
+    <h3>4. 地震力係數(續)</h3>
+    <h4>4.2 中小度地震力係數<span class="chapter-ref">(2.10.1節)</span></h4>
+    <div class="content-block">
+        <div class="formula-group">
+            <h5>X 方向</h5>
+            <!--
+            =======================================================================================
+            ====   【核心修改】使用 <br> 換行，並將備註文字用新 class 包裹                 ====
+            =======================================================================================
+            -->
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:<br><span class="label-note">(不考慮近斷層)</span></span>
+                <span class="calculation">$\displaystyle{ \dfrac{S_{aD,X}^*}{F_{uD,X}^*} = \dfrac{ {{ results.SaDX_no_fault|floatformat:4 }} }{ {{ results.FuDX_no_fault|floatformat:4 }} } = {{ results.ratio_SaDX_no_fault_FuDX_no_fault|floatformat:4 }} }$</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依式(2-2)修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aD}}{F_u} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aD}}{F_u} & ; \dfrac{S_{aD}}{F_u} \le 0.3 \\
+                         \displaystyle 0.52 \dfrac{S_{aD}}{F_u} + 0.144 & ; 0.3 < \dfrac{S_{aD}}{F_u} < 0.8 \\
+                         \displaystyle 0.70 \dfrac{S_{aD}}{F_u} & ; \dfrac{S_{aD}}{F_u} \ge 0.8
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$\displaystyle{ \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} } }$</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaDX_no_fault_FuDX_no_fault %}{% if ratio <= 0.3 %}因比值
+                    {{ ratio|floatformat:4 }} ≤ 0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值
+                    {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                    {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }}。{% else %}因比值
+                    {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                    {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }}。{% endif %}{% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C^{*}_{X}$:</span>
+                {% if results.is_taipei_basin %}
+                    <span class="calculation">$\displaystyle{ \dfrac{I \cdot F_{uD,X}^*}{3.5 \alpha_y} \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDX_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_X|floatformat:4 }} } }$</span>
+                {% else %}
+                    <span class="calculation">$\displaystyle{ \dfrac{I \cdot F_{uD,X}^*}{4.2 \alpha_y} \left( \dfrac{S_{aD,X}^*}{F_{uD,X}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDX_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_X_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_X|floatformat:4 }} } }$</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="formula-group">
+            <h5>Y 方向</h5>
+            <div class="formula-step">
+                <span class="label">A. 計算原始比值:<br><span class="label-note">(不考慮近斷層)</span></span>
+                <span class="calculation">$ \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} = \dfrac{ {{ results.SaDY_no_fault|floatformat:4 }} }{ {{ results.FuDY_no_fault|floatformat:4 }} } = {{ results.ratio_SaDY_no_fault_FuDY_no_fault|floatformat:4 }} $</span>
+            </div>
+            <div class="formula-step">
+                <span class="label">B. 依式(2-2)修正:</span>
+                <span class="calculation">
+                <div class="formula-display" style="margin: 0; text-align: left;">
+                    $$ \left( \dfrac{S_{aD}}{F_u} \right)_m =
+                       \begin{cases}
+                         \displaystyle \dfrac{S_{aD}}{F_u} & ; \dfrac{S_{aD}}{F_u} \le 0.3 \\
+                         \displaystyle 0.52 \dfrac{S_{aD}}{F_u} + 0.144 & ; 0.3 < \dfrac{S_{aD}}{F_u} < 0.8 \\
+                         \displaystyle 0.70 \dfrac{S_{aD}}{F_u} & ; \dfrac{S_{aD}}{F_u} \ge 0.8
+                       \end{cases}
+                    $$
+                </div>
+            </span>
+            </div>
+            <div class="formula-step">
+                <span class="label">C. 修正後比值:</span>
+                <span class="calculation">$ \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \mathbf{ {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} } $</span>
+            </div>
+            <div class="reasoning">
+                {% with ratio=results.ratio_SaDY_no_fault_FuDY_no_fault %}{% if ratio <= 0.3 %}因比值
+                    {{ ratio|floatformat:4 }} ≤ 0.3，故修正值 = 比值。{% elif ratio < 0.8 %}因 0.3 < 比值
+                    {{ ratio|floatformat:4 }} < 0.8，故修正值 = 0.52 × {{ ratio|floatformat:4 }} + 0.144 =
+                    {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }}。{% else %}因比值
+                    {{ ratio|floatformat:4 }} ≥ 0.8，故修正值 = 0.70 × {{ ratio|floatformat:4 }} =
+                    {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }}。{% endif %}{% endwith %}
+            </div>
+            <div class="formula-step">
+                <span class="label">D. 計算係數 $C^{*}_{Y}$:</span>
+                {% if results.is_taipei_basin %}
+                    <span class="calculation">$ \dfrac{I \cdot F_{uD,Y}^* }{3.5 \alpha_y} \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDY_no_fault|floatformat:4 }} }{3.5 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_Y|floatformat:4 }} } $</span>
+                {% else %}
+                    <span class="calculation">$ \dfrac{I \cdot F_{uD,Y}^* }{4.2 \alpha_y} \left( \dfrac{S_{aD,Y}^*}{F_{uD,Y}^*} \right)_m = \dfrac{ {{ results.I|floatformat:2 }} \times {{ results.FuDY_no_fault|floatformat:4 }} }{4.2 \times {{ results.alpha_y|floatformat:2 }} } \times {{ results.SaD_over_FuD_m_Y_no_fault|floatformat:4 }} = \mathbf{ {{ results.C_V_star_Y|floatformat:4 }} } $</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
