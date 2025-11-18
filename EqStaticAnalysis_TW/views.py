@@ -1,3 +1,5 @@
+# EqStaticAnalysis_TW/views.py
+
 import pandas as pd
 import numpy as np
 from django.shortcuts import render
@@ -7,7 +9,7 @@ from django.conf import settings
 import traceback
 import json
 
-# --- 全域設定與輔助函式 (與之前的腳本相同) ---
+# --- 全域設定與輔助函式 (保持不變) ---
 DISTANCE_COLUMNS = ['r<=1', 'r=3', 'r=5', 'r=7', 'r=9', 'r=11', 'r=13', 'r>=14']
 DISTANCE_POINTS = [1, 3, 5, 7, 9, 11, 13, 14]
 
@@ -70,7 +72,7 @@ def calculate_Fu(R, T, T0D, is_taipei_basin, mode=1):
     else:
         Ra = 1 + (R - 1) / 1.5
     current_Ra = R if mode == 2 else Ra
-    if (2 * current_Ra - 1) < 0: return 0, 0  # 避免開根號負數
+    if (2 * current_Ra - 1) < 0: return 0, 0
     sqrt_2Ra_minus_1 = (2 * current_Ra - 1) ** 0.5
     if T >= T0D:
         Fu = current_Ra
@@ -113,6 +115,7 @@ def calculate_SaDV_over_Fuv_m(SaV, Fuv, is_near_fault):
 
 # --- 主视图函式 ---
 def calculator_view(request):
+    # ... (前面的程式碼保持不變) ...
     DATA_DIR = os.path.join(settings.BASE_DIR, 'EqStaticAnalysis_TW', 'data')
     GENERAL_CSV = os.path.join(DATA_DIR, 'seismic_data_general.csv')
     TAIPEI_CSV = os.path.join(DATA_DIR, 'seismic_data_taipei_special.csv')
@@ -137,7 +140,7 @@ def calculator_view(request):
     if request.method == 'POST':
         try:
             form_data = request.POST.copy()
-
+            # ... (前面的資料處理保持不變) ...
             submitted_faults = {}
             faults_list_for_report = []
             for key, value in form_data.items():
@@ -180,15 +183,21 @@ def calculator_view(request):
             is_taipei_basin = is_taipei_special and location_data.get('Zone_Type') == "Basin"
 
             if is_taipei_basin:
-                SDS = SMS = location_data['SDS']
+                SDS = location_data['SDS']
+                SMS = location_data['SMS']
                 T0D = T0M = location_data['T0_sec']
                 SDS_no_fault, T0D_no_fault = SDS, T0D
                 is_near_fault = False
                 SD1, SM1, SD1_no_fault = None, None, None
+                ss_params_no_fault = {}
+                ground_type = 0 # 台北盆地不適用地盤分類
             else:
                 final_Ss_params = {'SsD': location_data['SsD'], 'S1D': location_data['S1D'],
                                    'SsM': location_data['SsM'], 'S1M': location_data['S1M']}
-                ss_params_no_fault = {'SsD': location_data['SsD'], 'S1D': location_data['S1D']}
+
+                ss_params_no_fault = {'SsD': location_data['SsD'], 'S1D': location_data['S1D'],
+                                      'SsM': location_data['SsM'], 'S1M': location_data['S1M']}
+
                 faults_str = location_data.get('Nearby_Faults')
                 is_near_fault = pd.notna(faults_str)
 
@@ -225,7 +234,8 @@ def calculator_view(request):
                                     adjusted_val = interpolate(DISTANCE_POINTS, y_points, r)
                                     final_Ss_params[param] = max(final_Ss_params[param], adjusted_val)
 
-                ground_type = 2
+                ground_type = int(form_data.get('ground_type', 2))
+
                 FaD, FvD = get_site_amplification_factors(final_Ss_params['SsD'], final_Ss_params['S1D'], ground_type)
                 SDS, SD1 = FaD * final_Ss_params['SsD'], FvD * final_Ss_params['S1D']
                 FaM, FvM = get_site_amplification_factors(final_Ss_params['SsM'], final_Ss_params['S1M'], ground_type)
@@ -305,56 +315,85 @@ def calculator_view(request):
             C_VMX, C_VMY = (I / (1.4 * alpha_y)) * SaM_over_FuM_m_X, (I / (1.4 * alpha_y)) * SaM_over_FuM_m_Y
 
             v_mode = form_data.get('vertical_mode')
-            Rv, C_VZX_D, C_VZY_D = 3.0, 0, 0
-            if v_mode == '1':
-                TvX, TvY = Tx, Ty
-                SaDVX, SaDVY = SaDX * vertical_ratio, SaDY * vertical_ratio
-                FuvX, _ = calculate_Fu(Rv, TvX, T0D, is_taipei_basin, 1)
-                FuvY, _ = calculate_Fu(Rv, TvY, T0D, is_taipei_basin, 1)
-                SaDV_over_Fuv_m_X, SaDV_over_Fuv_m_Y = calculate_SaDV_over_Fuv_m(SaDVX, FuvX,
-                                                                                 is_near_fault), calculate_SaDV_over_Fuv_m(
-                    SaDVY, FuvY, is_near_fault)
-                C_VZX_D, C_VZY_D = (I / (1.4 * alpha_y)) * SaDV_over_Fuv_m_X, (I / (1.4 * alpha_y)) * SaDV_over_Fuv_m_Y
-            else:
-                Tv_eff = Tx if SaDX >= SaDY else Ty
-                SaD_eff = SaDX if SaDX >= SaDY else SaDY
-                SaDV_eff = SaD_eff * vertical_ratio
-                Fuv_eff, _ = calculate_Fu(Rv, Tv_eff, T0D, is_taipei_basin, 1)
-                SaDV_over_Fuv_m = calculate_SaDV_over_Fuv_m(SaDV_eff, Fuv_eff, is_near_fault)
-                C_VZX_D = C_VZY_D = (I / (1.4 * alpha_y)) * SaDV_over_Fuv_m
+            Rv = 3.0
+
+            SaDVX, SaDVY, FuvX, FuvY = 0, 0, 0, 0
+            RavX, RavY = 0, 0
+
+            FuDVX, _ = calculate_Fu(Rv, Tx, T0D, is_taipei_basin, 1)
+            FuDVY, _ = calculate_Fu(Rv, Ty, T0D, is_taipei_basin, 1)
+
+            # --- 【核心修改】移除 v_mode 判斷，永遠採標準模式 ---
+            Rv = 3.0
+            SaDVX, SaDVY = SaDX * vertical_ratio, SaDY * vertical_ratio
+
+            FuvX, RavX = calculate_Fu(Rv, Tx, T0D, is_taipei_basin, 1)
+            FuvY, RavY = calculate_Fu(Rv, Ty, T0D, is_taipei_basin, 1)
+
+            SaDV_over_Fuv_m_X = calculate_SaDV_over_Fuv_m(SaDVX, FuvX, is_near_fault)
+            SaDV_over_Fuv_m_Y = calculate_SaDV_over_Fuv_m(SaDVY, FuvY, is_near_fault)
+            C_VZX_D = (I / (1.4 * alpha_y)) * SaDV_over_Fuv_m_X
+            C_VZY_D = (I / (1.4 * alpha_y)) * SaDV_over_Fuv_m_Y
+
+            ratio_SaDVX_FuDVX = SaDVX / FuvX if FuvX != 0 else 0
+            ratio_SaDVY_FuDVY = SaDVY / FuvY if FuvY != 0 else 0
 
             SaDVX_no_fault, SaDVY_no_fault = SaDX_no_fault * (1 / 2), SaDY_no_fault * (1 / 2)
             FuvX_no_fault, _ = calculate_Fu(Rv, Tx, T0D_no_fault, is_taipei_basin, 1)
             FuvY_no_fault, _ = calculate_Fu(Rv, Ty, T0D_no_fault, is_taipei_basin, 1)
             SaDV_over_Fuv_m_X_no_fault = calculate_SaDV_over_Fuv_m(SaDVX_no_fault, FuvX_no_fault, False)
             SaDV_over_Fuv_m_Y_no_fault = calculate_SaDV_over_Fuv_m(SaDVY_no_fault, FuvY_no_fault, False)
+
+            ratio_SaDVX_no_fault_FuDVX_no_fault = SaDVX_no_fault / FuvX_no_fault if FuvX_no_fault != 0 else 0
+            ratio_SaDVY_no_fault_FuDVY_no_fault = SaDVY_no_fault / FuvY_no_fault if FuvY_no_fault != 0 else 0
+
             C_V_star_ZX = (I * FuvX_no_fault / (V_star_divisor * alpha_y)) * SaDV_over_Fuv_m_X_no_fault
             C_V_star_ZY = (I * FuvY_no_fault / (V_star_divisor * alpha_y)) * SaDV_over_Fuv_m_Y_no_fault
 
             SaMVX, SaMVY = SaMX * vertical_ratio, SaMY * vertical_ratio
-            FuvMX, _ = calculate_Fu(Rv, Tx, T0M, is_taipei_basin, 2)
-            FuvMY, _ = calculate_Fu(Rv, Ty, T0M, is_taipei_basin, 2)
-            SaMV_over_FuvM_m_X = calculate_SaDV_over_Fuv_m(SaMVX, FuvMX, is_near_fault)
-            SaMV_over_FuvM_m_Y = calculate_SaDV_over_Fuv_m(SaMVY, FuvMY, is_near_fault)
+
+            # --- 【核心修正】將 FuMVX 和 FuMVY 的變數名統一 ---
+            FuMVX, _ = calculate_Fu(Rv, Tx, T0M, is_taipei_basin, 2)
+            FuMVY, _ = calculate_Fu(Rv, Ty, T0M, is_taipei_basin, 2)
+
+            # --- 【核心修正】使用統一後的變數名計算後續值 ---
+            SaMV_over_FuvM_m_X = calculate_SaDV_over_Fuv_m(SaMVX, FuMVX, is_near_fault)
+            SaMV_over_FuvM_m_Y = calculate_SaDV_over_Fuv_m(SaMVY, FuMVY, is_near_fault)
+
+            ratio_SaMVX_FuMVX = SaMVX / FuMVX if FuMVX != 0 else 0
+            ratio_SaMVY_FuMVY = SaMVY / FuMVY if FuMVY != 0 else 0
+
             C_VMZX, C_VMZY = (I / (1.4 * alpha_y)) * SaMV_over_FuvM_m_X, (I / (1.4 * alpha_y)) * SaMV_over_FuvM_m_Y
+
+            # --- 【核心修改】將 C_design 的計算邏輯擴充 ---
+            final_CzD = max(C_VZX_D, C_VZY_D)
+            final_Cz_star = max(C_V_star_ZX, C_V_star_ZY)
+            final_CzM = max(C_VMZX, C_VMZY)
 
             if is_near_fault:
                 C_column = (0.80 * SDS * I) / (3 * alpha_y)
             else:
                 C_column = (0.40 * SDS * I) / (2 * alpha_y)
 
-            C_design_X, C_design_Y = max(C_VX, C_V_star_X), max(C_VY, C_V_star_Y)
+            C_design_X = max(C_VX, C_V_star_X, C_VMX)
+            C_design_Y = max(C_VY, C_V_star_Y, C_VMY)
+            C_design_Z = max(final_CzD, final_Cz_star, final_CzM)
 
             context['results'] = {
                 'county': county, 'township': township, 'village': form_data.get('village', ''), 'hn': hn,
                 'structure_type': structure_type_str,
+                'T_empirical': T_empirical,
+                'T_limit': T_limit,
                 'Tx': Tx, 'Ty': Ty, 'I': I, 'Rx': Rx, 'Ry': Ry, 'alpha_y': alpha_y,
                 'alpha_y_choice': form_data.get('alpha_y_choice'), 'vertical_mode': v_mode,
                 'is_taipei_basin': is_taipei_basin, 'is_near_fault': is_near_fault,
-                'zone_name': location_data.get('Zone_Name', '一般震区'),
+                'zone_name': location_data.get('Zone_Name', '一般震區'),
+                'ground_type': ground_type,
                 'faults_data_for_report': faults_list_for_report,
                 'ss_params_no_fault_SsD': ss_params_no_fault.get('SsD'),
                 'ss_params_no_fault_S1D': ss_params_no_fault.get('S1D'),
+                'ss_params_no_fault_SsM': ss_params_no_fault.get('SsM'),
+                'ss_params_no_fault_S1M': ss_params_no_fault.get('S1M'),
                 'final_Ss_params_SsD': final_Ss_params.get('SsD'), 'final_Ss_params_S1D': final_Ss_params.get('S1D'),
                 'final_Ss_params_SsM': final_Ss_params.get('SsM'), 'final_Ss_params_S1M': final_Ss_params.get('S1M'),
                 'FaD': FaD, 'FvD': FvD, 'FaM': FaM, 'FvM': FvM, 'FaD_no_fault': FaD_no_fault,
@@ -379,16 +418,29 @@ def calculator_view(request):
                 'C_VZX_D': C_VZX_D, 'C_VZY_D': C_VZY_D, 'C_V_star_ZX': C_V_star_ZX, 'C_V_star_ZY': C_V_star_ZY,
                 'C_VMZX': C_VMZX, 'C_VMZY': C_VMZY, 'C_column': C_column, 'C_design_X': C_design_X,
                 'C_design_Y': C_design_Y,
+                # --- 【核心新增】將新的 Z 向變數加入 context ---
+                'final_CzD': final_CzD,
+                'final_Cz_star': final_Cz_star,
+                'C_design_Z': C_design_Z,
+                'final_CzM': final_CzM,
                 'vertical_ratio': vertical_ratio, 'SaDVX': SaDVX, 'SaDVY': SaDVY, 'SaMVX': SaMVX, 'SaMVY': SaMVY,
                 'SaDVX_no_fault': SaDVX_no_fault, 'SaDVY_no_fault': SaDVY_no_fault,
-                'FuvX': FuvX, 'FuvY': FuvY, 'FuvMX': FuvMX, 'FuvMY': FuvMY,
+                'Rv': Rv, 'RavX': RavX, 'RavY': RavY,
+                'FuDVX': FuDVX, 'FuDVY': FuDVY,
+                'FuMVX': FuMVX, 'FuMVY': FuMVY,
+                'FuvX': FuvX, 'FuvY': FuvY,
                 'FuvX_no_fault': FuvX_no_fault, 'FuvY_no_fault': FuvY_no_fault,
                 'SaDV_over_Fuv_m_X': SaDV_over_Fuv_m_X, 'SaDV_over_Fuv_m_Y': SaDV_over_Fuv_m_Y,
+                'ratio_SaDVX_FuDVX': ratio_SaDVX_FuDVX,
+                'ratio_SaDVY_FuDVY': ratio_SaDVY_FuDVY,
+                'ratio_SaDVX_no_fault_FuDVX_no_fault': ratio_SaDVX_no_fault_FuDVX_no_fault,
+                'ratio_SaDVY_no_fault_FuDVY_no_fault': ratio_SaDVY_no_fault_FuDVY_no_fault,
+                'ratio_SaMVX_FuMVX': ratio_SaMVX_FuMVX,
+                'ratio_SaMVY_FuMVY': ratio_SaMVY_FuMVY,
                 'SaDV_over_Fuv_m_X_no_fault': SaDV_over_Fuv_m_X_no_fault,
                 'SaDV_over_Fuv_m_Y_no_fault': SaDV_over_Fuv_m_Y_no_fault,
                 'SaMV_over_FuvM_m_X': SaMV_over_FuvM_m_X, 'SaMV_over_FuvM_m_Y': SaMV_over_FuvM_m_Y,
             }
-            context['submitted_data'] = form_data
             context['submitted_data'] = form_data
             context['submitted_faults'] = submitted_faults
 
@@ -400,17 +452,11 @@ def calculator_view(request):
     return render(request, 'EqStaticAnalysis_TW/calculator.html', context)
 
 
-# --- 报告页面视图函式 ---
-# EqStaticAnalysis_TW/views.py
-
+# ... (report_view, get_townships, check_faults, get_villages 保持不變) ...
 def report_view(request):
-    # 預先初始化 context，確保即使不是 POST 請求，頁面也能正常渲染（雖然會是空的）
     context = {'results': None, 'report_type': 'general'}
 
     if request.method == 'POST':
-        # --- 1. 數據接收與清洗 ---
-
-        # 輔助函式，用於安全地轉換 POST 過來的字串數據
         def _clean_value(value):
             if value is None or value == '':
                 return None
@@ -420,21 +466,16 @@ def report_view(request):
             if val_lower == 'false':
                 return False
             try:
-                # 嘗試轉換為浮點數
                 return float(value)
             except (ValueError, TypeError):
-                # 如果都不是，則返回原始字串
                 return value
 
-        # 使用字典推導式，快速地將 request.POST 清洗並存入 results_dict
         results_dict = {key: _clean_value(value) for key, value in request.POST.items()}
 
-        # 特殊處理 village 欄位
         village_value = results_dict.get('village')
         if not village_value or village_value == '全区所有里':
-            results_dict['village'] = ''  # 將其設為空字串，而不是 None
+            results_dict['village'] = ''
 
-        # 重建斷層列表
         faults_data_for_report = []
         i = 0
         while True:
@@ -450,42 +491,25 @@ def report_view(request):
                 break
         results_dict['faults_data_for_report'] = faults_data_for_report
 
-        # --- 2. 報告書類型判斷 ---
-
-        # 從清洗過的字典中，安全地獲取判斷依據
         is_taipei = results_dict.get('is_taipei_basin', False)
         is_near = results_dict.get('is_near_fault', False)
 
-        report_type = 'general'  # 預設為一般區域
+        report_type = 'general'
         if is_taipei:
             report_type = 'taipei'
         elif is_near:
             report_type = 'near_fault'
 
-        # --- 3. 打包最終的 Context ---
         context = {
             'results': results_dict,
             'report_type': report_type,
+            'request': request  # 【重要】將 request 物件本身傳遞給模板
         }
 
-        # --- 4. (可選但推薦) 優化偵錯輸出 ---
-        import pprint
-        print("\n--- 正在生成地震力報告書 ---")
-        print("  - 判斷的報告書類型:", report_type)
-        print("  - 傳遞給模板的 Context (部分):")
-        pprint.pprint({k: v for k, v in context.items() if k != 'results'})  # 打印除了 results 之外的 context
-        # print("  - 完整的 Results 字典:")
-        # pprint.pprint(context.get('results')) # 如果需要，可以取消註解來查看完整的 results
-        print("-" * 30)
-
-    # 無論是 GET 還是 POST，都渲染同一個模板
-    # 如果是 GET 請求，context 會是 {'results': None, ...}，模板中的 {% if results %} 會處理這種情況
     return render(request, 'EqStaticAnalysis_TW/eqTW_report.html', context)
 
 
-# --- API 視圖函式 ---
 def get_townships(request, county):
-    # ... (此處省略，與之前相同) ...
     DATA_DIR = os.path.join(settings.BASE_DIR, 'EqStaticAnalysis_TW', 'data')
     GENERAL_CSV, TAIPEI_CSV = os.path.join(DATA_DIR, 'seismic_data_general.csv'), os.path.join(DATA_DIR,
                                                                                                'seismic_data_taipei_special.csv')
@@ -499,7 +523,6 @@ def get_townships(request, county):
 
 
 def check_faults(request, county, township):
-    # ... (此處省略，與之前相同) ...
     DATA_DIR = os.path.join(settings.BASE_DIR, 'EqStaticAnalysis_TW', 'data')
     GENERAL_CSV = os.path.join(DATA_DIR, 'seismic_data_general.csv')
     df_general = pd.read_csv(GENERAL_CSV)

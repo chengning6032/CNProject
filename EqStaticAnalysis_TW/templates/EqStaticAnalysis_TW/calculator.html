@@ -3,14 +3,8 @@
 {% block title %}臺灣建築物耐震設計靜力分析係數計算器{% endblock %}
 
 {% block extra_styles %}
-    {# 我們將在這裡直接定義所有樣式，不再依賴外部 Bootstrap #}
     <style>
-        /* ============================================= */
-        /* ====   耐震靜力分析計算器 全新樣式   ==== */
-        /* ============================================= */
-
-        /* 1. 全局與佈局 (借鑒 style.css)
-        --------------------------------------------- */
+        /* ... (您的大部分 CSS 樣式保持不變) ... */
         .page-wrapper {
             width: 100%;
             max-width: 1400px;
@@ -18,7 +12,6 @@
             padding: 0 20px;
         }
 
-        /* 【核心新增】麵包屑導航樣式 */
         .breadcrumb-container {
             width: 100%;
             margin: 20px auto 15px auto;
@@ -91,8 +84,6 @@
             margin-bottom: 40px;
         }
 
-        /* 2. 卡片化設計 (借鑒 section-container)
-        --------------------------------------------- */
         .card {
             background-color: #ffffff;
             border-radius: 10px;
@@ -116,8 +107,6 @@
             width: 100%;
         }
 
-        /* 3. 表單元素美化
-        --------------------------------------------- */
         .input-fieldset {
             border: 1px solid #dee2e6;
             padding: 20px;
@@ -170,20 +159,6 @@
             box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
         }
 
-        .form-check-group {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        .form-check label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
         #faults-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -196,8 +171,6 @@
             color: #888;
         }
 
-        /* 4. 結果區域美化
-        --------------------------------------------- */
         .results-placeholder {
             text-align: center;
             padding: 80px 20px;
@@ -205,42 +178,56 @@
             font-style: italic;
         }
 
+        /*
+        ================================================================
+        ====   【核心修改】調整結果表格樣式                       ====
+        ================================================================
+        */
         .result-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 15px;
             margin-bottom: 20px;
+            table-layout: fixed; /* 讓欄寬設定生效 */
         }
 
         .result-table th, .result-table td {
             border: 1px solid #e9ecef;
             padding: 12px;
+            text-align: center; /* 讓所有儲存格預設置中 */
         }
 
         .result-table th {
-            background-color: #f8f9fa;
             font-weight: 500;
-            width: 55%;
-            text-align: left;
+        }
+
+        .result-table tbody th {
+            background-color: #f8f9fa;
+            width: 25%; /* 縮小方向欄的寬度 */
+            text-align: left; /* 方向欄文字靠左 */
+            padding-left: 20px;
         }
 
         .result-table td {
-            text-align: center;
             font-family: Consolas, "Courier New", monospace;
         }
 
         .result-table .group-header {
-            background-color: #1d3557;
-            color: #fff;
+            background-color: #eaf2f6; /* 使用一個稍深的淡藍色背景 */
+            color: #1d3557;              /* 文字改為深藍色 */
             font-weight: bold;
             font-size: 1.1em;
-            text-align: center;
         }
 
-        .result-table .sub-group-header {
-            background-color: #eaf2f6;
+        .result-table thead th {
+            background-color: #f8f9fa;
             font-weight: bold;
-            text-align: left;
+        }
+
+        .result-table .sub-group-header { /* 用於柱係數的表頭 */
+            background-color: #eaf2f6; /* 淡藍色背景 */
+            font-weight: bold;
+            text-align: left; /* 文字靠左 */
             padding-left: 20px;
         }
 
@@ -249,12 +236,10 @@
             font-weight: bold;
             color: #0056b3;
             background-color: #eaf2f6;
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 4px;
         }
 
-        /* 5. 按鈕風格統一
-        --------------------------------------------- */
         .btn {
             border: none;
             padding: 12px 28px;
@@ -291,7 +276,6 @@
             box-shadow: 0 8px 20px rgba(42, 157, 143, 0.3);
         }
 
-        /* 響應式 */
         @media (max-width: 1200px) {
             .calculator-grid {
                 grid-template-columns: 1fr;
@@ -330,9 +314,14 @@
                     <form id="seismic-form" method="post">
                         {% csrf_token %}
 
-                        <!-- 1. 地點參數 -->
+                        <!--
+                        ================================================================
+                        ====   【核心修改】1. "地點參數" -> "工址參數"            ====
+                        ====              2. 新增 "地盤分類" 下拉選單         ====
+                        ================================================================
+                        -->
                         <fieldset class="input-fieldset">
-                            <legend>1. 地點參數</legend>
+                            <legend>1. 工址參數</legend>
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="county-select" class="form-label">縣市</label>
@@ -355,6 +344,22 @@
                                 <label for="village-select" class="form-label">里</label>
                                 <select id="village-select" name="village" class="form-select" disabled>
                                     <option selected disabled value="">請選擇里</option>
+                                </select>
+                            </div>
+                            <!-- 新增的地盤分類，預設隱藏 -->
+                            <div id="ground-type-wrapper" class="form-group" style="display: none; margin-top: 20px;">
+                                <label for="ground-type-select" class="form-label">地盤分類</label>
+                                <select id="ground-type-select" name="ground_type" class="form-select">
+                                    <option value="1" {% if submitted_data.ground_type == '1' %}selected{% endif %}>
+                                        第一類地盤 (堅實地盤)
+                                    </option>
+                                    <option value="2"
+                                            {% if not submitted_data.ground_type or submitted_data.ground_type == '2' %}selected{% endif %}>
+                                        第二類地盤 (普通地盤)
+                                    </option>
+                                    <option value="3" {% if submitted_data.ground_type == '3' %}selected{% endif %}>
+                                        第三類地盤 (軟弱地盤)
+                                    </option>
                                 </select>
                             </div>
                             <div id="faults-section" style="display: none; margin-top:20px;">
@@ -427,147 +432,92 @@
                                 <div class="form-group" id="alpha-y-wrapper">
                                     <!-- JavaScript 将会动态填入此处 -->
                                 </div>
+                                <!--
+                                ================================================================
+                                ====   【核心修改】允許韌性容量輸入小數點下兩位           ====
+                                ================================================================
+                                -->
                                 <div class="form-group">
                                     <label for="Rx" class="form-label">X方向韌性容量 Rx</label>
-                                    <input type="number" step="0.1" class="form-control" id="Rx" name="Rx"
+                                    <input type="number" step="0.01" class="form-control" id="Rx" name="Rx"
                                            value="{{ submitted_data.Rx }}" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="Ry" class="form-label">Y方向韌性容量 Ry</label>
-                                    <input type="number" step="0.1" class="form-control" id="Ry" name="Ry"
+                                    <input type="number" step="0.01" class="form-control" id="Ry" name="Ry"
                                            value="{{ submitted_data.Ry }}" required>
                                 </div>
                             </div>
                         </fieldset>
 
-                        <!-- 4. 垂直力计算模式 -->
-                        <fieldset class="input-fieldset">
-                            <legend>4. 垂直力計算模式</legend>
-                            <div class="form-check-group">
-                                <div class="form-check">
-                                    <label><input class="form-check-input" type="radio" name="vertical_mode"
-                                                  id="v_mode_1" value="1"
-                                                  {% if submitted_data.vertical_mode == '1' or not submitted_data %}checked{% endif %}>
-                                        標準模式 (X, Y方向獨立計算)</label>
-                                </div>
-                                <div class="form-check">
-                                    <label><input class="form-check-input" type="radio" name="vertical_mode"
-                                                  id="v_mode_2" value="2"
-                                                  {% if submitted_data.vertical_mode == '2' %}checked{% endif %}> 保守模式
-                                        (統一採用較不利向反應計算)</label>
-                                </div>
-                            </div>
-                        </fieldset>
+                        <!--
+                        ================================================================
+                        ====   【核心修改】移除 "4. 垂直力計算模式" fieldset      ====
+                        ================================================================
+                        -->
 
                         <button type="submit" class="btn btn-primary">計算地震力係數</button>
                     </form>
                 </div>
             </div>
 
-            <!-- 右側結果欄 -->
+            <!--
+            ================================================================
+            ====   【核心修改】簡化右側結果顯示區塊                     ====
+            ================================================================
+            -->
             <div class="card">
                 <div class="card-header">計算結果</div>
                 <div class="card-body">
                     {% if results %}
                         <div id="results-section">
+                            <!--
+                            ================================================================
+                            ====   【核心修改】替換為全新、更美觀的結果表格         ====
+                            ================================================================
+                            -->
                             <table class="result-table">
+                                <thead>
+                                <tr class="group-header">
+                                    <th colspan="4">水平及垂直地震力係數</th>
+                                </tr>
+                                <tr>
+                                    <th>方向</th>
+                                    <th>最小設計總橫力<br><code>C<sub>D</sub></code></th>
+                                    <th>中小度地震力<br><code>C*</code></th>
+                                    <th>最大考量地震力<br><code>C<sub>M</sub></code></th>
+                                </tr>
+                                </thead>
                                 <tbody>
-                                <tr class="group-header">
-                                    <td colspan="2">1. 水平地震力係數</td>
-                                </tr>
-                                <tr class="sub-group-header">
-                                    <td colspan="2">最小設計總橫力係數 C (2.2節)</td>
+                                <tr>
+                                    <th>X 向</th>
+                                    <td><code>{{ results.C_VX|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.C_V_star_X|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.C_VMX|floatformat:4 }}</code></td>
                                 </tr>
                                 <tr>
-                                    <th>X方向 V = C * W</th>
-                                    <td><code>{{ results.C_VX|floatformat:4 }} * W</code></td>
+                                    <th>Y 向</th>
+                                    <td><code>{{ results.C_VY|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.C_V_star_Y|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.C_VMY|floatformat:4 }}</code></td>
                                 </tr>
                                 <tr>
-                                    <th>Y方向 V = C * W</th>
-                                    <td><code>{{ results.C_VY|floatformat:4 }} * W</code></td>
+                                    <th>Z 向 (垂直)</th>
+                                    <td><code>{{ results.final_CzD|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.final_Cz_star|floatformat:4 }}</code></td>
+                                    <td><code>{{ results.final_CzM|floatformat:4 }}</code></td>
                                 </tr>
+                                </tbody>
+                            </table>
 
+                            <table class="result-table" style="margin-top: 2rem;">
+                                <tbody>
                                 <tr class="sub-group-header">
-                                    <td colspan="2">中小度地震降伏之設計地震力係數 C* (2.10.1節)</td>
+                                    <th colspan="2">柱之垂直地震力係數</th>
                                 </tr>
                                 <tr>
-                                    <th>X方向 V* = C* * W</th>
-                                    <td><code>{{ results.C_V_star_X|floatformat:4 }} * W</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向 V* = C* * W</th>
-                                    <td><code>{{ results.C_V_star_Y|floatformat:4 }} * W</code></td>
-                                </tr>
-
-                                <tr class="sub-group-header">
-                                    <td colspan="2">最大考量地震崩塌之設計地震力係數 CM (2.10.2節)</td>
-                                </tr>
-                                <tr>
-                                    <th>X方向 VM = CM * W</th>
-                                    <td><code>{{ results.C_VMX|floatformat:4 }} * W</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向 VM = CM * W</th>
-                                    <td><code>{{ results.C_VMY|floatformat:4 }} * W</code></td>
-                                </tr>
-
-                                <tr class="group-header">
-                                    <td colspan="2">2. 垂直地震力係數 (2.18節)</td>
-                                </tr>
-                                <tr class="sub-group-header">
-                                    <td colspan="2">設計垂直地震力係數 Cz_D (梁、版適用)</td>
-                                </tr>
-                                <tr>
-                                    <th>X方向 Vz = Cz_D * W</th>
-                                    <td><code>{{ results.C_VZX_D|floatformat:4 }} * W</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向 Vz = Cz_D * W</th>
-                                    <td><code>{{ results.C_VZY_D|floatformat:4 }} * W</code></td>
-                                </tr>
-
-                                <tr class="sub-group-header">
-                                    <td colspan="2">中小度垂直地震力係數 Cz* (梁、版適用)</td>
-                                </tr>
-                                <tr>
-                                    <th>X方向 Vz* = Cz* * W</th>
-                                    <td><code>{{ results.C_V_star_ZX|floatformat:4 }} * W</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向 Vz* = Cz* * W</th>
-                                    <td><code>{{ results.C_V_star_ZY|floatformat:4 }} * W</code></td>
-                                </tr>
-
-                                <tr class="sub-group-header">
-                                    <td colspan="2">最大考量垂直地震力係數 Cz_M (梁、版適用)</td>
-                                </tr>
-                                <tr>
-                                    <th>X方向 VzM = Cz_M * W</th>
-                                    <td><code>{{ results.C_VMZX|floatformat:4 }} * W</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向 VzM = Cz_M * W</th>
-                                    <td><code>{{ results.C_VMZY|floatformat:4 }} * W</code></td>
-                                </tr>
-
-                                <tr class="sub-group-header">
-                                    <td colspan="2">柱子專用之垂直力係數 C_column</td>
-                                </tr>
-                                <tr>
-                                    <th>柱自重 * C_column</th>
+                                    <th><code>C<sub>column</sub></code></th>
                                     <td><code>{{ results.C_column|floatformat:4 }}</code></td>
-                                </tr>
-
-                                <tr class="group-header">
-                                    <td colspan="2">3. 設計建議</td>
-                                </tr>
-                                <tr>
-                                    <th>X方向建議設計係數 C_design,x = max(C, C*)</th>
-                                    <td><code>{{ results.C_design_X|floatformat:4 }}</code></td>
-                                </tr>
-                                <tr>
-                                    <th>Y方向建議設計係數 C_design,y = max(C, C*)</th>
-                                    <td><code>{{ results.C_design_Y|floatformat:4 }}</code></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -594,12 +544,13 @@
         {{ results|json_script:"results-data" }}
     {% endif %}
 
-    <!-- JavaScript (與您提供的版本完全相同) -->
     <script>
+        // ... (大部分 JS 保持不變) ...
         const countySelect = document.getElementById('county-select');
         const townshipSelect = document.getElementById('township-select');
         const villageWrapper = document.getElementById('village-wrapper');
         const villageSelect = document.getElementById('village-select');
+        const groundTypeWrapper = document.getElementById('ground-type-wrapper'); // 新增
         const faultsSection = document.getElementById('faults-section');
         const faultsInputs = document.getElementById('faults-inputs');
         const structureTypeSelect = document.getElementById('structure-type');
@@ -608,6 +559,7 @@
         const generateReportBtn = document.getElementById('generate-report-btn');
 
         function updateAlphaYOptions() {
+            // ... (此函式不變)
             const structureType = structureTypeSelect.value;
             alphaYWrapper.innerHTML = '';
             const submittedAlphaChoice = "{{ submitted_data.alpha_y_choice|default:'' }}";
@@ -638,11 +590,13 @@
             alphaYWrapper.innerHTML = content;
         }
 
+        // --- 【核心修改】loadTownships 函式中加入地盤分類的顯示邏輯 ---
         async function loadTownships(county) {
             townshipSelect.innerHTML = '<option selected disabled value="">載入中...</option>';
             townshipSelect.disabled = true;
             villageWrapper.style.display = 'none';
             villageSelect.disabled = true;
+            groundTypeWrapper.style.display = 'none'; // 先隱藏地盤分類
 
             try {
                 const response = await fetch(`/OLi/eqTW/api/get_townships/${county}/`);
@@ -650,6 +604,14 @@
                 townshipSelect.innerHTML = '<option selected disabled value="">請選擇鄉鎮市區</option>';
                 data.townships.forEach(township => townshipSelect.add(new Option(township, township)));
                 townshipSelect.disabled = false;
+
+                // 如果是台北市或新北市，則隱藏地盤分類，否則顯示
+                if (county === '臺北市' || county === '新北市') {
+                    groundTypeWrapper.style.display = 'none';
+                } else {
+                    groundTypeWrapper.style.display = 'block';
+                }
+
                 const selectedTownship = "{{ submitted_data.township|default:'' }}";
                 if (selectedTownship) {
                     townshipSelect.value = selectedTownship;
@@ -662,6 +624,7 @@
         }
 
         async function loadVillages(county, township) {
+            // ... (此函式不變) ...
             villageWrapper.style.display = 'none';
             villageSelect.innerHTML = '';
             villageSelect.disabled = true;
@@ -700,6 +663,7 @@
         }
 
         async function checkFaults(county, township) {
+            // ... (此函式不變) ...
             faultsSection.style.display = 'none';
             faultsInputs.innerHTML = '';
             try {
@@ -729,6 +693,7 @@
         }
 
         function createHiddenInput(name, value) {
+            // ... (此函式不變) ...
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = name;
@@ -750,18 +715,13 @@
         structureTypeSelect.addEventListener('change', updateAlphaYOptions);
 
         if (generateReportBtn) {
+            // ... (此事件監聽器不變) ...
             generateReportBtn.addEventListener('click', function (event) {
                 event.preventDefault();
 
                 reportForm.innerHTML = ''; // 清空
-
-                // --- 【核心修正】: 完整地打包所有数据 ---
-
-                // 1. 加入 CSRF Token
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 reportForm.appendChild(createHiddenInput('csrfmiddlewaretoken', csrfToken));
-
-                // 2. 将主表单的所有输入值打包
                 const mainForm = document.getElementById('seismic-form');
                 const mainFormData = new FormData(mainForm);
                 for (let [key, value] of mainFormData.entries()) {
@@ -769,13 +729,10 @@
                         reportForm.appendChild(createHiddenInput(key, value));
                     }
                 }
-
-                // 3. 将所有计算结果打包
                 const resultsDataElement = document.getElementById('results-data');
                 if (resultsDataElement) {
                     const resultsData = JSON.parse(resultsDataElement.textContent);
                     for (const [key, value] of Object.entries(resultsData)) {
-                        // 特别处理 faults_data_for_report，将其打平
                         if (key === 'faults_data_for_report' && Array.isArray(value)) {
                             value.forEach((fault, index) => {
                                 reportForm.appendChild(createHiddenInput(`fault_${index}_name`, fault.name));

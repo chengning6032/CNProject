@@ -1,16 +1,23 @@
 # products/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
+from django.utils import timezone
+from django.conf import settings
+from django.contrib import messages
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from django.utils import timezone
+import time
 
 from accounts.models import Profile
-from .models import Product
+from .models import Product, Order
+
+# 從我們手動建立的 sdk 資料夾中引用 SDK
+from sdk.ecpay_payment_sdk import ECPayPaymentSdk
 
 
 @login_required
@@ -36,6 +43,166 @@ def product_list_view(request):
         'purchased_module_ids': purchased_module_ids,  # 將列表傳遞給模板
     }
     return render(request, 'products/product_list.html', context)
+
+# 【核心新增】第一步：建立訂單，並生成導向綠界的表單
+@login_required
+@require_POST
+def ecpay_checkout_view(request):
+    try:
+        data = json.loads(request.body)
+        cart_items = data.get('items', [])
+        if not cart_items:
+            return JsonResponse({'status': 'error', 'message': '購物車是空的'}, status=400)
+
+        total_amount = 0
+        item_names = []
+        for item in cart_items:
+            product = Product.objects.get(product_id=item['id'])
+            item_names.append(product.name)
+            plan = item.get('plan', 'monthly')
+            if plan == 'semiannually':
+                price = product.prices.get('semiannually', 0)
+            elif plan == 'annually':
+                price = product.prices.get('annually', 0)
+            else:
+                price = product.prices.get('monthly', 0)
+            total_amount += int(price)
+
+        merchant_trade_no = f"OLI{int(time.time())}"
+        Order.objects.create(
+            user=request.user,
+            merchant_trade_no=merchant_trade_no,
+            total_amount=total_amount,
+            items=cart_items
+        )
+
+        # 準備要傳送給綠界的基礎參數字典
+        # 【核心修正】我們將完全遵從 SDK 內部的參數檢查機制
+        order_params = {
+            'MerchantTradeNo': merchant_trade_no,
+            'MerchantTradeDate': datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+            'PaymentType': 'aio',
+            'TotalAmount': total_amount,
+            'TradeDesc': "OLI 工程設計模組訂閱",
+            'ItemName': '#'.join(item_names),
+            'ReturnURL': f"{settings.SITE_URL}{reverse('products:ecpay_return')}",
+            'ChoosePayment': 'Credit',
+            'EncryptType': 1,
+            'OrderResultURL': f"{settings.SITE_URL}{reverse('products:ecpay_notify')}",
+        }
+
+        # 初始化 SDK
+        sdk = ECPayPaymentSdk(
+            MerchantID=settings.ECPAY_MERCHANT_ID,
+            HashKey=settings.ECPAY_HASH_KEY,
+            HashIV=settings.ECPAY_HASH_IV
+        )
+
+        # 產生綠界訂單所需參數
+        # SDK 內部的 integrate_parameter 會自動加入 MerchantID 並產生 CheckMacValue
+        final_order_params = sdk.create_order(order_params)
+
+        # 產生 HTML 的 form 格式
+        action_url = settings.ECPAY_API_URL
+        final_html_form = sdk.gen_html_post_form(action_url, final_order_params)
+
+        return HttpResponse(final_html_form)
+
+    except Exception as e:
+        import traceback
+        print("An error occurred in ecpay_checkout_view:")
+        traceback.print_exc()
+        return JsonResponse({'status': 'error', 'message': f'伺服器發生未預期的錯誤: {e}'}, status=500)
+
+
+# 【核心新增】第二步：使用者付款後，綠界將其瀏覽器導回此處 (前景)
+@csrf_exempt
+def ecpay_return_view(request):
+    return render(request, 'products/payment_success.html')
+
+
+# 【核心新增】第三步：綠界伺服器在背景發送通知到此處，進行真正的訂單更新 (後景)
+@csrf_exempt
+@require_POST
+def ecpay_notify_view(request):
+    # 1. 從綠界 POST 回來的資料中，取得所有參數
+    post_data = request.POST.dict()
+
+    # 2. 【核心修正】手動進行 CheckMacValue 驗證
+    # 2.1 從回傳資料中，先把官方的 CheckMacValue 取出並移除
+    if 'CheckMacValue' not in post_data:
+        return HttpResponse('Invalid request: CheckMacValue not found', status=400)
+
+    received_mac_value = post_data.pop('CheckMacValue')
+
+    # 2.2 初始化 SDK
+    sdk = ECPayPaymentSdk(
+        MerchantID=settings.ECPAY_MERCHANT_ID,
+        HashKey=settings.ECPAY_HASH_KEY,
+        HashIV=settings.ECPAY_HASH_IV
+    )
+
+    # 2.3 用剩下的資料，自己重新產生一次 CheckMacValue
+    #     我們直接呼叫 SDK 中那個我們已經確認存在的 generate_check_value 函式
+    generated_mac_value = sdk.generate_check_value(post_data)
+
+    # 2.4 比對兩者是否相符
+    if received_mac_value != generated_mac_value:
+        # 如果不相符，代表這筆通知可能是偽造的，直接拒絕
+        return HttpResponse('MAC verification failed', status=400)
+
+    # 3. 處理訂單邏輯 (這部分和之前完全一樣)
+    merchant_trade_no = post_data.get('MerchantTradeNo')
+    rtn_code = post_data.get('RtnCode')
+
+    if rtn_code == '1':
+        try:
+            order = Order.objects.get(merchant_trade_no=merchant_trade_no, is_paid=False)
+
+            order.is_paid = True
+            order.paid_at = timezone.now()
+            order.save()
+
+            profile_to_update = order.user.profile
+            purchased = profile_to_update.purchased_modules if isinstance(profile_to_update.purchased_modules,
+                                                                          dict) else {}
+            today = timezone.now()
+
+            for item in order.items:
+                module_id = item.get('id')
+                plan = item.get('plan')
+                product = Product.objects.get(product_id=module_id)
+
+                if plan == 'monthly':
+                    delta = relativedelta(months=1)
+                elif plan == 'semiannually':
+                    delta = relativedelta(months=6)
+                elif plan == 'annually':
+                    delta = relativedelta(years=1)
+                else:
+                    continue
+
+                new_expiration_date = today + delta
+
+                purchased[module_id] = {
+                    'name': product.name,
+                    'plan': plan,
+                    'purchase_date': today.isoformat(),
+                    'expiration_date': new_expiration_date.isoformat(),
+                }
+
+            profile_to_update.purchased_modules = purchased
+            profile_to_update.save()
+
+            return HttpResponse('1|OK')
+
+        except Order.DoesNotExist:
+            return HttpResponse('Order not found', status=404)
+        except Exception as e:
+            print(f"Error processing notification for order {merchant_trade_no}: {e}")
+            return HttpResponse('Internal server error', status=500)
+
+    return HttpResponse('Payment not successful')
 
 
 @login_required

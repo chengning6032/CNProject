@@ -368,20 +368,43 @@
             transform: rotate(180deg);
         }
 
-        .changelog-list {
-            padding: 15px 20px 20px 40px;
+.changelog-list {
+            padding: 15px 20px 20px 20px; /* 調整 padding */
             background-color: #fff;
             list-style: none;
             margin: 0;
         }
 
-        .changelog-list li {
+        /* 版本標題的樣式 (e.g., v1.0.0) */
+        .changelog-version {
+            font-weight: bold;
+            color: #1d3557;
+            margin-top: 15px;
+        }
+        .changelog-version:first-child {
+            margin-top: 0;
+        }
+        .changelog-version .date {
+            font-weight: normal;
+            font-size: 0.85em;
+            color: #888;
+            margin-left: 8px;
+        }
+
+        /* 每個版本下的更新項目列表 */
+        .changelog-details {
+            list-style: none;
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+
+        .changelog-details li {
             position: relative;
             padding-bottom: 10px;
             font-size: 0.95em;
         }
 
-        .changelog-list li::before {
+        .changelog-details li::before {
             content: '\ec5c';
             font-family: 'remixicon';
             position: absolute;
@@ -511,11 +534,35 @@
             <div class="tool-group">
                 <div class="tool-group-title">耐震設計規範</div>
 
-                <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
+                 <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
                    class="tool-link"
                    data-title="建築物耐震設計 | 靜力分析"
                    data-description="依據內政部營建署最新發布的「建築物耐震設計規範及解說」，提供靜態分析法所需的各項參數計算。本工具能協助工程師快速、準確地完成初步設計與檢核，確保結構安全符合法規要求。"
-                   data-version="v0.0.0" data-updated="20XX-XX-XX">靜力分析</a>
+                   data-version="v1.1.251119"
+                   data-updated="2025-11-19"
+                   data-history='[
+                        {
+                            "version": "v1.1.251119",
+                            "date": "2025-11-19",
+                            "changes": [
+                                "新增「地盤分類」選項，Fa 及 Fv 值現在依據使用者選擇動態計算。",
+                                "簡化計算器結果頁面，聚焦於最終係數，版面更清晰。",
+                                "全面優化報告書排版引擎，實現更精確的「所見即所得」預覽與分頁控制。",
+                                "為報告書新增完整的垂直地震力計算過程章節。"
+                            ]
+                        },
+                        {
+                            "version": "v1.0.251028",
+                            "date": "2025-10-28",
+                            "changes": [
+                                "推出第一版靜力分析工具。",
+                                "整合全台灣鄉鎮市區地震參數。",
+                                "支援近斷層效應調整計算。",
+                                "支援臺北盆地專屬設計譜。"
+                            ]
+                        }
+                   ]'
+                >靜力分析</a>
 
             </div>
             <div class="tool-group">
@@ -538,7 +585,7 @@
                    data-title="結構設計 | 基礎版與錨栓"
                    data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
                    data-version="v1.2.5" data-updated="2025-10-28">鋼柱基礎版及錨栓設計檢核</a>
-                
+
 
             </div>
         </aside>
@@ -588,11 +635,9 @@
         const metaVersion = document.getElementById('meta-version');
         const metaUpdated = document.getElementById('meta-updated');
         const changelogContainer = document.getElementById('changelog-container');
-        const changelogSummary = document.getElementById('changelog-summary').querySelector('span');
         const changelogList = document.getElementById('changelog-list');
         const defaultTitle = descriptionTitle.innerHTML;
         const defaultText = descriptionText.innerHTML;
-
 
         toolLinks.forEach(link => {
             link.addEventListener('mouseover', function () {
@@ -602,7 +647,10 @@
                 const description = this.dataset.description;
                 const version = this.dataset.version;
                 const updated = this.dataset.updated;
-                const changelog = this.dataset.changelog;
+
+                // --- 【核心修改】讀取 data-history 屬性 ---
+                const historyData = this.dataset.history;
+
                 descriptionContent.style.opacity = 0;
                 setTimeout(() => {
                     descriptionTitle.innerHTML = title;
@@ -614,38 +662,57 @@
                     } else {
                         metaContainer.style.display = 'none';
                     }
-                    if (changelog) {
-                        changelogSummary.textContent = `版本 ${version} 更新日誌`;
-                        changelogList.innerHTML = '';
-                        const changes = changelog.split('|');
-                        changes.forEach(change => {
-                            if (change.trim() !== '') {
-                                const li = document.createElement('li');
-                                li.textContent = change.trim();
-                                changelogList.appendChild(li);
-                            }
-                        });
-                        changelogContainer.style.display = 'block';
+
+                    // --- 【核心修改】重構日誌生成邏輯 ---
+                    if (historyData) {
+                        try {
+                            const history = JSON.parse(historyData);
+                            changelogList.innerHTML = ''; // 清空舊列表
+
+                            history.forEach(entry => {
+                                // 創建版本標題 li
+                                const versionLi = document.createElement('li');
+                                versionLi.className = 'changelog-version';
+                                versionLi.innerHTML = `${entry.version} <span class="date">(${entry.date})</span>`;
+                                changelogList.appendChild(versionLi);
+
+                                // 創建包含更新項目的 ul
+                                const detailsUl = document.createElement('ul');
+                                detailsUl.className = 'changelog-details';
+
+                                entry.changes.forEach(changeText => {
+                                    const changeLi = document.createElement('li');
+                                    changeLi.textContent = changeText.trim();
+                                    detailsUl.appendChild(changeLi);
+                                });
+
+                                changelogList.appendChild(detailsUl);
+                            });
+
+                            changelogContainer.style.display = 'block';
+
+                        } catch (e) {
+                            console.error("解析 JSON 歷史數據時出錯:", e);
+                            changelogContainer.style.display = 'none';
+                        }
                     } else {
                         changelogContainer.style.display = 'none';
                     }
+
                     descriptionContent.style.opacity = 1;
                 }, 150);
             });
         });
 
+        // ... (後續的 JS 邏輯保持不變) ...
         const authRequiredLinks = document.querySelectorAll('.nav-link-requires-auth');
 
         authRequiredLinks.forEach(link => {
             link.addEventListener('click', function (event) {
-                event.preventDefault(); // 阻止任何預設行為
-
-                // 彈出一個更友好的確認框
+                event.preventDefault();
                 if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
-                    // 如果使用者點擊 "確定"，跳轉到登入頁面
                     window.location.href = "{% url 'login' %}";
                 }
-                // 如果使用者點擊 "取消"，則什麼都不做
             });
         });
 
@@ -653,14 +720,10 @@
 
         disabledToolLinks.forEach(link => {
             link.addEventListener('click', function (event) {
-                event.preventDefault(); // 阻止任何預設行為
-
-                // 彈出與 header 中連結相同的提示框
+                event.preventDefault();
                 if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
-                    // 如果使用者點擊 "確定"，跳轉到登入頁面
                     window.location.href = "{% url 'login' %}";
                 }
-                // 如果使用者點擊 "取消"，則什麼都不做
             });
         });
 
@@ -678,38 +741,25 @@
             }, 150);
         });
 
-        // ==========================================================
-        // ==== START: 【核心新增】滑動底線的 JavaScript 邏輯 ====
-        // ==========================================================
         const mainNav = document.querySelector('.main-nav');
         const navLinks = mainNav.querySelectorAll('.main-nav-link');
         const activeLink = mainNav.querySelector('.main-nav-link.active');
-        const underline = mainNav.style; // 我們直接操作 .main-nav::after 的樣式
+        const underline = mainNav.style;
 
         function moveUnderline(target) {
             if (!target) return;
-
-            // 計算目標連結相對於 main-nav 容器的位置
             const targetLeft = target.offsetLeft;
             const targetWidth = target.offsetWidth;
-
-            // 透過 CSS 變數或直接操作 style 來移動偽元素
             mainNav.style.setProperty('--underline-left', `${targetLeft}px`);
             mainNav.style.setProperty('--underline-width', `${targetWidth}px`);
         }
 
-        // 1. 頁面載入時，將底線定位到 active 連結
         if (activeLink) {
-            // 為了確保字體等渲染完畢，延遲一小段時間再定位
             setTimeout(() => {
                 const targetLeft = activeLink.offsetLeft;
                 const targetWidth = activeLink.offsetWidth;
-
-                // 直接設定偽元素的樣式
                 mainNav.style.setProperty('--underline-left-initial', `${targetLeft}px`);
                 mainNav.style.setProperty('--underline-width-initial', `${targetWidth}px`);
-
-                // 動態創建 style 標籤來應用初始位置
                 const style = document.createElement('style');
                 style.innerHTML = `
                     .main-nav::after {
@@ -721,14 +771,12 @@
             }, 50);
         }
 
-        // 2. 為每個連結添加滑鼠移入事件
         navLinks.forEach(link => {
             link.addEventListener('mouseenter', () => {
                 moveUnderline(link);
             });
         });
 
-        // 3. 為整個導覽區添加滑鼠移出事件，讓底線回到 active 位置
         mainNav.addEventListener('mouseleave', () => {
             moveUnderline(activeLink);
         });

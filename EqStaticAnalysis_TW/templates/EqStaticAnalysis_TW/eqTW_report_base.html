@@ -1,124 +1,164 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <title>{% block page_title %}地震力分析計算報告書{% endblock %}</title>
+
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true,
-                // 使用 TeX 巨集，強制所有行內數學和顯示數學都使用 display 樣式
-                {#macros: {#}
-                {#    everymath: "\displaystyle"}#}
-
+                processEscapes: true
             },
             options: {
                 ignoreHtmlClass: 'no-mathjax',
                 processHtmlClass: 'mathjax'
             },
             chtml: {
-                // 將字體設定為 MathJax 3 內建的 STIXTwo Math（或 'TeX' / 'STIX'）
-                // MathJax 3 默認的 'latest' 或 'STIX2' 通常是最佳選擇
-                fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2', // 確保字體路徑正確
-                mtextFont: 'Noto Sans TC', // 設定文字部分使用的字體，例如在 \text{} 中
-                scale: 1.0 // 基礎縮放比例
-            },
-            svg: {
-                // 如果您也使用 SVG 輸出，可以類似設定
-                fontCache: 'global',
-                scale: 1.0
+                fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                mtextFont: 'Noto Sans TC',
+                scale: 0.85
             }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+
     <style>
-        /* ============================================= */
-        /* ====      報告書檢視器通用樣式     ==== */
-        /* ============================================= */
-        body.report-body-view {
-            background-color: #525659;
-            padding: 30px 0;
-            margin: 0;
-            font-family: 'Noto Sans TC', sans-serif;
+        @page { size: A4; margin: 0; }
+        * { box-sizing: border-box; }
+        body {
+            background-color: #525659; margin: 0; padding: 20px 0;
+            font-family: 'Noto Sans TC', sans-serif; font-size: 11pt; color: #333;
         }
-
+        .a4-page {
+            width: 21cm;
+            min-height: 29.7cm;
+            height: auto;
+            overflow: visible;
+            padding: 2cm;
+            margin: 1cm auto;
+            background: white;
+            box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
         .report-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 2000;
-            display: flex;
-            gap: 15px;
+            position: fixed; top: 20px; right: 20px; z-index: 2000;
+            display: flex; gap: 15px;
         }
-
         .report-controls button {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background-color: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #495057;
-            transition: all 0.2s ease;
+            width: 50px; height: 50px; border-radius: 50%; border: none;
+            background-color: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: #495057; transition: all 0.2s ease;
         }
-
-        .report-controls button:hover {
-            background-color: #f1f3f5;
-            transform: translateY(-2px);
-        }
-
+        .report-controls button:hover { background-color: #f1f3f5; transform: translateY(-2px); }
         @media print {
-            body.report-body-view {
-                background-color: white !important;
-                padding: 0 !important;
-            }
-
-            .report-controls {
-                display: none !important;
-            }
-
+            body { background: none; margin: 0; padding: 0; }
+            .report-controls { display: none !important; }
             .a4-page {
-                box-shadow: none !important;
-                margin: 0 !important;
-                border: none !important;
+                height: auto; overflow: visible; margin: 0; box-shadow: none;
+                page-break-after: always;
             }
+            .a4-page:last-child { page-break-after: auto; }
+            h3, h4, table, .formula-group, .formula-display { page-break-inside: avoid !important; }
+        }
+
+        .page-content {
+            padding-top: 0cm;
+            padding-bottom: 0cm;
+        }
+        .page-footer {
+            position: absolute;
+            bottom: 1.5cm;
+            right: 2cm;
+            font-size: 10pt; color: #888;
+        }
+
+        .report-header { text-align: center; margin-bottom: 1.2cm; }
+        .report-header h1 {
+            font-weight: 700; font-size: 18pt; margin-bottom: 6px;
+            letter-spacing: 2px;
+        }
+        .report-header .lead { font-size: 10pt; color: #666; }
+        .section { margin-bottom: 0.8cm; }
+        .section h3 {
+            color: #005a9e; border-bottom: 2px solid #005a9e;
+            padding-bottom: 5px; margin-bottom: 12px;
+            font-size: 15pt; font-weight: 700;
+        }
+        .section h4 {
+            font-size: 12pt; font-weight: 500; color: #34495e;
+            margin-top: 0.8cm; margin-bottom: 8px;
+            border-bottom: 1px solid #eee; padding-bottom: 4px;
+        }
+
+        /*
+           ==============================================================
+           ====   【核心修改】使用更強的選擇器來統一樣式             ====
+           ==============================================================
+        */
+        .section h5, .content-block h5 {
+            font-size: 12pt;
+            font-weight: 500; /* 與 h4 的粗細度 (500) 保持一致 */
+            color: #34495e;
+            margin-top: 0.8cm;
+            margin-bottom: 10px;
+        }
+
+        .chapter-ref { font-size: 9pt; color: #888; font-weight: 400; margin-left: 8px; }
+        .content-block p { line-height: 1.5; margin-bottom: 0.8rem; }
+        .table {
+            width: 100%; border-collapse: collapse; font-size: 10pt;
+            margin-top: 0.4rem;
+        }
+        .table th, .table td {
+            border: 1px solid #ccc; padding: 6px 10px;
+            text-align: left; vertical-align: middle;
+        }
+        .table thead th { background-color: #f2f2f2; font-weight: 500; text-align: center; }
+        .formula-group {
+            border: 1px solid #dee2e6; border-radius: 4px; padding: 0.3rem 1.2rem;
+            margin: 0.5rem 0; page-break-inside: avoid;
+        }
+
+        /* 這個規則現在只負責 .formula-group 內的 h5 的特殊間距和邊框 */
+        .formula-group h5 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .formula-step {
+            display: grid; grid-template-columns: 210px 1fr; align-items: center;
+            margin: 5px 0;
+        }
+        .formula-step .label { font-weight: 500; line-height: 1.5; }
+        .label-note {
+            font-size: 0.9em; font-weight: normal; color: #555;
+        }
+        .formula-step .calculation { font-size: 1.0em; justify-self: start; }
+        .reasoning {
+            font-size: 11pt; color: #555; margin-left: 1em; padding: 0.5em 0 0.5em 1em;
+            border-left: 2px solid #eee;
+        }
+        .formula-display {
+            text-align: center; margin: 20px 0;
+            page-break-inside: avoid;
         }
     </style>
-
-    <!-- 子模板可以在這裡注入自己的專屬樣式 -->
-    {% block extra_head %}{% endblock %}
 </head>
-<body class="report-body-view">
-
-<div class="report-controls">
-    <button id="print-report-btn" title="列印或另存為 PDF">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM16 18H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM18 3H6v4h12V3z"/></svg>
-    </button>
-    <button onclick="window.close()" title="關閉視窗">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-    </button>
-</div>
-
-<div class="report-content-wrapper">
-    {% block report_content %}
-        <!-- 子模板將在這裡填充所有 A4 頁面 -->
-    {% endblock %}
-</div>
-
-<script>
-    document.getElementById('print-report-btn').addEventListener('click', () => {
-        window.print();
-    });
-</script>
-{% block extra_scripts %}{% endblock %}
-
+<body>
+    <div class="report-controls">
+        <button id="print-report-btn" title="列印或另存為 PDF"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM16 18H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM18 3H6v4h12V3z"/></svg></button>
+        <button onclick="window.close()" title="關閉視窗"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg></button>
+    </div>
+    {% block report_content %}{% endblock %}
+    <script>
+        document.getElementById('print-report-btn').addEventListener('click', () => { window.print(); });
+    </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

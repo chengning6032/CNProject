@@ -13,116 +13,31 @@
             </thead>
             <tbody>
             <tr>
-                <td>$S_{sD}$</td>
+                <td>$S_{s}^{D}$</td>
                 <td>{{ results.final_Ss_params_SsD|floatformat:4 }}</td>
             </tr>
             <tr>
-                <td>$S_{1D}$</td>
+                <td>$S_{1}^{D}$</td>
                 <td>{{ results.final_Ss_params_S1D|floatformat:4 }}</td>
             </tr>
             <tr>
-                <td>$S_{sM}$</td>
+                <td>$S_{s}^{M}$</td>
                 <td>{{ results.final_Ss_params_SsM|floatformat:4 }}</td>
             </tr>
             <tr>
-                <td>$S_{1M}$</td>
+                <td>$S_{1}^{M}$</td>
                 <td>{{ results.final_Ss_params_S1M|floatformat:4 }}</td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 【核心新增】補上 2.2, 2.3, 2.4 節 -->
-    <h4>2.2 工址放大係數 (F<sub>a</sub>, F<sub>v</sub>) <span class="chapter-ref">(2.5節)</span></h4>
-    <div class="content-block">
-        <p>假設為普通地盤（第二類地盤）</p>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>地震情境</th>
-                <th>$F_a$</th>
-                <th>$F_v$</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>設計地震</td>
-                <td>{{ results.FaD|floatformat:2 }}</td>
-                <td>{{ results.FvD|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <td>中小度地震</td>
-                <td>{{ results.FaD_no_fault|floatformat:2 }}</td>
-                <td>{{ results.FvD_no_fault|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <td>最大考量地震</td>
-                <td>{{ results.FaM|floatformat:2 }}</td>
-                <td>{{ results.FvM|floatformat:2 }}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+    <!--
+    ================================================================
+    ====   【核心修改】引用共用模板片段                       ====
+    ================================================================
+    -->
+    {% include 'EqStaticAnalysis_TW/_report_snippet_chapter_2_2.html' %}
+{#    {% include 'EqStaticAnalysis_TW/_report_snippet_chapter_2_3.html' %}#}
 
-    <h4>2.3 工址譜加速度係數 (S<sub>DS</sub>, S<sub>D1</sub>) <span class="chapter-ref">(2.5節)</span></h4>
-    <div class="content-block">
-        <table class="table">
-            <thead>
-            <tr>
-                <th>地震情境</th>
-                <th>$S_{DS}$ | $S_{MS}$</th>
-                <th>$S_{D1}$ | $S_{M1}$</th>
-                <th>$T_{0D}$ | $T_{0M}$ (sec)</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>設計地震</td>
-                <td>{{ results.SDS|floatformat:4 }}</td>
-                <td>{{ results.SD1|floatformat:4 }}</td>
-                <td>{{ results.T0D|floatformat:3 }}</td>
-            </tr>
-            <tr>
-                <td>中小度地震</td>
-                <td>{{ results.SDS_no_fault|floatformat:4 }}</td>
-                <td>{{ results.SD1_no_fault|floatformat:4 }}</td>
-                <td>{{ results.T0D_no_fault|floatformat:3 }}</td>
-            </tr>
-            <tr>
-                <td>最大考量地震</td>
-                <td>{{ results.SMS|floatformat:4 }}</td>
-                <td>{{ results.SM1|floatformat:4 }}</td>
-                <td>{{ results.T0M|floatformat:3 }}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <h4>2.4 設計譜加速度 (S<sub>aD</sub>, S<sub>aM</sub>) <span class="chapter-ref">(2.6節)</span></h4>
-    <div class="content-block">
-        <table class="table" style="table-layout: fixed;">
-            <thead>
-            <tr>
-                <th>方向</th>
-                <th>設計地震 $S_{aD}$</th>
-                <th>中小度地震 $S_{aD}^*$</th>
-                <th>最大考量地震 $S_{aM}$</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>X ($T_x={{ results.Tx|floatformat:3 }}s$)</td>
-                <td>{{ results.SaDX|floatformat:4 }}</td>
-                <td>{{ results.SaDX_no_fault|floatformat:4 }}</td>
-                <td>{{ results.SaMX|floatformat:4 }}</td>
-            </tr>
-            <tr>
-                <td>Y ($T_y={{ results.Ty|floatformat:3 }}s$)</td>
-                <td>{{ results.SaDY|floatformat:4 }}</td>
-                <td>{{ results.SaDY_no_fault|floatformat:4 }}</td>
-                <td>{{ results.SaMY|floatformat:4 }}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
 </div>

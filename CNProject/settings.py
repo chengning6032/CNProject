@@ -32,9 +32,11 @@ ALLOWED_HOSTS = [
 ]
 # 如果是在本地開發模式 (DEBUG=True)，就把本地網址加進去
 if DEBUG:
-    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
+    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost','impliably-unascertainable-shaunta.ngrok-free.dev'])
 
-# Application definition
+CSRF_TRUSTED_ORIGINS = [
+    'https://impliably-unascertainable-shaunta.ngrok-free.dev', # <--- 把您完整的 ngrok 網址貼在這裡
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -171,3 +173,20 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ADMIN_EMAIL = 'chengning6032@gmail.com'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+
+
+# 綠界金流設定 (ECPay)
+# -----------------------------------------------------------------------------
+# 這是官方提供的「測試環境」專用參數，您現在可以直接使用來開發與模擬。
+
+# [測試環境] 的 API 提交網址
+ECPAY_API_URL = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'
+# [測試環境] 的商店 ID (特店編號)
+ECPAY_MERCHANT_ID = '2000132'
+# [測試環境] 的 HashKey
+ECPAY_HASH_KEY = '5294y06JbISpM5x9'
+# 【核心修正】串接金鑰 HashIV
+ECPAY_HASH_IV = 'v77hoKGq4kWxNNIS'
+# 您的網站公開網址。在本地開發時，【必須】使用 ngrok 提供的網址。
+# 每次重啟 ngrok 都需要來這裡更新。
+SITE_URL = 'https://impliably-unascertainable-shaunta.ngrok-free.dev' # 【重要】請務必在測試前換成您自己的 ngrok 網址

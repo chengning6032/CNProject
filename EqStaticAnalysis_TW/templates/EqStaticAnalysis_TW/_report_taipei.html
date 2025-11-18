@@ -8,7 +8,7 @@
     </div>
 
     <!-- 【核心新增】補上 2.3, 2.4 節 -->
-    <h4>2.3 工址譜加速度係數 (S<sub>DS</sub>, S<sub>D1</sub>) <span class="chapter-ref">(2.7節)</span></h4>
+    <h4>2.3 工址譜加速度係數<span class="chapter-ref">(2.7節)</span></h4>
     <div class="content-block">
         <table class="table">
             <thead>
@@ -16,7 +16,7 @@
                 <th>地震情境</th>
                 <th>$S_{DS}$ | $S_{MS}$</th>
                 <th>$S_{D1}$ | $S_{M1}$</th>
-                <th>$T_{0D}$ | $T_{0M}$ (sec)</th>
+                <th>$T_{0}^{D}$ | $T_{0}^{M}$ (sec)</th>
             </tr>
             </thead>
             <tbody>
@@ -36,31 +36,4 @@
         </table>
     </div>
 
-    <h4>2.4 設計譜加速度 (S<sub>aD</sub>, S<sub>aM</sub>) <span class="chapter-ref">(2.6節)</span></h4>
-    <div class="content-block">
-        <table class="table" style="table-layout: fixed;">
-            <thead>
-            <tr>
-                <th>方向</th>
-                <th>設計地震 $S_{aD}$</th>
-                <th>中小度地震 $S_{aD}^*$</th>
-                <th>最大考量地震 $S_{aM}$</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>X ($T_x={{ results.Tx|floatformat:3 }}s$)</td>
-                <td>{{ results.SaDX|floatformat:4 }}</td>
-                <td>{{ results.SaDX_no_fault|floatformat:4 }}</td>
-                <td>{{ results.SaMX|floatformat:4 }}</td>
-            </tr>
-            <tr>
-                <td>Y ($T_y={{ results.Ty|floatformat:3 }}s$)</td>
-                <td>{{ results.SaDY|floatformat:4 }}</td>
-                <td>{{ results.SaDY_no_fault|floatformat:4 }}</td>
-                <td>{{ results.SaMY|floatformat:4 }}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
 </div>

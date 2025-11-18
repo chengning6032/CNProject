@@ -112,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', function () {
-            // 【核心修正】正確的檢查物件是否為空的方式
             const cartArray = Object.values(window.cart);
             if (cartArray.length === 0) {
                 alert('您的購物車是空的，請先加入商品！');
@@ -120,16 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.disabled = true;
-            this.textContent = '處理中...';
+            this.textContent = '產生訂單中...';
 
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
             const cartItemsForBackend = cartArray.map(item => ({
                 id: item.id,
                 plan: item.plan,
                 name: item.name
             }));
-
             const checkoutUrl = this.dataset.checkoutUrl;
 
             fetch(checkoutUrl, {
@@ -142,30 +139,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     items: cartItemsForBackend
                 }),
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    window.cart = {};
-                    window.updateCartUI();
-                    window.location.href = data.redirect_url;
-                } else {
-                    alert('發生錯誤：' + data.message);
+                .then(response => {
+                    // 如果伺服器回傳錯誤(4xx, 5xx)，我們嘗試解析 JSON 錯誤訊息
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || `伺服器回應錯誤: ${response.status}`);
+                        });
+                    }
+                    // 如果成功，回傳的是 HTML 頁面，我們需要將其渲染
+                    return response.text();
+                })
+                .then(html => {
+                    // 【核心修改】將整個頁面替換為綠界重導向頁面的內容
+                    document.open();
+                    document.write(html);
+                    document.close();
+                })
+                .catch(error => {
+                    console.error('Checkout Fetch Error:', error);
+                    alert('結帳請求失敗：' + error.message);
                     this.disabled = false;
                     this.textContent = '前往結帳';
-                }
-            })
-            .catch(error => {
-                console.error('Checkout Fetch Error:', error);
-                alert('結帳請求失敗。請檢查您的網路連線或稍後再試。');
-                this.disabled = false;
-                this.textContent = '前往結帳';
-            });
+                });
         });
     }
 });
