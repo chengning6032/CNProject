@@ -744,7 +744,7 @@ def bp_anchor_calculate_api(request):
                                         ANCHOR_PARAMS_FOR_CHECKS,
                                         bolt_params_for_checks,
                                         all_bolt_coords=all_bolt_coords_for_checks.tolist(),  # 傳入所有錨栓座標
-                                        generate_plot=True  # 要求生成圖表
+                                        generate_plot=False  # 要求生成圖表
                                     )
                                     if vcb_x_res:
                                         phi_Vcb_x = vcb_x_res['phi_Vcb']
@@ -831,7 +831,7 @@ def bp_anchor_calculate_api(request):
                                         ANCHOR_PARAMS_FOR_CHECKS,
                                         bolt_params_for_checks,
                                         all_bolt_coords=all_bolt_coords_for_checks.tolist(),
-                                        generate_plot=True
+                                        generate_plot=False
                                     )
 
                                     if vcb_y_res:
