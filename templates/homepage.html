@@ -3,10 +3,11 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OLI | Optimal Lean Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
     <style>
-        /* ... 大部分 CSS 樣式保持不變 ... */
+        /* ... (桌面版的 CSS 樣式保持不變，此處省略以保持簡潔) ... */
         body {
             background-color: #f4f7f9;
             font-family: '微軟正黑體', 'Microsoft JhengHei', Arial, sans-serif;
@@ -30,11 +31,10 @@
             transition: all 0.3s ease;
         }
 
-        /* ===== 頂部導覽列 (已修改) ===== */
         .top-header {
             display: flex;
             justify-content: space-between;
-            align-items: center; /* 確保所有直接子元素都垂直居中 */
+            align-items: center;
             padding: 0 40px;
             height: 70px;
             background-color: rgba(255, 255, 255, 0.95);
@@ -53,7 +53,7 @@
         }
 
         .logo-img {
-            height: 40px; /* 調整 Logo 高度 */
+            height: 40px;
         }
 
         .main-nav {
@@ -61,11 +61,9 @@
             align-items: center;
             gap: 10px;
             height: 100%;
-            position: relative; /* 【1】讓偽元素可以相對於它定位 */
+            position: relative;
         }
 
-
-        /* 【核心新增】為 a 和 span 標籤定義一個共用的 class */
         .main-nav-link {
             padding: 8px 16px;
             color: #555;
@@ -74,15 +72,14 @@
             position: relative;
             display: flex;
             align-items: center;
-            transition: color 0.3s ease; /* 只保留顏色的過渡 */
-            z-index: 1; /* 確保連結在底線之上 */
+            transition: color 0.3s ease;
+            z-index: 1;
         }
 
         .main-nav-link:hover {
             color: #0056b3;
         }
 
-        /* 當前頁面高亮效果 */
         .main-nav-link.active {
             color: #0056b3;
             font-weight: bold;
@@ -95,18 +92,17 @@
         .main-nav::after {
             content: '';
             position: absolute;
-            bottom: 20px; /* 調整底線的垂直位置 */
+            bottom: 20px;
             height: 3px;
             background-color: #0056b3;
             border-radius: 2px;
-            transition: left 0.3s ease-in-out, width 0.3s ease-in-out; /* 動畫效果 */
+            transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
         }
 
         .nav-link-requires-auth {
             cursor: pointer;
         }
 
-        /* 移除了舊的 .company-link 樣式 */
         .user-auth-section {
             display: flex;
             align-items: center;
@@ -116,6 +112,9 @@
         .user-auth-section .welcome-msg {
             font-weight: 500;
             color: #333;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .user-auth-section .welcome-msg strong {
@@ -127,17 +126,16 @@
             border: none;
             padding: 0;
             font-family: inherit;
-            font-size: 1em;
+            font-size: 1.2em;
             cursor: pointer;
             color: #888;
             transition: color 0.2s;
         }
 
         .user-auth-section .logout-btn:hover {
-            color: #e63946; /* 紅色 */
+            color: #e63946;
         }
 
-        /* 針對未登入狀態的按鈕 */
         .user-auth-section .login-btn {
             color: #555;
             padding: 8px 18px;
@@ -155,7 +153,7 @@
             background-color: #1d3557;
             color: white;
             border-radius: 20px;
-            padding: 9px 20px; /* 增加一點 padding */
+            padding: 9px 20px;
             border: none;
         }
 
@@ -163,15 +161,14 @@
             background-color: #000;
         }
 
-        /* ===== 【核心新增】後台管理按鈕樣式 ===== */
         .user-auth-section .admin-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             padding: 6px 12px;
-            background-color: #fffbe6; /* 淡黃色背景 */
-            color: #721c24; /* 深紅色文字 */
-            border: 1px solid #ffeeba; /* 淡黃色邊框 */
+            background-color: #fffbe6;
+            color: #721c24;
+            border: 1px solid #ffeeba;
             border-radius: 20px;
             font-size: 0.9em;
             font-weight: 500;
@@ -190,7 +187,6 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* ... .main-container 到 .changelog-list 的樣式保持不變 ... */
         .main-container {
             display: flex;
             gap: 30px;
@@ -368,22 +364,23 @@
             transform: rotate(180deg);
         }
 
-.changelog-list {
-            padding: 15px 20px 20px 20px; /* 調整 padding */
+        .changelog-list {
+            padding: 15px 20px 20px 20px;
             background-color: #fff;
             list-style: none;
             margin: 0;
         }
 
-        /* 版本標題的樣式 (e.g., v1.0.0) */
         .changelog-version {
             font-weight: bold;
             color: #1d3557;
             margin-top: 15px;
         }
+
         .changelog-version:first-child {
             margin-top: 0;
         }
+
         .changelog-version .date {
             font-weight: normal;
             font-size: 0.85em;
@@ -391,7 +388,6 @@
             margin-left: 8px;
         }
 
-        /* 每個版本下的更新項目列表 */
         .changelog-details {
             list-style: none;
             padding-left: 20px;
@@ -413,18 +409,13 @@
             color: #28a745;
         }
 
-
-        /*
-         * ===== START OF NEW CSS =====
-         * 新增的「返回公司主頁」區塊樣式
-        */
         .back-to-company-section {
             text-align: center;
-            margin-top: 40px; /* 與上方內容的間距 */
+            margin-top: 40px;
         }
 
         .back-to-company-btn {
-            display: inline-flex; /* 使用 inline-flex 讓圖示和文字對齊 */
+            display: inline-flex;
             align-items: center;
             gap: 10px;
             padding: 15px 35px;
@@ -444,17 +435,14 @@
         }
 
         .back-to-company-btn:hover {
-            background-position: right center; /* 讓漸層背景移動 */
+            background-position: right center;
             box-shadow: 0 6px 20px rgba(29, 53, 87, 0.4);
-            transform: translateY(-3px); /* 輕微上浮 */
+            transform: translateY(-3px);
         }
 
         .back-to-company-btn:hover i {
-            transform: translateX(-5px); /* 圖示向左移動 */
+            transform: translateX(-5px);
         }
-
-
-        /* ===== END OF NEW CSS ===== */
 
         .footer {
             text-align: center;
@@ -467,29 +455,240 @@
         }
 
         .nav-link-requires-auth {
-            cursor: pointer; /* 讓它看起來像可點擊的 */
+            cursor: pointer;
         }
 
         .tool-link-disabled {
             cursor: pointer;
         }
 
+        /*
+        ================================================================
+        ====   【核心新增】漢堡選單相關 CSS 樣式                  ====
+        ================================================================
+        */
+
+        /* 漢堡按鈕 (預設在桌面版隱藏) */
+        .mobile-nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #1d3557;
+        }
+
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s; /* 延遲隱藏 */
+        }
+
+        .mobile-nav-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0; /* 起始位置就在右邊 */
+            width: 300px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            /* 使用 transform 來實現滑出效果，這不會影響頁面佈局 */
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .mobile-nav.active {
+            transform: translateX(0); /* 滑入到可見位置 */
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: flex-end;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .mobile-nav-links {
+            margin-top: 20px;
+        }
+        .mobile-nav-links a, .mobile-nav-links span {
+            display: block;
+            padding: 15px;
+            font-size: 1.1em;
+            color: #333;
+            border-radius: 6px;
+        }
+        .mobile-nav-links a:hover {
+            background-color: #f0f0f0;
+        }
+
+        /*
+        ================================================================
+        ====   【核心修改】全新的響應式設計規則                   ====
+        ================================================================
+        */
+
+        /* --- 1. 平板電腦樣式 (寬度小於 1024px) --- */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+
+            .main-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .left-panel {
+                max-width: 100%;
+            }
+
+            .right-panel {
+                padding: 30px;
+            }
+
+            .right-panel::before {
+                display: none;
+            }
+        }
+
+        /* --- 2. 較窄的桌面/平板橫式 (寬度小於 820px) --- */
+        @media (max-width: 820px) {
+            /* 隱藏桌面版導覽列 */
+            .main-nav {
+                display: none;
+            }
+
+            /* 顯示漢堡按鈕 */
+            .mobile-nav-toggle {
+                display: block;
+            }
+
+            .user-auth-section .welcome-msg strong {
+                display: none;
+            }
+
+            .top-header {
+                padding: 0 20px;
+            }
+
+            /* 隱藏主導覽列，為使用者區塊騰出空間 */
+            .main-nav {
+                display: none;
+            }
+
+            .user-auth-section .welcome-msg strong {
+                display: none; /* 只顯示 "歡迎," */
+            }
+        }
+
+        /* --- 3. 手機樣式 (寬度小於 600px) --- */
+        @media (max-width: 600px) {
+            .top-header {
+                flex-direction: column;
+                height: auto;
+                padding: 15px;
+                gap: 15px;
+            }
+
+            .logo-container {
+                width: 100%;
+                justify-content: center; /* Logo 置中 */
+            }
+
+            /* 讓使用者區塊重新可見並垂直堆疊 */
+            .user-auth-section {
+                width: 100%;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .user-auth-section .welcome-msg {
+                order: 1; /* 將歡迎訊息放在最上面 */
+                width: 100%;
+                justify-content: center;
+            }
+
+            .user-auth-section .welcome-msg strong {
+                display: inline; /* 重新顯示使用者名稱 */
+            }
+
+            .user-auth-section form {
+                order: 2; /* 登出按鈕在中間 */
+            }
+
+            /* 如果是未登入狀態，將兩個按鈕並排 */
+            .user-auth-buttons-wrapper {
+                display: flex;
+                gap: 15px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .user-auth-buttons-wrapper > a {
+                flex-grow: 1;
+                text-align: center;
+            }
+
+            .main-container {
+                margin-top: 20px;
+            }
+
+            #description-title {
+                font-size: 1.6em;
+                text-align: center;
+            }
+
+            #description-text {
+                font-size: 1em;
+                line-height: 1.7;
+            }
+
+            .right-panel {
+                padding: 20px;
+            }
+
+            .back-to-company-btn {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 <body>
 
-<!-- ===== 頂部導覽列 (已修改) ===== -->
 <header class="top-header">
     <a href="{% url 'homepage' %}" class="logo-container">
         <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="logo-img">
     </a>
 
-    <!-- 中間導覽 -->
     <nav class="main-nav">
-        <!-- 【核心修改】為所有 a 和 span 標籤加上 'main-nav-link' class -->
         <a href="{% url 'homepage' %}"
            class="main-nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}">工具總覽</a>
-
         {% if user.is_authenticated %}
             <a href="{% url 'profile' %}"
                class="main-nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">會員中心</a>
@@ -501,19 +700,24 @@
         {% endif %}
     </nav>
 
-    <!-- 已移除返回公司的連結 -->
-
+    <!--
+    ================================================================
+    ====   【核心修改】刪除重複的 user-auth-section 區塊        ====
+    ================================================================
+    -->
     <div class="user-auth-section">
         {% if user.is_authenticated %}
-            <span class="welcome-msg">
-                歡迎, <strong>{{ user.username }}</strong>
+            <div class="welcome-msg">
+                <span class="welcome-text">
+                    歡迎, <strong>{{ user.username }}</strong>
+                </span>
                 {% if user.is_superuser %}
                     <a href="{% url 'admin:index' %}" class="admin-btn" title="後台管理">
-                    <i class="ri-settings-3-line"></i>
-                    <span>後台管理</span>
-                </a>
+                        <i class="ri-settings-3-line"></i>
+                        <span>後台管理</span>
+                    </a>
                 {% endif %}
-            </span>
+            </div>
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" class="logout-btn" title="登出">
@@ -521,20 +725,45 @@
                 </button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}" class="login-btn">登入</a>
-            <a href="{% url 'signup' %}" class="signup-btn">註冊</a>
+            <div class="user-auth-buttons-wrapper">
+                <a href="{% url 'login' %}" class="login-btn">登入</a>
+                <a href="{% url 'signup' %}" class="signup-btn">註冊</a>
+            </div>
         {% endif %}
     </div>
+
+    <!-- 漢堡按鈕 -->
+    <button class="mobile-nav-toggle" id="mobile-nav-toggle">
+        <i class="ri-menu-line"></i>
+    </button>
 </header>
 
+<div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+<nav class="mobile-nav" id="mobile-nav">
+    <div class="mobile-nav-header">
+        <button class="mobile-nav-close" id="mobile-nav-close">
+            <i class="ri-close-line"></i>
+        </button>
+    </div>
+    <div class="mobile-nav-links">
+        <a href="{% url 'homepage' %}">工具總覽</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}">會員中心</a>
+            <a href="{% url 'products:list' %}">購買/續訂</a>
+        {% else %}
+            <span class="nav-link-requires-auth">會員中心</span>
+            <span class="nav-link-requires-auth">購買/續訂</span>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- ... (後續的 HTML 和 JavaScript 保持不變) ... -->
 <div class="container">
     <div class="main-container" id="main-container">
-        <!-- ... 左側和右側欄位內容保持不變 ... -->
         <aside class="left-panel">
             <div class="tool-group">
                 <div class="tool-group-title">耐震設計規範</div>
-
-                 <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
+                <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
                    class="tool-link"
                    data-title="建築物耐震設計 | 靜力分析"
                    data-description="依據內政部營建署最新發布的「建築物耐震設計規範及解說」，提供靜態分析法所需的各項參數計算。本工具能協助工程師快速、準確地完成初步設計與檢核，確保結構安全符合法規要求。"
@@ -563,30 +792,22 @@
                         }
                    ]'
                 >靜力分析</a>
-
             </div>
             <div class="tool-group">
                 <div class="tool-group-title">耐風設計規範</div>
-
                 <a class="tool-link disabled-link" data-title="耐風設計 | 封閉式建築"
                    data-description="針對封閉式或部分封閉式建築，依據「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，涵蓋各種地形、陣風反應因子等複雜參數，提供設計風力評估。"
                    data-version="v0.0.0" data-updated="20XX-XX-XX">封閉或部分封閉式建築</a>
-
-
                 <a class="tool-link disabled-link" data-title="耐風設計 | 開放式建築"
                    data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具依據我國「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，以應對台灣多變的氣候挑戰。"
                    data-version="v0.0.0" data-updated="20XX-XX-XX">開放式建築</a>
-
             </div>
             <div class="tool-group">
                 <div class="tool-group-title">結構設計</div>
-
                 <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
                    data-title="結構設計 | 基礎版與錨栓"
                    data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
                    data-version="v1.2.5" data-updated="2025-10-28">鋼柱基礎版及錨栓設計檢核</a>
-
-
             </div>
         </aside>
         <main class="right-panel">
@@ -610,18 +831,13 @@
             </div>
         </main>
     </div>
-
-    <!-- ===== 【核心新增】返回公司主頁的區塊 ===== -->
     <div class="back-to-company-section">
         <a href="{% url 'CZ_homepage' %}" class="back-to-company-btn">
             <i class="ri-arrow-left-line"></i>
             <span>返回 勤築工程實業 主頁</span>
         </a>
     </div>
-
 </div>
-
-<!-- ... 頁尾內容不變 ... -->
 <footer class="footer">&copy; {% now "Y" %} OLi | Optimal Lean Interface. All Rights Reserved.</footer>
 
 <!-- ... JavaScript 內容保持不變 ... -->
@@ -638,6 +854,11 @@
         const changelogList = document.getElementById('changelog-list');
         const defaultTitle = descriptionTitle.innerHTML;
         const defaultText = descriptionText.innerHTML;
+
+        const toggleButton = document.getElementById('mobile-nav-toggle');
+        const closeButton = document.getElementById('mobile-nav-close');
+        const overlay = document.getElementById('mobile-nav-overlay');
+        const mobileNav = document.getElementById('mobile-nav');
 
         toolLinks.forEach(link => {
             link.addEventListener('mouseover', function () {
@@ -780,6 +1001,20 @@
         mainNav.addEventListener('mouseleave', () => {
             moveUnderline(activeLink);
         });
+
+        function openMenu() {
+            mobileNav.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closeMenu() {
+            mobileNav.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        toggleButton.addEventListener('click', openMenu);
+        closeButton.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
 
 
     });

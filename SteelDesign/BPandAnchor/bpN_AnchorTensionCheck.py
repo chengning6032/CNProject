@@ -4,6 +4,7 @@ from shapely.geometry import Polygon, Point
 from shapely.ops import unary_union
 from shapely.geometry import Polygon
 import matplotlib
+from .bpN_svg_utils import SvgPlotter
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -264,57 +265,99 @@ def calculate_single_anchor_breakout_Ncb(anchor_coord, pedestal_params, anchor_p
     # [核心新增] 繪圖邏輯
     plot_base64 = None
     if generate_plot:
-        fig, ax = plt.subplots(figsize=(8, 8))
+        plotter = SvgPlotter(width=600, height=600)
+        unit_system = anchor_params.get('unit_system', 'imperial')
         unit_label = 'cm' if unit_system == 'mks' else 'in'
 
-        # 1. 繪製墩柱輪廓
+        # 1. 繪製墩柱
+        pedestal_shape = pedestal_params.get('shape')
+        pedestal_poly = None
+        if pedestal_shape == 'rectangle':
+            pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
+            pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
+                                     (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+        elif pedestal_shape == 'circle':
+            pedestal_D = pedestal_params.get('D', 0)
+            pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+
         if pedestal_poly:
-            ped_x, ped_y = pedestal_poly.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+            plotter.add_shapely_polygon(pedestal_poly, fill="#E9ECEF", stroke="#adb5bd", opacity=1.0)
 
-        # 2. [核心修正] 繪製被墩柱裁切後的理論破壞面積
-        #    我們只繪製 breakout_square_poly 和 pedestal_poly 的 "邊界" 交集
-        clipped_theoretical_poly = breakout_square_poly.intersection(pedestal_poly)
-        if not clipped_theoretical_poly.is_empty:
-            # 如果交集是一個多邊形(Polygon)
-            if clipped_theoretical_poly.geom_type == 'Polygon':
-                ctp_x, ctp_y = clipped_theoretical_poly.exterior.xy
-                ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2, label='Theoretical Area Boundary')
-            # 如果交集是多個多邊形(MultiPolygon)，分別繪製
-            elif clipped_theoretical_poly.geom_type == 'MultiPolygon':
-                for i, poly in enumerate(clipped_theoretical_poly.geoms):
-                    ctp_x, ctp_y = poly.exterior.xy
-                    # 只為第一個多邊形添加圖例標籤
-                    ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2,
-                            label='Theoretical Area Boundary' if i == 0 else "")
+        # 2. 繪製被墩柱裁切後的理論破壞面積 (3 hef x 3 hef square)
+        # 這裡的 breakout_square_poly 和 A_Nc_poly 在前面計算中已經產生了
+        if 'breakout_square_poly' in locals() and pedestal_poly:
+            clipped_theoretical = breakout_square_poly.intersection(pedestal_poly)
+            if not clipped_theoretical.is_empty:
+                # 繪製藍色虛線邊框 (理論範圍邊界)
+                plotter.add_shapely_polygon(clipped_theoretical, fill="none", stroke="#457b9d", stroke_width=2,
+                                            stroke_dasharray="5,5", opacity=1.0)
 
-        # 3. 繪製實際破壞面積 (ANc) - 邏輯不變，因為 ANc 本身就是交集結果
-        if not A_Nc_poly.is_empty:
-            anc_x, anc_y = A_Nc_poly.exterior.xy
-            ax.fill(anc_x, anc_y, color=(230/255, 57/255, 70/255, 0.4), ec='#e63946', lw=2, label=f'Actual Area (A_Nc)')
+        if 'A_Nc_poly' in locals() and not A_Nc_poly.is_empty:
+            # 繪製紅色填充 (實際 ANc)
+            plotter.add_shapely_polygon(A_Nc_poly, fill="#e63946", stroke="none", opacity=0.4)
 
-        # 4. 繪製所有錨栓
+        # 3. 繪製所有錨栓
         if all_bolt_coords is not None and len(all_bolt_coords) > 0:
-            all_bolts_np = np.array(all_bolt_coords)
-            ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='Other Anchors')
+            for bx, by in all_bolt_coords:
+                plotter.add_circle(bx, by, r=3, fill="gray", stroke="none", opacity=0.6)
 
-        # 5. 突顯被檢核的錨栓
-        ax.plot(x, y, '*', color='#fca311', markersize=15, markeredgecolor='black', label='Critical Anchor')
+        # 4. 突顯被檢核的錨栓
+        plotter.add_circle(anchor_coord[0], anchor_coord[1], r=4, fill="#fca311", stroke="black", stroke_width=1.5,
+                           opacity=1.0)
 
-        # 6. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Concrete Breakout Area ($A_{{Nc}}$) for Single Anchor', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+        plot_base64 = plotter.render_to_base64()
+    # if generate_plot:
+    #     fig, ax = plt.subplots(figsize=(8, 8))
+    #     unit_label = 'cm' if unit_system == 'mks' else 'in'
+    #
+    #     # 1. 繪製墩柱輪廓
+    #     if pedestal_poly:
+    #         ped_x, ped_y = pedestal_poly.exterior.xy
+    #         ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+    #
+    #     # 2. [核心修正] 繪製被墩柱裁切後的理論破壞面積
+    #     #    我們只繪製 breakout_square_poly 和 pedestal_poly 的 "邊界" 交集
+    #     clipped_theoretical_poly = breakout_square_poly.intersection(pedestal_poly)
+    #     if not clipped_theoretical_poly.is_empty:
+    #         # 如果交集是一個多邊形(Polygon)
+    #         if clipped_theoretical_poly.geom_type == 'Polygon':
+    #             ctp_x, ctp_y = clipped_theoretical_poly.exterior.xy
+    #             ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2, label='Theoretical Area Boundary')
+    #         # 如果交集是多個多邊形(MultiPolygon)，分別繪製
+    #         elif clipped_theoretical_poly.geom_type == 'MultiPolygon':
+    #             for i, poly in enumerate(clipped_theoretical_poly.geoms):
+    #                 ctp_x, ctp_y = poly.exterior.xy
+    #                 # 只為第一個多邊形添加圖例標籤
+    #                 ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2,
+    #                         label='Theoretical Area Boundary' if i == 0 else "")
+    #
+    #     # 3. 繪製實際破壞面積 (ANc) - 邏輯不變，因為 ANc 本身就是交集結果
+    #     if not A_Nc_poly.is_empty:
+    #         anc_x, anc_y = A_Nc_poly.exterior.xy
+    #         ax.fill(anc_x, anc_y, color=(230/255, 57/255, 70/255, 0.4), ec='#e63946', lw=2, label=f'Actual Area (A_Nc)')
+    #
+    #     # 4. 繪製所有錨栓
+    #     if all_bolt_coords is not None and len(all_bolt_coords) > 0:
+    #         all_bolts_np = np.array(all_bolt_coords)
+    #         ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='Other Anchors')
+    #
+    #     # 5. 突顯被檢核的錨栓
+    #     ax.plot(x, y, '*', color='#fca311', markersize=15, markeredgecolor='black', label='Critical Anchor')
+    #
+    #     # 6. 圖表設定
+    #     ax.set_aspect('equal', 'box')
+    #     ax.grid(True, linestyle=':', linewidth=0.5)
+    #     ax.set_title(f'Concrete Breakout Area ($A_{{Nc}}$) for Single Anchor', fontsize=14)
+    #     ax.set_xlabel(f'X-axis ({unit_label})')
+    #     ax.set_ylabel(f'Y-axis ({unit_label})')
+    #     ax.legend()
+    #     plt.tight_layout()
+    #
+    #     buf = io.BytesIO()
+    #     fig.savefig(buf, format='png', dpi=120)
+    #     buf.seek(0)
+    #     plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    #     plt.close(fig)
 
     return {
         # 主要結果 (英制)
@@ -535,61 +578,98 @@ def calculate_group_breakout_Ncbg(analysis_results, pedestal_params, anchor_para
     # [核心新增] 繪圖邏輯
     plot_base64 = None
     if generate_plot:
-        fig, ax = plt.subplots(figsize=(8, 8))
-        unit_label = 'cm' if unit_system == 'mks' else 'in'
+        plotter = SvgPlotter(width=600, height=600)
 
-        # 1. 繪製墩柱
-        if pedestal_polygon:
-            ped_x, ped_y = pedestal_polygon.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+        # 1. 繪製墩柱 (同上)
+        pedestal_shape = pedestal_params.get('shape')
+        pedestal_poly = None
+        if pedestal_shape == 'rectangle':
+            pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
+            pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
+                                     (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+        elif pedestal_shape == 'circle':
+            pedestal_D = pedestal_params.get('D', 0)
+            pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
 
-        # 2. 繪製理論破壞面積 (union_of_squares) 的邊界
-        clipped_theoretical_poly = union_of_squares.intersection(pedestal_polygon)
-        if not clipped_theoretical_poly.is_empty:
-            if clipped_theoretical_poly.geom_type == 'Polygon':
-                ctp_x, ctp_y = clipped_theoretical_poly.exterior.xy
-                ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2, label='Theoretical Area Boundary')
-            elif clipped_theoretical_poly.geom_type == 'MultiPolygon':
-                for i, poly in enumerate(clipped_theoretical_poly.geoms):
-                    ctp_x, ctp_y = poly.exterior.xy
-                    ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2,
-                            label='Theoretical Area Boundary' if i == 0 else "")
+        if pedestal_poly:
+            plotter.add_shapely_polygon(pedestal_poly, fill="#E9ECEF", stroke="#adb5bd", opacity=1.0)
 
-        # 3. 繪製實際破壞面積 (ANc)
-        A_Nc_poly = clipped_theoretical_poly  # For groups, clipped theoretical area is the actual area
-        if not A_Nc_poly.is_empty:
-            if A_Nc_poly.geom_type == 'Polygon':
-                anc_x, anc_y = A_Nc_poly.exterior.xy
-                ax.fill(anc_x, anc_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='#e63946', lw=2,
-                        label=f'Actual Area (A_Ncg)')
-            elif A_Nc_poly.geom_type == 'MultiPolygon':
-                for i, poly in enumerate(A_Nc_poly.geoms):
-                    anc_x, anc_y = poly.exterior.xy
-                    ax.fill(anc_x, anc_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='#e63946', lw=2,
-                            label=f'Actual Area (A_Ncg)' if i == 0 else "")
+        # 2. 繪製實際破壞面積 (ANc) - union_of_squares 與 pedestal 的交集
+        # 變數 A_Nc_poly (或 clipped_theoretical_poly) 應在計算部分已產生
+        if 'union_of_squares' in locals() and pedestal_poly:
+            actual_area = union_of_squares.intersection(pedestal_poly)
+            if not actual_area.is_empty:
+                plotter.add_shapely_polygon(actual_area, fill="#e63946", stroke="none", opacity=0.4)
+                plotter.add_shapely_polygon(actual_area, fill="none", stroke="#457b9d", stroke_width=2,
+                                            stroke_dasharray="5,5", opacity=1.0)
 
-        # 4. 繪製所有錨栓，並突顯受拉錨栓
-        all_bolts_np = np.array(bolt_coords)
-        is_tension = np.isin(np.arange(len(all_bolts_np)), tension_indices)
-        ax.plot(all_bolts_np[~is_tension, 0], all_bolts_np[~is_tension, 1], 'o', color='gray', markersize=8,
-                label='Other Anchors')
-        ax.plot(all_bolts_np[is_tension, 0], all_bolts_np[is_tension, 1], '*', color='#fca311', markersize=15,
-                markeredgecolor='black', label='Tension Anchors in Group')
+        # 3. 繪製錨栓
+        # tension_indices 是受拉錨栓的索引
+        for i, (bx, by) in enumerate(bolt_coords):
+            if i in tension_indices:
+                # 受拉錨栓 (金黃色)
+                plotter.add_circle(bx, by, r=4, fill="#fca311", stroke="black", stroke_width=1.5, opacity=1.0)
+            else:
+                # 其他錨栓
+                plotter.add_circle(bx, by, r=3, fill="gray", stroke="none", opacity=0.6)
 
-        # 5. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Concrete Breakout Area ($A_{{Ncg}}$) for Anchor Group', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+        plot_base64 = plotter.render_to_base64()
+    # if generate_plot:
+    #     fig, ax = plt.subplots(figsize=(8, 8))
+    #     unit_label = 'cm' if unit_system == 'mks' else 'in'
+    #
+    #     # 1. 繪製墩柱
+    #     if pedestal_polygon:
+    #         ped_x, ped_y = pedestal_polygon.exterior.xy
+    #         ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+    #
+    #     # 2. 繪製理論破壞面積 (union_of_squares) 的邊界
+    #     clipped_theoretical_poly = union_of_squares.intersection(pedestal_polygon)
+    #     if not clipped_theoretical_poly.is_empty:
+    #         if clipped_theoretical_poly.geom_type == 'Polygon':
+    #             ctp_x, ctp_y = clipped_theoretical_poly.exterior.xy
+    #             ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2, label='Theoretical Area Boundary')
+    #         elif clipped_theoretical_poly.geom_type == 'MultiPolygon':
+    #             for i, poly in enumerate(clipped_theoretical_poly.geoms):
+    #                 ctp_x, ctp_y = poly.exterior.xy
+    #                 ax.plot(ctp_x, ctp_y, color='#457b9d', linestyle='--', lw=2,
+    #                         label='Theoretical Area Boundary' if i == 0 else "")
+    #
+    #     # 3. 繪製實際破壞面積 (ANc)
+    #     A_Nc_poly = clipped_theoretical_poly  # For groups, clipped theoretical area is the actual area
+    #     if not A_Nc_poly.is_empty:
+    #         if A_Nc_poly.geom_type == 'Polygon':
+    #             anc_x, anc_y = A_Nc_poly.exterior.xy
+    #             ax.fill(anc_x, anc_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='#e63946', lw=2,
+    #                     label=f'Actual Area (A_Ncg)')
+    #         elif A_Nc_poly.geom_type == 'MultiPolygon':
+    #             for i, poly in enumerate(A_Nc_poly.geoms):
+    #                 anc_x, anc_y = poly.exterior.xy
+    #                 ax.fill(anc_x, anc_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='#e63946', lw=2,
+    #                         label=f'Actual Area (A_Ncg)' if i == 0 else "")
+    #
+    #     # 4. 繪製所有錨栓，並突顯受拉錨栓
+    #     all_bolts_np = np.array(bolt_coords)
+    #     is_tension = np.isin(np.arange(len(all_bolts_np)), tension_indices)
+    #     ax.plot(all_bolts_np[~is_tension, 0], all_bolts_np[~is_tension, 1], 'o', color='gray', markersize=8,
+    #             label='Other Anchors')
+    #     ax.plot(all_bolts_np[is_tension, 0], all_bolts_np[is_tension, 1], '*', color='#fca311', markersize=15,
+    #             markeredgecolor='black', label='Tension Anchors in Group')
+    #
+    #     # 5. 圖表設定
+    #     ax.set_aspect('equal', 'box')
+    #     ax.grid(True, linestyle=':', linewidth=0.5)
+    #     ax.set_title(f'Concrete Breakout Area ($A_{{Ncg}}$) for Anchor Group', fontsize=14)
+    #     ax.set_xlabel(f'X-axis ({unit_label})')
+    #     ax.set_ylabel(f'Y-axis ({unit_label})')
+    #     ax.legend()
+    #     plt.tight_layout()
+    #
+    #     buf = io.BytesIO()
+    #     fig.savefig(buf, format='png', dpi=120)
+    #     buf.seek(0)
+    #     plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    #     plt.close(fig)
 
     return {
         "phi_Ncbg": phi_Ncbg,
@@ -725,101 +805,195 @@ def calculate_side_face_blowout_for_single_anchor(anchor_coord, pedestal_params,
     # [核心新增] 繪圖邏輯
     plot_base64 = None
     if generate_plot:
-        fig, ax = plt.subplots(figsize=(8, 8))
+        plotter = SvgPlotter(width=600, height=600)
+        unit_system = anchor_params.get('unit_system', 'imperial')
         unit_label = 'cm' if unit_system == 'mks' else 'in'
 
-        # 1. 繪製墩柱輪廓
+        # --- 1. 繪製墩柱輪廓 ---
         pedestal_shape = pedestal_params.get('shape')
-        pedestal_poly = None
         if pedestal_shape == 'rectangle':
-            pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
-            pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
-                                     (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+            ped_B = pedestal_params.get('B', 0)
+            ped_N = pedestal_params.get('N', 0)
+            # 繪製灰色填充、深灰邊框的矩形
+            plotter.add_rect(0, 0, ped_B, ped_N, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5)
         elif pedestal_shape == 'circle':
-            pedestal_D = pedestal_params.get('D', 0)
-            pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+            ped_D = pedestal_params.get('D', 0)
+            # 繪製灰色填充、深灰邊框的圓形
+            plotter.add_circle(0, 0, ped_D / 2.0, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5)
 
-        if pedestal_poly:
-            ped_x, ped_y = pedestal_poly.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
-
-        # 2. 繪製所有錨栓
+        # --- 2. 繪製所有錨栓 (背景灰點) ---
         if all_bolt_coords is not None and len(all_bolt_coords) > 0:
-            all_bolts_np = np.array(all_bolt_coords)
-            ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='Other Anchors')
+            for bx, by in all_bolt_coords:
+                plotter.add_circle(bx, by, r=3, fill="gray", stroke="none", opacity=0.6)
 
-        # 3. 突顯被檢核的錨栓
-        ax.plot(anchor_coord[0], anchor_coord[1], '*', color='#fca311', markersize=15, markeredgecolor='black',
-                label='Critical Anchor')
+        # --- 3. 突顯被檢核的錨栓 (金色星號效果) ---
+        # 使用橘黃色填充、黑色邊框強調
+        plotter.add_circle(x, y, r=5, fill="#fca311", stroke="black", stroke_width=1.5, opacity=1.0)
 
-        # 4. [核心重構] 根據 ca1_direction 繪製 ca1 和 ca2 標示線
-        ax_xlim = ax.get_xlim()
-        ax_ylim = ax.get_ylim()
-        offset_x = (ax_xlim[1] - ax_xlim[0]) * 0.02
-        offset_y = (ax_ylim[1] - ax_ylim[0]) * 0.02
+        # --- 4. 繪製 ca1 與 ca2 尺寸標示 ---
+        # 取得繪圖邊界以計算文字偏移量 (避免文字貼太近)
+        # 由於 SvgPlotter 自動計算邊界，這裡我們設定一個固定的偏移係數
+        offset_dist = max(pedestal_params.get('B', 10), pedestal_params.get('N', 10)) * 0.05
 
-        if ca1_direction:
-            # --- 繪製 ca1 ---
+        # (A) 繪製 ca1 (紅色)
+        if 'ca1_direction' in locals() and ca1_direction:
+            line_color = "red"
             if ca1_direction == 'right':
-                ax.plot([x, x + ca1], [y, y], 'r-', lw=2.5)
-                ax.text(x + ca1 / 2, y + offset_y, f'ca1={ca1:.2f}', color='red', ha='center', va='bottom')
+                # 從錨栓向右畫線
+                plotter.add_line(x, y, x + ca1, y, color=line_color, width=2)
+                plotter.add_text(x + ca1 / 2, y - offset_dist * 0.5, f"ca1={ca1:.2f}", color=line_color, bg="white")
             elif ca1_direction == 'left':
-                ax.plot([x, x - ca1], [y, y], 'r-', lw=2.5)
-                ax.text(x - ca1 / 2, y + offset_y, f'ca1={ca1:.2f}', color='red', ha='center', va='bottom')
+                # 從錨栓向左畫線
+                plotter.add_line(x, y, x - ca1, y, color=line_color, width=2)
+                plotter.add_text(x - ca1 / 2, y - offset_dist * 0.5, f"ca1={ca1:.2f}", color=line_color, bg="white")
             elif ca1_direction == 'top':
-                ax.plot([x, x], [y, y + ca1], 'r-', lw=2.5)
-                ax.text(x + offset_x, y + ca1 / 2, f'ca1={ca1:.2f}', color='red', va='center', ha='left', rotation=90)
+                # 從錨栓向上畫線
+                plotter.add_line(x, y, x, y + ca1, color=line_color, width=2)
+                # 文字旋轉 90 度
+                plotter.add_text(x + offset_dist * 0.5, y + ca1 / 2, f"ca1={ca1:.2f}", color=line_color, rotation=90,
+                                 bg="white")
             elif ca1_direction == 'bottom':
-                ax.plot([x, x], [y, y - ca1], 'r-', lw=2.5)
-                ax.text(x + offset_x, y - ca1 / 2, f'ca1={ca1:.2f}', color='red', va='center', ha='left', rotation=90)
+                # 從錨栓向下畫線
+                plotter.add_line(x, y, x, y - ca1, color=line_color, width=2)
+                plotter.add_text(x + offset_dist * 0.5, y - ca1 / 2, f"ca1={ca1:.2f}", color=line_color, rotation=90,
+                                 bg="white")
+            elif ca1_direction == 'radial':  # 圓形墩柱專用
+                dist = np.sqrt(x ** 2 + y ** 2)
+                if dist > 1e-6:
+                    ux, uy = x / dist, y / dist  # 單位向量
+                    end_x, end_y = x + ux * ca1, y + uy * ca1
+                    plotter.add_line(x, y, end_x, end_y, color=line_color, width=2)
+                    # 文字標在線段中間
+                    mid_x, mid_y = x + ux * ca1 * 0.5, y + uy * ca1 * 0.5
+                    plotter.add_text(mid_x, mid_y, f"ca1={ca1:.2f}", color=line_color, bg="white")
 
-            # --- 繪製 ca2 ---
+        # (B) 繪製 ca2 (藍色) - 僅當有定義 ca2_direction 時
+        if 'ca2_direction' in locals() and ca2_direction:
+            line_color = "blue"
             if ca2_direction == 'top':
-                ax.plot([x, x], [y, y + ca2], 'b-', lw=2.5)
-                ax.text(x - offset_x, y + ca2 / 2, f'ca2={ca2:.2f}', color='blue', va='center', ha='right', rotation=90)
+                plotter.add_line(x, y, x, y + ca2, color=line_color, width=2)
+                plotter.add_text(x - offset_dist * 0.5, y + ca2 / 2, f"ca2={ca2:.2f}", color=line_color, rotation=90,
+                                 bg="white")
             elif ca2_direction == 'bottom':
-                ax.plot([x, x], [y, y - ca2], 'b-', lw=2.5)
-                ax.text(x - offset_x, y - ca2 / 2, f'ca2={ca2:.2f}', color='blue', va='center', ha='right', rotation=90)
+                plotter.add_line(x, y, x, y - ca2, color=line_color, width=2)
+                plotter.add_text(x - offset_dist * 0.5, y - ca2 / 2, f"ca2={ca2:.2f}", color=line_color, rotation=90,
+                                 bg="white")
             elif ca2_direction == 'right':
-                ax.plot([x, x + ca2], [y, y], 'b-', lw=2.5)
-                ax.text(x + ca2 / 2, y - offset_y, f'ca2={ca2:.2f}', color='blue', ha='center', va='top')
+                plotter.add_line(x, y, x + ca2, y, color=line_color, width=2)
+                plotter.add_text(x + ca2 / 2, y + offset_dist * 0.5, f"ca2={ca2:.2f}", color=line_color, bg="white")
             elif ca2_direction == 'left':
-                ax.plot([x, x - ca2], [y, y], 'b-', lw=2.5)
-                ax.text(x - ca2 / 2, y - offset_y, f'ca2={ca2:.2f}', color='blue', ha='center', va='top')
+                plotter.add_line(x, y, x - ca2, y, color=line_color, width=2)
+                plotter.add_text(x - ca2 / 2, y + offset_dist * 0.5, f"ca2={ca2:.2f}", color=line_color, bg="white")
+            elif ca2_direction == 'tangential':  # 圓形墩柱切向
+                # 簡化繪製：畫一條垂直於半徑的線
+                if dist > 1e-6:
+                    # 切向單位向量 (-y, x)
+                    tx, ty = -y / dist, x / dist
+                    # 簡單判斷畫哪邊 (確保在圓內)
+                    # 這裡簡化畫法，直接畫一條示意線
+                    end_tx, end_ty = x + tx * ca2, y + ty * ca2
+                    plotter.add_line(x, y, end_tx, end_ty, color=line_color, width=2)
+                    plotter.add_text(x + tx * ca2 * 0.5, y + ty * ca2 * 0.5, f"ca2={ca2:.2f}", color=line_color,
+                                     bg="white")
 
-            # 圓形墩柱的簡化標示 (如果 ca2_direction 為 None)
-            if ca1_direction == 'radial':
-                # 繪製徑向的 ca1
-                if dist_from_center > 1e-6:  # 避免除以零
-                    unit_vec_radial = np.array([x, y]) / dist_from_center
-                    end_point_ca1 = np.array([x, y]) + unit_vec_radial * ca1
-                    ax.plot([x, end_point_ca1[0]], [y, end_point_ca1[1]], 'r-', lw=2.5)
-                    text_pos_ca1 = np.array([x, y]) + unit_vec_radial * ca1 * 0.5
-                    ax.text(text_pos_ca1[0], text_pos_ca1[1] + offset_y, f'ca1={ca1:.2f}', color='red', ha='center')
-
-                # 繪製切向的 ca2
-                if ca2 > 1e-6:
-                    unit_vec_tangential = np.array([-y, x]) / dist_from_center if dist_from_center > 1e-6 else np.array(
-                        [0, 1])
-                    end_point_ca2 = np.array([x, y]) + unit_vec_tangential * ca2
-                    ax.plot([x, end_point_ca2[0]], [y, end_point_ca2[1]], 'b-', lw=2.5)
-                    text_pos_ca2 = np.array([x, y]) + unit_vec_tangential * ca2 * 0.5
-                    ax.text(text_pos_ca2[0], text_pos_ca2[1], f'ca2={ca2:.2f}', color='blue', ha='center')
-
-        # 5. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Side-Face Blowout Geometry ($N_{{sb}}$)', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+        # --- 5. 生成 Base64 ---
+        plot_base64 = plotter.render_to_base64()
+    # if generate_plot:
+    #     fig, ax = plt.subplots(figsize=(8, 8))
+    #     unit_label = 'cm' if unit_system == 'mks' else 'in'
+    #
+    #     # 1. 繪製墩柱輪廓
+    #     pedestal_shape = pedestal_params.get('shape')
+    #     pedestal_poly = None
+    #     if pedestal_shape == 'rectangle':
+    #         pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
+    #         pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
+    #                                  (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+    #     elif pedestal_shape == 'circle':
+    #         pedestal_D = pedestal_params.get('D', 0)
+    #         pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+    #
+    #     if pedestal_poly:
+    #         ped_x, ped_y = pedestal_poly.exterior.xy
+    #         ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+    #
+    #     # 2. 繪製所有錨栓
+    #     if all_bolt_coords is not None and len(all_bolt_coords) > 0:
+    #         all_bolts_np = np.array(all_bolt_coords)
+    #         ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='Other Anchors')
+    #
+    #     # 3. 突顯被檢核的錨栓
+    #     ax.plot(anchor_coord[0], anchor_coord[1], '*', color='#fca311', markersize=15, markeredgecolor='black',
+    #             label='Critical Anchor')
+    #
+    #     # 4. [核心重構] 根據 ca1_direction 繪製 ca1 和 ca2 標示線
+    #     ax_xlim = ax.get_xlim()
+    #     ax_ylim = ax.get_ylim()
+    #     offset_x = (ax_xlim[1] - ax_xlim[0]) * 0.02
+    #     offset_y = (ax_ylim[1] - ax_ylim[0]) * 0.02
+    #
+    #     if ca1_direction:
+    #         # --- 繪製 ca1 ---
+    #         if ca1_direction == 'right':
+    #             ax.plot([x, x + ca1], [y, y], 'r-', lw=2.5)
+    #             ax.text(x + ca1 / 2, y + offset_y, f'ca1={ca1:.2f}', color='red', ha='center', va='bottom')
+    #         elif ca1_direction == 'left':
+    #             ax.plot([x, x - ca1], [y, y], 'r-', lw=2.5)
+    #             ax.text(x - ca1 / 2, y + offset_y, f'ca1={ca1:.2f}', color='red', ha='center', va='bottom')
+    #         elif ca1_direction == 'top':
+    #             ax.plot([x, x], [y, y + ca1], 'r-', lw=2.5)
+    #             ax.text(x + offset_x, y + ca1 / 2, f'ca1={ca1:.2f}', color='red', va='center', ha='left', rotation=90)
+    #         elif ca1_direction == 'bottom':
+    #             ax.plot([x, x], [y, y - ca1], 'r-', lw=2.5)
+    #             ax.text(x + offset_x, y - ca1 / 2, f'ca1={ca1:.2f}', color='red', va='center', ha='left', rotation=90)
+    #
+    #         # --- 繪製 ca2 ---
+    #         if ca2_direction == 'top':
+    #             ax.plot([x, x], [y, y + ca2], 'b-', lw=2.5)
+    #             ax.text(x - offset_x, y + ca2 / 2, f'ca2={ca2:.2f}', color='blue', va='center', ha='right', rotation=90)
+    #         elif ca2_direction == 'bottom':
+    #             ax.plot([x, x], [y, y - ca2], 'b-', lw=2.5)
+    #             ax.text(x - offset_x, y - ca2 / 2, f'ca2={ca2:.2f}', color='blue', va='center', ha='right', rotation=90)
+    #         elif ca2_direction == 'right':
+    #             ax.plot([x, x + ca2], [y, y], 'b-', lw=2.5)
+    #             ax.text(x + ca2 / 2, y - offset_y, f'ca2={ca2:.2f}', color='blue', ha='center', va='top')
+    #         elif ca2_direction == 'left':
+    #             ax.plot([x, x - ca2], [y, y], 'b-', lw=2.5)
+    #             ax.text(x - ca2 / 2, y - offset_y, f'ca2={ca2:.2f}', color='blue', ha='center', va='top')
+    #
+    #         # 圓形墩柱的簡化標示 (如果 ca2_direction 為 None)
+    #         if ca1_direction == 'radial':
+    #             # 繪製徑向的 ca1
+    #             if dist_from_center > 1e-6:  # 避免除以零
+    #                 unit_vec_radial = np.array([x, y]) / dist_from_center
+    #                 end_point_ca1 = np.array([x, y]) + unit_vec_radial * ca1
+    #                 ax.plot([x, end_point_ca1[0]], [y, end_point_ca1[1]], 'r-', lw=2.5)
+    #                 text_pos_ca1 = np.array([x, y]) + unit_vec_radial * ca1 * 0.5
+    #                 ax.text(text_pos_ca1[0], text_pos_ca1[1] + offset_y, f'ca1={ca1:.2f}', color='red', ha='center')
+    #
+    #             # 繪製切向的 ca2
+    #             if ca2 > 1e-6:
+    #                 unit_vec_tangential = np.array([-y, x]) / dist_from_center if dist_from_center > 1e-6 else np.array(
+    #                     [0, 1])
+    #                 end_point_ca2 = np.array([x, y]) + unit_vec_tangential * ca2
+    #                 ax.plot([x, end_point_ca2[0]], [y, end_point_ca2[1]], 'b-', lw=2.5)
+    #                 text_pos_ca2 = np.array([x, y]) + unit_vec_tangential * ca2 * 0.5
+    #                 ax.text(text_pos_ca2[0], text_pos_ca2[1], f'ca2={ca2:.2f}', color='blue', ha='center')
+    #
+    #     # 5. 圖表設定
+    #     ax.set_aspect('equal', 'box')
+    #     ax.grid(True, linestyle=':', linewidth=0.5)
+    #     ax.set_title(f'Side-Face Blowout Geometry ($N_{{sb}}$)', fontsize=14)
+    #     ax.set_xlabel(f'X-axis ({unit_label})')
+    #     ax.set_ylabel(f'Y-axis ({unit_label})')
+    #     ax.legend()
+    #     plt.tight_layout()
+    #
+    #     buf = io.BytesIO()
+    #     fig.savefig(buf, format='png', dpi=120)
+    #     buf.seek(0)
+    #     plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    #     plt.close(fig)
 
     return {
         "phi_Nsb": phi_sfb * Nsb,
@@ -982,98 +1156,203 @@ def calculate_side_face_blowout_for_group(analysis_results, pedestal_params, anc
     # [核心新增] 繪圖邏輯
     plot_base64 = None
     if generate_plot:
-        fig, ax = plt.subplots(figsize=(8, 8))
-        unit_label = 'cm' if anchor_params.get('unit_system') == 'mks' else 'in'
+        plotter = SvgPlotter(width=600, height=600)
+        unit_system = anchor_params.get('unit_system', 'imperial')
+        unit_label = 'cm' if unit_system == 'mks' else 'in'
 
-        # 1. 繪製墩柱
+        # --- 1. 繪製墩柱輪廓 ---
         pedestal_shape = pedestal_params.get('shape')
-        pedestal_poly = None
         if pedestal_shape == 'rectangle':
-            pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
-            pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
-                                     (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+            ped_B = pedestal_params.get('B', 0)
+            ped_N = pedestal_params.get('N', 0)
+            plotter.add_rect(0, 0, ped_B, ped_N, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5)
         elif pedestal_shape == 'circle':
-            pedestal_D = pedestal_params.get('D', 0)
-            pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+            ped_D = pedestal_params.get('D', 0)
+            plotter.add_circle(0, 0, ped_D / 2.0, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5)
 
-        if pedestal_poly:
-            ped_x, ped_y = pedestal_poly.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+        # --- 2. 繪製錨栓並區分群組 ---
+        # edge_group_anchors 是計算邏輯中找出的位於最不利邊緣的錨栓列表
+        group_indices = [a['index'] for a in edge_group_anchors]
 
-        # 2. 繪製所有錨栓
-        all_bolts_np = np.array(analysis_results['bolt_coords'])
-        ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='All Anchors')
+        # 遍歷所有錨栓座標
+        for i, (bx, by) in enumerate(bolt_coords):
+            if i in group_indices:
+                # 參與群組檢核的錨栓：金色填充
+                plotter.add_circle(bx, by, r=5, fill="#fca311", stroke="black", stroke_width=1.5, opacity=1.0)
+            else:
+                # 其他錨栓：灰色填充
+                plotter.add_circle(bx, by, r=3, fill="gray", stroke="none", opacity=0.6)
 
-        # 3. 突顯參與群組檢核的錨栓
-        group_coords_np = np.array([res['coord'] for res in edge_group_anchors])
-        ax.plot(group_coords_np[:, 0], group_coords_np[:, 1], '*', color='#fca311', markersize=15,
-                markeredgecolor='black', label='Anchors in Group')
-
-        # 4. [核心重構] 根據 group_ca1_direction 繪製 s 和 ca1 標示線
-        if group_ca1_direction and len(group_coords_np) > 0:
-            ax_xlim = ax.get_xlim()
-            ax_ylim = ax.get_ylim()
-            offset_x = (ax_xlim[1] - ax_xlim[0]) * 0.03
-            offset_y = (ax_ylim[1] - ax_ylim[0]) * 0.03
-
-            # 找出群組的幾何中心和邊界
+        # --- 3. 繪製群組幾何尺寸 (s 和 ca1) ---
+        if group_ca1_direction and len(edge_group_anchors) > 0:
+            # 提取群組錨栓座標以計算邊界
+            group_coords_np = np.array([a['coord'] for a in edge_group_anchors])
             min_x, max_x = np.min(group_coords_np[:, 0]), np.max(group_coords_np[:, 0])
             min_y, max_y = np.min(group_coords_np[:, 1]), np.max(group_coords_np[:, 1])
-            center_x, center_y = np.mean(group_coords_np, axis=0)
 
+            # 計算群組的幾何中心
+            center_x = (min_x + max_x) / 2
+            center_y = (min_y + max_y) / 2
+
+            # 設定偏移量 (用於錯開線條與文字)
+            offset = max(pedestal_params.get('B', 10), pedestal_params.get('N', 10)) * 0.04
+
+            # 根據 ca1 的方向繪製
             if group_ca1_direction == 'left':
-                # ca1 往左, s 垂直
-                ax.plot([min_x, min_x - group_ca1], [center_y, center_y], 'b-', lw=2.5)
-                ax.text(min_x - group_ca1/2, center_y + offset_y, f'ca1 = {group_ca1:.2f}', color='blue', ha='center', va='bottom')
-                ax.plot([min_x + offset_x, min_x + offset_x], [min_y, max_y], 'r-', lw=2.5)
-                ax.text(min_x + offset_x*1.5, center_y, f's = {s_calculated:.2f}', color='red', ha='left', va='center', rotation=90)
+                # ca1 向左 (紅色)
+                plotter.add_line(min_x, center_y, min_x - group_ca1, center_y, color="red", width=2)
+                plotter.add_text(min_x - group_ca1 / 2, center_y - offset, f"ca1={group_ca1:.2f}", color="red",
+                                 bg="white")
+
+                # s 為垂直方向 (藍色)，畫在群組右側
+                plotter.add_line(min_x + offset, min_y, min_x + offset, max_y, color="blue", width=2)
+                plotter.add_text(min_x + offset * 1.5, center_y, f"s={s_calculated:.2f}", color="blue", rotation=90,
+                                 bg="white")
+
             elif group_ca1_direction == 'right':
-                # ca1 往右, s 垂直
-                ax.plot([max_x, max_x + group_ca1], [center_y, center_y], 'b-', lw=2.5)
-                ax.text(max_x + group_ca1/2, center_y + offset_y, f'ca1 = {group_ca1:.2f}', color='blue', ha='center', va='bottom')
-                ax.plot([max_x - offset_x, max_x - offset_x], [min_y, max_y], 'r-', lw=2.5)
-                ax.text(max_x - offset_x*1.5, center_y, f's = {s_calculated:.2f}', color='red', ha='right', va='center', rotation=90)
+                # ca1 向右 (紅色)
+                plotter.add_line(max_x, center_y, max_x + group_ca1, center_y, color="red", width=2)
+                plotter.add_text(max_x + group_ca1 / 2, center_y - offset, f"ca1={group_ca1:.2f}", color="red",
+                                 bg="white")
+
+                # s 為垂直方向 (藍色)，畫在群組左側
+                plotter.add_line(max_x - offset, min_y, max_x - offset, max_y, color="blue", width=2)
+                plotter.add_text(max_x - offset * 1.5, center_y, f"s={s_calculated:.2f}", color="blue", rotation=90,
+                                 bg="white")
+
             elif group_ca1_direction == 'top':
-                # ca1 往上, s 水平
-                ax.plot([center_x, center_x], [max_y, max_y + group_ca1], 'b-', lw=2.5)
-                ax.text(center_x - offset_x, max_y + group_ca1/2, f'ca1 = {group_ca1:.2f}', color='blue', ha='right', va='center', rotation=90)
-                ax.plot([min_x, max_x], [max_y - offset_y, max_y - offset_y], 'r-', lw=2.5)
-                ax.text(center_x, max_y - offset_y*1.5, f's = {s_calculated:.2f}', color='red', ha='center', va='top')
+                # ca1 向上 (紅色)
+                plotter.add_line(center_x, max_y, center_x, max_y + group_ca1, color="red", width=2)
+                plotter.add_text(center_x - offset, max_y + group_ca1 / 2, f"ca1={group_ca1:.2f}", color="red",
+                                 rotation=90, bg="white")
+
+                # s 為水平方向 (藍色)，畫在群組下方
+                plotter.add_line(min_x, max_y - offset, max_x, max_y - offset, color="blue", width=2)
+                plotter.add_text(center_x, max_y - offset * 1.5, f"s={s_calculated:.2f}", color="blue", bg="white")
+
             elif group_ca1_direction == 'bottom':
-                # ca1 往下, s 水平
-                ax.plot([center_x, center_x], [min_y, min_y - group_ca1], 'b-', lw=2.5)
-                ax.text(center_x - offset_x, min_y - group_ca1/2, f'ca1 = {group_ca1:.2f}', color='blue', ha='right', va='center', rotation=90)
-                ax.plot([min_x, max_x], [min_y + offset_y, min_y + offset_y], 'r-', lw=2.5)
-                ax.text(center_x, min_y + offset_y*1.5, f's = {s_calculated:.2f}', color='red', ha='center', va='bottom')
+                # ca1 向下 (紅色)
+                plotter.add_line(center_x, min_y, center_x, min_y - group_ca1, color="red", width=2)
+                plotter.add_text(center_x - offset, min_y - group_ca1 / 2, f"ca1={group_ca1:.2f}", color="red",
+                                 rotation=90, bg="white")
+
+                # s 為水平方向 (藍色)，畫在群組上方
+                plotter.add_line(min_x, min_y + offset, max_x, min_y + offset, color="blue", width=2)
+                plotter.add_text(center_x, min_y + offset * 1.5, f"s={s_calculated:.2f}", color="blue", bg="white")
 
             # [核心新增] 繪製 ca2 的邏輯 (顏色與 ca1/s 區分，例如用綠色)
             if group_ca2_direction == 'top':
-                ax.plot([center_x, center_x], [max_y, max_y + group_ca2], 'g-', lw=2.5)
-                ax.text(center_x + offset_x, max_y + group_ca2/2, f'ca2 = {group_ca2:.2f}', color='green', ha='left', va='center', rotation=90)
+                plotter.add_line(center_x, max_y, center_x, max_y + group_ca2, color="green", width=2)
+                plotter.add_text(center_x + offset, max_y + group_ca2 / 2, f"ca2={group_ca2:.2f}", color="green",
+                                 rotation=90, bg="white")
             elif group_ca2_direction == 'bottom':
-                ax.plot([center_x, center_x], [min_y, min_y - group_ca2], 'g-', lw=2.5)
-                ax.text(center_x + offset_x, min_y - group_ca2/2, f'ca2 = {group_ca2:.2f}', color='green', ha='left', va='center', rotation=90)
+                plotter.add_line(center_x, min_y, center_x, min_y - group_ca2, color="green", width=2)
+                plotter.add_text(center_x + offset, min_y - group_ca2 / 2, f"ca2={group_ca2:.2f}", color="green",
+                                 rotation=90, bg="white")
             elif group_ca2_direction == 'right':
-                ax.plot([max_x, max_x + group_ca2], [center_y, center_y], 'g-', lw=2.5)
-                ax.text(max_x + group_ca2/2, center_y - offset_y, f'ca2 = {group_ca2:.2f}', color='green', ha='center', va='top')
+                plotter.add_line(max_x, center_y, max_x + group_ca2, center_y, color="green", width=2)
+                plotter.add_text(max_x + group_ca2 / 2, center_y - offset, f"ca2={group_ca2:.2f}", color="green",
+                                 bg="white")
             elif group_ca2_direction == 'left':
-                ax.plot([min_x, min_x - group_ca2], [center_y, center_y], 'g-', lw=2.5)
-                ax.text(min_x - group_ca2/2, center_y - offset_y, f'ca2 = {group_ca2:.2f}', color='green', ha='center', va='top')
+                plotter.add_line(min_x, center_y, min_x - group_ca2, center_y, color="green", width=2)
+                plotter.add_text(min_x - group_ca2 / 2, center_y - offset, f"ca2={group_ca2:.2f}", color="green",
+                                 bg="white")
 
-        # 5. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Side-Face Blowout Geometry ($N_{{sbg}}$)', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+        # --- 4. 生成 Base64 ---
+        plot_base64 = plotter.render_to_base64()
+    # if generate_plot:
+    #     fig, ax = plt.subplots(figsize=(8, 8))
+    #     unit_label = 'cm' if anchor_params.get('unit_system') == 'mks' else 'in'
+    #
+    #     # 1. 繪製墩柱
+    #     pedestal_shape = pedestal_params.get('shape')
+    #     pedestal_poly = None
+    #     if pedestal_shape == 'rectangle':
+    #         pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
+    #         pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
+    #                                  (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+    #     elif pedestal_shape == 'circle':
+    #         pedestal_D = pedestal_params.get('D', 0)
+    #         pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+    #
+    #     if pedestal_poly:
+    #         ped_x, ped_y = pedestal_poly.exterior.xy
+    #         ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+    #
+    #     # 2. 繪製所有錨栓
+    #     all_bolts_np = np.array(analysis_results['bolt_coords'])
+    #     ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, label='All Anchors')
+    #
+    #     # 3. 突顯參與群組檢核的錨栓
+    #     group_coords_np = np.array([res['coord'] for res in edge_group_anchors])
+    #     ax.plot(group_coords_np[:, 0], group_coords_np[:, 1], '*', color='#fca311', markersize=15,
+    #             markeredgecolor='black', label='Anchors in Group')
+    #
+    #     # 4. [核心重構] 根據 group_ca1_direction 繪製 s 和 ca1 標示線
+    #     if group_ca1_direction and len(group_coords_np) > 0:
+    #         ax_xlim = ax.get_xlim()
+    #         ax_ylim = ax.get_ylim()
+    #         offset_x = (ax_xlim[1] - ax_xlim[0]) * 0.03
+    #         offset_y = (ax_ylim[1] - ax_ylim[0]) * 0.03
+    #
+    #         # 找出群組的幾何中心和邊界
+    #         min_x, max_x = np.min(group_coords_np[:, 0]), np.max(group_coords_np[:, 0])
+    #         min_y, max_y = np.min(group_coords_np[:, 1]), np.max(group_coords_np[:, 1])
+    #         center_x, center_y = np.mean(group_coords_np, axis=0)
+    #
+    #         if group_ca1_direction == 'left':
+    #             # ca1 往左, s 垂直
+    #             ax.plot([min_x, min_x - group_ca1], [center_y, center_y], 'b-', lw=2.5)
+    #             ax.text(min_x - group_ca1/2, center_y + offset_y, f'ca1 = {group_ca1:.2f}', color='blue', ha='center', va='bottom')
+    #             ax.plot([min_x + offset_x, min_x + offset_x], [min_y, max_y], 'r-', lw=2.5)
+    #             ax.text(min_x + offset_x*1.5, center_y, f's = {s_calculated:.2f}', color='red', ha='left', va='center', rotation=90)
+    #         elif group_ca1_direction == 'right':
+    #             # ca1 往右, s 垂直
+    #             ax.plot([max_x, max_x + group_ca1], [center_y, center_y], 'b-', lw=2.5)
+    #             ax.text(max_x + group_ca1/2, center_y + offset_y, f'ca1 = {group_ca1:.2f}', color='blue', ha='center', va='bottom')
+    #             ax.plot([max_x - offset_x, max_x - offset_x], [min_y, max_y], 'r-', lw=2.5)
+    #             ax.text(max_x - offset_x*1.5, center_y, f's = {s_calculated:.2f}', color='red', ha='right', va='center', rotation=90)
+    #         elif group_ca1_direction == 'top':
+    #             # ca1 往上, s 水平
+    #             ax.plot([center_x, center_x], [max_y, max_y + group_ca1], 'b-', lw=2.5)
+    #             ax.text(center_x - offset_x, max_y + group_ca1/2, f'ca1 = {group_ca1:.2f}', color='blue', ha='right', va='center', rotation=90)
+    #             ax.plot([min_x, max_x], [max_y - offset_y, max_y - offset_y], 'r-', lw=2.5)
+    #             ax.text(center_x, max_y - offset_y*1.5, f's = {s_calculated:.2f}', color='red', ha='center', va='top')
+    #         elif group_ca1_direction == 'bottom':
+    #             # ca1 往下, s 水平
+    #             ax.plot([center_x, center_x], [min_y, min_y - group_ca1], 'b-', lw=2.5)
+    #             ax.text(center_x - offset_x, min_y - group_ca1/2, f'ca1 = {group_ca1:.2f}', color='blue', ha='right', va='center', rotation=90)
+    #             ax.plot([min_x, max_x], [min_y + offset_y, min_y + offset_y], 'r-', lw=2.5)
+    #             ax.text(center_x, min_y + offset_y*1.5, f's = {s_calculated:.2f}', color='red', ha='center', va='bottom')
+    #
+    #         # [核心新增] 繪製 ca2 的邏輯 (顏色與 ca1/s 區分，例如用綠色)
+    #         if group_ca2_direction == 'top':
+    #             ax.plot([center_x, center_x], [max_y, max_y + group_ca2], 'g-', lw=2.5)
+    #             ax.text(center_x + offset_x, max_y + group_ca2/2, f'ca2 = {group_ca2:.2f}', color='green', ha='left', va='center', rotation=90)
+    #         elif group_ca2_direction == 'bottom':
+    #             ax.plot([center_x, center_x], [min_y, min_y - group_ca2], 'g-', lw=2.5)
+    #             ax.text(center_x + offset_x, min_y - group_ca2/2, f'ca2 = {group_ca2:.2f}', color='green', ha='left', va='center', rotation=90)
+    #         elif group_ca2_direction == 'right':
+    #             ax.plot([max_x, max_x + group_ca2], [center_y, center_y], 'g-', lw=2.5)
+    #             ax.text(max_x + group_ca2/2, center_y - offset_y, f'ca2 = {group_ca2:.2f}', color='green', ha='center', va='top')
+    #         elif group_ca2_direction == 'left':
+    #             ax.plot([min_x, min_x - group_ca2], [center_y, center_y], 'g-', lw=2.5)
+    #             ax.text(min_x - group_ca2/2, center_y - offset_y, f'ca2 = {group_ca2:.2f}', color='green', ha='center', va='top')
+    #
+    #     # 5. 圖表設定
+    #     ax.set_aspect('equal', 'box')
+    #     ax.grid(True, linestyle=':', linewidth=0.5)
+    #     ax.set_title(f'Side-Face Blowout Geometry ($N_{{sbg}}$)', fontsize=14)
+    #     ax.set_xlabel(f'X-axis ({unit_label})')
+    #     ax.set_ylabel(f'Y-axis ({unit_label})')
+    #     ax.legend()
+    #     plt.tight_layout()
+    #
+    #     buf = io.BytesIO()
+    #     fig.savefig(buf, format='png', dpi=120)
+    #     buf.seek(0)
+    #     plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    #     plt.close(fig)
 
     # [核心修正] 現在 dc_ratio 的計算絕對是 kips / kips
     dc_ratio = safe_dc_ratio(total_group_force_kips, phi_Nsbg_kips)

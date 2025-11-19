@@ -22,18 +22,18 @@
 
                         <!-- [核心重構] 插入新的圖表組合 -->
                         {% if check.shear_distribution_plot and check.shear_table_data %}
-                            <div class="report-flex-container">
+                            <div class="report-flex-container shear-component-layout">
                                 <!-- 左欄: 剪力分佈圖 -->
-                                <div class="figure-container" style="flex: 1.2; min-width: 300px;">
+                                <div class="figure-container">
                                     <figure class="report-figure" style="margin: 0;">
-                                        <img src="data:image/png;base64,{{ check.shear_distribution_plot|safe }}"
+                                        <img src="data:image/svg+xml;base64,{{ check.shear_distribution_plot|safe }}"
                                              alt="剪力分布圖">
                                         <figcaption>圖 6.7 剪力分佈圖 (Combo #{{ check_data.combo_id }})
                                         </figcaption>
                                     </figure>
                                 </div>
                                 <!-- 右欄: 剪力分量表 -->
-                                <div class="table-container" style="flex: 1.8; min-width: 280px;">
+                                <div class="table-container">
                                     <p class="param-group-title"
                                        style="margin-top:0; text-align: center; font-size: 12px; flex-shrink: 0;">
                                         各錨栓之剪力分量表 ({% if unit_system == 'mks' %}tf{% else %}kips{% endif %}
@@ -222,7 +222,7 @@
                                     <!-- 左圖: 剪力分佈圖 -->
                                     <div class="figure-container">
                                         <figure class="report-figure" style="margin: 0;">
-                                            <img src="data:image/png;base64,{{ check.shear_distribution_plot|safe }}"
+                                            <img src="data:image/svg+xml;base64,{{ check.shear_distribution_plot|safe }}"
                                                  alt="剪力分布圖"
                                                  style="max-height: 85mm; width: auto;">
                                             <figcaption>圖 6.8.1-1 控制工況之剪力分佈圖</figcaption>
@@ -231,7 +231,7 @@
                                     <!-- 右圖: AVc 示意圖 -->
                                     <div class="figure-container">
                                         <figure class="report-figure" style="margin: 0;">
-                                            <img src="data:image/png;base64,{{ check.avc_plot_base64|safe }}"
+                                            <img src="data:image/svg+xml;base64,{{ check.avc_plot_base64|safe }}"
                                                  alt="AVc 示意圖"
                                                  style="max-height: 85mm; width: auto;">
                                             <figcaption>圖 6.8.1-2 混凝土剪破影響面積 A<sub>Vc</sub> 示意圖
@@ -343,13 +343,15 @@
                                 &= \left( 1.86 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_a|floatformat:"-2" }}\text{ kgf}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 3.8\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\times {{ check.lambda_a|floatformat:"-2" }} \times
                                 \left({{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_b|floatformat:"-2" }} \text{ kgf}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -473,13 +475,15 @@
                                 &= \left( 7 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_a|floatformat:"-2" }}\text{ lb}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 9\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }}
+                                \times
                                 \left({{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_b|floatformat:"-2" }} \text{ lb}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -620,7 +624,7 @@
                                 <div class="report-flex-container" style="margin-bottom: 10px;">
                                     <div class="figure-container">
                                         <figure class="report-figure" style="margin: 0;">
-                                            <img src="data:image/png;base64,{{ check.shear_distribution_plot|safe }}"
+                                            <img src="data:image/svg+xml;base64,{{ check.shear_distribution_plot|safe }}"
                                                  alt="剪力分布圖" style="max-height: 85mm; width: auto;">
 
                                             <figcaption>圖 6.8.2-1 控制工況之剪力分佈圖</figcaption>
@@ -628,7 +632,7 @@
                                     </div>
                                     <div class="figure-container">
                                         <figure class="report-figure" style="margin: 0;">
-                                            <img src="data:image/png;base64,{{ check.avc_plot_base64|safe }}"
+                                            <img src="data:image/svg+xml;base64,{{ check.avc_plot_base64|safe }}"
                                                  alt="AVc 示意圖" style="max-height: 85mm; width: auto;">
                                             <figcaption>圖 6.8.2-2 混凝土剪破影響面積 A<sub>Vc</sub> 示意圖
                                             </figcaption>
@@ -739,13 +743,15 @@
                                 &= \left( 1.86 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_a|floatformat:"-2" }}\text{ kgf}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 3.8\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\times {{ check.lambda_a|floatformat:"-2" }} \times
                                 \left({{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_b|floatformat:"-2" }} \text{ kgf}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -868,13 +874,15 @@
                                 &= \left( 7 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_a|floatformat:"-2" }}\text{ lb}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 9\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }}
+                                \times
                                 \left({{ check.ca1|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb_b|floatformat:"-2" }} \text{ lb}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -1007,19 +1015,19 @@
                     {% with check=check_data.details %}
                         <p>{{ check.full_description|safe }}</p>
 
-                <!-- =============================== -->
+                        <!-- =============================== -->
                         {% if check.shear_distribution_plot and check.avc_plot_base64 and check.shear_table_data %}
                             <div class="report-flex-container" style="margin-bottom: 10px;">
                                 <div class="figure-container">
                                     <figure class="report-figure" style="margin: 0;">
-                                        <img src="data:image/png;base64,{{ check.shear_distribution_plot|safe }}"
+                                        <img src="data:image/svg+xml;base64,{{ check.shear_distribution_plot|safe }}"
                                              alt="剪力分布圖" style="max-height: 85mm; width: auto;">
                                         <figcaption>圖 6.8.3-1 控制工況之剪力分佈圖</figcaption>
                                     </figure>
                                 </div>
                                 <div class="figure-container">
                                     <figure class="report-figure" style="margin: 0;">
-                                        <img src="data:image/png;base64,{{ check.avc_plot_base64|safe }}"
+                                        <img src="data:image/svg+xml;base64,{{ check.avc_plot_base64|safe }}"
                                              alt="AVcg 示意圖" style="max-height: 85mm; width: auto;">
                                         <figcaption>圖 6.8.3-2 混凝土群組剪破影響面積 A<sub>Vcg</sub> 示意圖
                                         </figcaption>
@@ -1123,13 +1131,15 @@
                                 &= \left( 1.86 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb1|floatformat:"-2" }}\text{ kgf}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 3.8\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\times {{ check.lambda_a|floatformat:"-2" }} \times
                                 \left({{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb2|floatformat:"-2" }} \text{ kgf}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -1269,13 +1279,15 @@
                                 &= \left( 7 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb1|floatformat:"-2" }}\text{ lb}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 9\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }}
+                                \times
                                 \left({{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb2|floatformat:"-2" }} \text{ lb}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -1432,14 +1444,14 @@
                             <div class="report-flex-container" style="margin-bottom: 10px;">
                                 <div class="figure-container">
                                     <figure class="report-figure" style="margin: 0;">
-                                        <img src="data:image/png;base64,{{ check.shear_distribution_plot|safe }}"
+                                        <img src="data:image/svg+xml;base64,{{ check.shear_distribution_plot|safe }}"
                                              alt="剪力分布圖" style="max-height: 85mm; width: auto;">
                                         <figcaption>圖 6.8.4-1 控制工況之剪力分佈圖</figcaption>
                                     </figure>
                                 </div>
                                 <div class="figure-container">
                                     <figure class="report-figure" style="margin: 0;">
-                                        <img src="data:image/png;base64,{{ check.avc_plot_base64|safe }}"
+                                        <img src="data:image/svg+xml;base64,{{ check.avc_plot_base64|safe }}"
                                              alt="AVcg 示意圖" style="max-height: 85mm; width: auto;">
                                         <figcaption>圖 6.8.4-2 混凝土群組剪破影響面積 A<sub>Vcg</sub> 示意圖
                                         </figcaption>
@@ -1545,13 +1557,15 @@
                                 &= \left( 1.86 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb1|floatformat:"-2" }}\text{ kgf}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 3.8\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 3.8\sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\times {{ check.lambda_a|floatformat:"-2" }} \times
                                 \left({{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb2|floatformat:"-2" }} \text{ kgf}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -1691,13 +1705,15 @@
                                 &= \left( 7 \left(\dfrac{ {{ check.le|floatformat:"-2" }}
                                 }{ {{ check.da|floatformat:"-3" }}
                                 }\right)^{0.2}\sqrt{ {{ check.da|floatformat:"-3" }}
-                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times \sqrt{ {{ check.fc|floatformat:"-2" }}
+                                }\right)\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                \sqrt{ {{ check.fc|floatformat:"-2" }}
                                 }\left( {{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb1|floatformat:"-2" }}\text{ lb}
                                 \end{align*}$
                             </p>
                             <p>$V_{b2} = 9\sqrt{f'_{c}}\lambda_{a}\left(c_{a1}\right)^{1.5}
-                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }} \times
+                                = 9\sqrt{ {{ check.fc|floatformat:"-2" }} }\times {{ check.lambda_a|floatformat:"-2" }}
+                                \times
                                 \left({{ check.ca1_used|floatformat:"-2" }}
                                 \right)^{1.5}={{ check.Vb2|floatformat:"-2" }} \text{ lb}$</p>
                             <p>基本剪破強度 $V_b = min\left( V_{b1}, V_{b2}\right)
@@ -2042,9 +2058,9 @@
                     {% if check_data and check_data.details.result != 'N/A' %}
                         {% with check=check_data.details %}
                             {% if results.has_any_tension %}
-<h4 style="font-weight: bold; margin-bottom: 10px;">6.9.2 錨栓群混凝土撬破強度檢核</h4>
+                                <h4 style="font-weight: bold; margin-bottom: 10px;">6.9.2 錨栓群混凝土撬破強度檢核</h4>
                             {% else %}
-<h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群混凝土撬破強度檢核</h4>
+                                <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群混凝土撬破強度檢核</h4>
                             {% endif %}
 
                             <p>此檢核由載重组合 <b>#{{ check_data.combo_id }}</b> 控制。</p>
@@ -2204,11 +2220,11 @@
 
                         {% endwith %}
                     {% else %}
-                                                    {% if results.has_any_tension %}
-<h4 style="font-weight: bold; margin-bottom: 10px;">6.9.2 錨栓群混凝土撬破強度檢核</h4>
-                            {% else %}
-<h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群混凝土撬破強度檢核</h4>
-                            {% endif %}
+                        {% if results.has_any_tension %}
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.9.2 錨栓群混凝土撬破強度檢核</h4>
+                        {% else %}
+                            <h4 style="font-weight: bold; margin-bottom: 10px;">6.6.2 錨栓群混凝土撬破強度檢核</h4>
+                        {% endif %}
 
                         <p class="check-message"><i>{{ check_data.details.message|default:"不適用或未計算" }}</i>
                         </p>

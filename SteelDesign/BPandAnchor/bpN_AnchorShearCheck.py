@@ -6,6 +6,7 @@ import pandas as pd
 
 import matplotlib
 from matplotlib.ticker import MaxNLocator
+from .bpN_svg_utils import SvgPlotter
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -291,7 +292,7 @@ def calculate_single_anchor_shear_breakout_Vcb(anchor_coord, shear_direction_vec
 
     plot_base64 = None
     if generate_plot:
-        fig, ax = plt.subplots(figsize=(8, 8))
+        plotter = SvgPlotter(width=600, height=600)
         unit_system = anchor_params.get('unit_system', 'imperial')
         unit_label = 'cm' if unit_system == 'mks' else 'in'
 
@@ -307,72 +308,45 @@ def calculate_single_anchor_shear_breakout_Vcb(anchor_coord, shear_direction_vec
             pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
 
         if pedestal_poly:
-            ped_x, ped_y = pedestal_poly.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+            plotter.add_shapely_polygon(pedestal_poly, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5, opacity=1.0)
 
-        # 2. [核心重構] 精確建構並繪製 AVc 破壞區域
-        if P1 and P2 and pedestal_poly:
-            # a. 建立兩條從錨栓出發的無限長的射線 (LineString)
-            # 為了模擬無限長，我們給一個遠大於墩柱尺寸的長度
+        # 2. 精確建構並繪製 AVc 破壞區域
+        # 这里的 P1, P2, angle_1, angle_2 是前面计算逻辑中已經算好的
+        if 'P1' in locals() and P1 and 'P2' in locals() and P2 and pedestal_poly:
             far_dist = max(pedestal_params.get('B', 0), pedestal_params.get('N', 0), pedestal_params.get('D', 0)) * 5
             ray1_end = (anchor_coord[0] + far_dist * math.cos(angle_1), anchor_coord[1] + far_dist * math.sin(angle_1))
             ray2_end = (anchor_coord[0] + far_dist * math.cos(angle_2), anchor_coord[1] + far_dist * math.sin(angle_2))
-            ray1 = LineString([anchor_coord, ray1_end])
-            ray2 = LineString([anchor_coord, ray2_end])
 
-            # b. 建立一個包含這兩條射線和錨栓點的理論破壞錐多邊形
-            # 這個多邊形非常大，遠超墩柱範圍
             theoretical_cone_poly = Polygon([anchor_coord, ray1_end, ray2_end])
-
-            # c. 計算理論破壞錐與墩柱的實際交集區域
             actual_area_poly = theoretical_cone_poly.intersection(pedestal_poly)
 
-            # d. 繪製這個精確的交集區域
-            if not actual_area_poly.is_empty and actual_area_poly.geom_type == 'Polygon':
-                # 繪製半透明填充
-                ax_x, ax_y = actual_area_poly.exterior.xy
-                ax.fill(ax_x, ax_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='none', label='Actual Area (A_Vc)')
-                # 繪製虛線邊界
-                ax.plot(ax_x, ax_y, color='#457b9d', linestyle='--', lw=2, label='Breakout Boundary')
+            if not actual_area_poly.is_empty:
+                # 紅色半透明填充 (AVc)
+                plotter.add_shapely_polygon(actual_area_poly, fill="#e63946", stroke="none", opacity=0.4)
+                # 藍色虛線邊界
+                plotter.add_shapely_polygon(actual_area_poly, fill="none", stroke="#457b9d", stroke_width=2,
+                                            stroke_dasharray="5,5", opacity=1.0)
 
         # 3. 繪製所有錨栓
         if all_bolt_coords is not None and len(all_bolt_coords) > 0:
-            all_bolts_np = np.array(all_bolt_coords)
-            ax.plot(all_bolts_np[:, 0], all_bolts_np[:, 1], 'o', color='gray', markersize=8, alpha=0.8,
-                    label='Other Anchors')
+            for bx, by in all_bolt_coords:
+                plotter.add_circle(bx, by, r=3, fill="gray", stroke="none", opacity=0.6)
 
         # 4. 突顯被檢核的錨栓
-        ax.plot(anchor_coord[0], anchor_coord[1], '*', color='#fca311', markersize=18, markeredgecolor='black',
-                label='Critical Anchor')
+        plotter.add_circle(anchor_coord[0], anchor_coord[1], r=4, fill="#fca311", stroke="black", stroke_width=1.5,
+                           opacity=1.0)
 
         # 5. 繪製主剪力方向箭頭
-        ax.quiver(anchor_coord[0], anchor_coord[1], vx, vy, angles='xy', scale_units='xy', scale=1, color='black',
-                  width=0.01, headwidth=5, label='Shear Direction')
+        arrow_len = min(pedestal_params.get('B', 10), pedestal_params.get('N', 10)) * 0.15
+        end_x = anchor_coord[0] + vx * arrow_len
+        end_y = anchor_coord[1] + vy * arrow_len
+        plotter.add_arrow(anchor_coord[0], anchor_coord[1], end_x, end_y, color="black", width=2)
 
-        # 6. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Concrete Shear Breakout Area ($A_{{Vc}}$)', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
+        # # 6. 文字標籤 (可選，簡單標示軸向)
+        # plotter.add_text(0, pedestal_params.get('N', 0) / 2 + 5, f"Y ({unit_label})", size=10)
+        # plotter.add_text(pedestal_params.get('B', 0) / 2 + 5, 0, f"X ({unit_label})", size=10)
 
-        # [核心新增] 手動設定刻度和範圍
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
-        ax.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
-        x_abs_max = np.max(np.abs(ax.get_xlim()))
-        y_abs_max = np.max(np.abs(ax.get_ylim()))
-        ax_max = max(x_abs_max, y_abs_max) * 1.1
-        ax.set_xlim(-ax_max, ax_max)
-        ax.set_ylim(-ax_max, ax_max)
-
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        plot_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+        plot_base64 = plotter.render_to_base64()
 
     return {
         "phi_Vcb": phi_Vcb, "Vcb": Vcb, "ca1": ca1, "ca2": ca2, "fc": fc,
@@ -673,11 +647,17 @@ def calculate_group_shear_breakout_Vcbg(shear_direction_vector, pedestal_params,
         critical_res = min(all_combinations_results, key=lambda x: x['phi_Vcbg'])
         group_coords_to_plot = critical_res.get('group_coords_list', [])
 
-        fig, ax = plt.subplots(figsize=(8, 8))
+        # 準備相關幾何變數
+        vx, vy = shear_direction_vector
+        shear_angle = math.atan2(vy, vx)
+        angle_1 = shear_angle + math.radians(55)
+        angle_2 = shear_angle - math.radians(55)
+
+        plotter = SvgPlotter(width=600, height=600)
         unit_system = anchor_params.get('unit_system', 'imperial')
         unit_label = 'cm' if unit_system == 'mks' else 'in'
 
-        # 1. 繪製墩柱輪廓
+        # 1. 繪製墩柱
         pedestal_shape = pedestal_params.get('shape')
         pedestal_poly = None
         if pedestal_shape == 'rectangle':
@@ -689,15 +669,10 @@ def calculate_group_shear_breakout_Vcbg(shear_direction_vector, pedestal_params,
             pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
 
         if pedestal_poly:
-            ped_x, ped_y = pedestal_poly.exterior.xy
-            ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+            plotter.add_shapely_polygon(pedestal_poly, fill="#E9ECEF", stroke="#adb5bd", stroke_width=1.5, opacity=1.0)
 
         # 2. 精確建構並繪製 Vcbg 破壞區域
-        # ... (這部分的邏輯與 Vcb 的繪圖邏輯非常相似，但需要對群組中所有錨栓操作) ...
-        # a. 為群組中的每個錨栓創建射線和理論破壞錐
         all_cones = []
-        shear_angle = math.atan2(vy, vx)
-        angle_1, angle_2 = shear_angle + math.radians(55), shear_angle - math.radians(55)
         far_dist = max(pedestal_params.get('B', 0), pedestal_params.get('N', 0), pedestal_params.get('D', 0)) * 5
 
         for bolt_coord in group_coords_to_plot:
@@ -705,52 +680,114 @@ def calculate_group_shear_breakout_Vcbg(shear_direction_vector, pedestal_params,
             ray2_end = (bolt_coord[0] + far_dist * math.cos(angle_2), bolt_coord[1] + far_dist * math.sin(angle_2))
             all_cones.append(Polygon([bolt_coord, ray1_end, ray2_end]))
 
-        # b. 將所有錨栓的理論破壞錐合併成一個大的形狀
         union_of_cones = unary_union(all_cones)
-
-        # c. 計算合併後的形狀與墩柱的交集
         actual_area_poly = union_of_cones.intersection(pedestal_poly)
 
-        # d. 繪製這個精確的交集區域
-        if not actual_area_poly.is_empty and actual_area_poly.geom_type == 'Polygon':
-            ax_x, ax_y = actual_area_poly.exterior.xy
-            ax.fill(ax_x, ax_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='none', label='Actual Area (A_Vcg)')
-            ax.plot(ax_x, ax_y, color='#457b9d', linestyle='--', lw=2, label='Breakout Boundary')
+        if not actual_area_poly.is_empty:
+            # 紅色半透明填充 (AVcg)
+            plotter.add_shapely_polygon(actual_area_poly, fill="#e63946", stroke="none", opacity=0.4)
+            # 藍色虛線邊界
+            plotter.add_shapely_polygon(actual_area_poly, fill="none", stroke="#457b9d", stroke_width=2,
+                                        stroke_dasharray="5,5", opacity=1.0)
 
         # 3. 繪製所有錨栓，並突顯群組錨栓
-        all_bolts_np = np.array(all_bolt_coords)
-        group_bolts_np = np.array(group_coords_to_plot)
-        is_in_group = [tuple(row) in map(tuple, group_bolts_np) for row in all_bolts_np]
-        ax.plot(all_bolts_np[~np.array(is_in_group), 0], all_bolts_np[~np.array(is_in_group), 1], 'o', color='gray',
-                markersize=8, alpha=0.8, label='Other Anchors')
-        ax.plot(group_bolts_np[:, 0], group_bolts_np[:, 1], '*', color='#fca311', markersize=18,
-                markeredgecolor='black',
-                label='Anchors in Group')
+        # 將 group_coords 轉為 set 以便快速查找
+        group_set = set(tuple(c) for c in group_coords_to_plot)
 
-        # 6. 圖表設定
-        ax.set_aspect('equal', 'box')
-        ax.grid(True, linestyle=':', linewidth=0.5)
-        ax.set_title(f'Concrete Shear Breakout Area ($A_{{Vc}}$)', fontsize=14)
-        ax.set_xlabel(f'X-axis ({unit_label})')
-        ax.set_ylabel(f'Y-axis ({unit_label})')
-        ax.legend()
+        for coord in all_bolt_coords:
+            coord_tuple = tuple(coord)
+            if coord_tuple in group_set:
+                # 群組錨栓 (金色星號效果用圓形代替或堆疊多邊形)
+                plotter.add_circle(coord[0], coord[1], r=4, fill="#fca311", stroke="black", stroke_width=1.5,
+                                   opacity=1.0)
+            else:
+                # 其他錨栓 (灰色)
+                plotter.add_circle(coord[0], coord[1], r=3, fill="gray", stroke="none", opacity=0.6)
 
-        # [核心新增] 手動設定刻度和範圍
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
-        ax.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
-        x_abs_max = np.max(np.abs(ax.get_xlim()))
-        y_abs_max = np.max(np.abs(ax.get_ylim()))
-        ax_max = max(x_abs_max, y_abs_max) * 1.1
-        ax.set_xlim(-ax_max, ax_max)
-        ax.set_ylim(-ax_max, ax_max)
+        critical_res['plot_base64'] = plotter.render_to_base64()
 
-        plt.tight_layout()
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120)
-        buf.seek(0)
-        critical_res['plot_base64'] = base64.b64encode(buf.getvalue()).decode('utf-8')
-        plt.close(fig)
+    # if generate_plot and all_combinations_results:
+    #     critical_res = min(all_combinations_results, key=lambda x: x['phi_Vcbg'])
+    #     group_coords_to_plot = critical_res.get('group_coords_list', [])
+    #
+    #     fig, ax = plt.subplots(figsize=(8, 8))
+    #     unit_system = anchor_params.get('unit_system', 'imperial')
+    #     unit_label = 'cm' if unit_system == 'mks' else 'in'
+    #
+    #     # 1. 繪製墩柱輪廓
+    #     pedestal_shape = pedestal_params.get('shape')
+    #     pedestal_poly = None
+    #     if pedestal_shape == 'rectangle':
+    #         pedestal_B, pedestal_N = pedestal_params.get('B', 0), pedestal_params.get('N', 0)
+    #         pedestal_poly = Polygon([(-pedestal_B / 2, -pedestal_N / 2), (pedestal_B / 2, -pedestal_N / 2),
+    #                                  (pedestal_B / 2, pedestal_N / 2), (-pedestal_B / 2, pedestal_N / 2)])
+    #     elif pedestal_shape == 'circle':
+    #         pedestal_D = pedestal_params.get('D', 0)
+    #         pedestal_poly = Point(0, 0).buffer(pedestal_D / 2.0, resolution=64)
+    #
+    #     if pedestal_poly:
+    #         ped_x, ped_y = pedestal_poly.exterior.xy
+    #         ax.fill(ped_x, ped_y, color='#E9ECEF', ec='#adb5bd', lw=1.5, label='Pedestal')
+    #
+    #     # 2. 精確建構並繪製 Vcbg 破壞區域
+    #     # ... (這部分的邏輯與 Vcb 的繪圖邏輯非常相似，但需要對群組中所有錨栓操作) ...
+    #     # a. 為群組中的每個錨栓創建射線和理論破壞錐
+    #     all_cones = []
+    #     shear_angle = math.atan2(vy, vx)
+    #     angle_1, angle_2 = shear_angle + math.radians(55), shear_angle - math.radians(55)
+    #     far_dist = max(pedestal_params.get('B', 0), pedestal_params.get('N', 0), pedestal_params.get('D', 0)) * 5
+    #
+    #     for bolt_coord in group_coords_to_plot:
+    #         ray1_end = (bolt_coord[0] + far_dist * math.cos(angle_1), bolt_coord[1] + far_dist * math.sin(angle_1))
+    #         ray2_end = (bolt_coord[0] + far_dist * math.cos(angle_2), bolt_coord[1] + far_dist * math.sin(angle_2))
+    #         all_cones.append(Polygon([bolt_coord, ray1_end, ray2_end]))
+    #
+    #     # b. 將所有錨栓的理論破壞錐合併成一個大的形狀
+    #     union_of_cones = unary_union(all_cones)
+    #
+    #     # c. 計算合併後的形狀與墩柱的交集
+    #     actual_area_poly = union_of_cones.intersection(pedestal_poly)
+    #
+    #     # d. 繪製這個精確的交集區域
+    #     if not actual_area_poly.is_empty and actual_area_poly.geom_type == 'Polygon':
+    #         ax_x, ax_y = actual_area_poly.exterior.xy
+    #         ax.fill(ax_x, ax_y, color=(230 / 255, 57 / 255, 70 / 255, 0.4), ec='none', label='Actual Area (A_Vcg)')
+    #         ax.plot(ax_x, ax_y, color='#457b9d', linestyle='--', lw=2, label='Breakout Boundary')
+    #
+    #     # 3. 繪製所有錨栓，並突顯群組錨栓
+    #     all_bolts_np = np.array(all_bolt_coords)
+    #     group_bolts_np = np.array(group_coords_to_plot)
+    #     is_in_group = [tuple(row) in map(tuple, group_bolts_np) for row in all_bolts_np]
+    #     ax.plot(all_bolts_np[~np.array(is_in_group), 0], all_bolts_np[~np.array(is_in_group), 1], 'o', color='gray',
+    #             markersize=8, alpha=0.8, label='Other Anchors')
+    #     ax.plot(group_bolts_np[:, 0], group_bolts_np[:, 1], '*', color='#fca311', markersize=18,
+    #             markeredgecolor='black',
+    #             label='Anchors in Group')
+    #
+    #     # 6. 圖表設定
+    #     ax.set_aspect('equal', 'box')
+    #     ax.grid(True, linestyle=':', linewidth=0.5)
+    #     ax.set_title(f'Concrete Shear Breakout Area ($A_{{Vc}}$)', fontsize=14)
+    #     ax.set_xlabel(f'X-axis ({unit_label})')
+    #     ax.set_ylabel(f'Y-axis ({unit_label})')
+    #     ax.legend()
+    #
+    #     # [核心新增] 手動設定刻度和範圍
+    #     ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
+    #     ax.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
+    #     x_abs_max = np.max(np.abs(ax.get_xlim()))
+    #     y_abs_max = np.max(np.abs(ax.get_ylim()))
+    #     ax_max = max(x_abs_max, y_abs_max) * 1.1
+    #     ax.set_xlim(-ax_max, ax_max)
+    #     ax.set_ylim(-ax_max, ax_max)
+    #
+    #     plt.tight_layout()
+    #
+    #     buf = io.BytesIO()
+    #     fig.savefig(buf, format='png', dpi=120)
+    #     buf.seek(0)
+    #     critical_res['plot_base64'] = base64.b64encode(buf.getvalue()).decode('utf-8')
+    #     plt.close(fig)
 
     return all_combinations_results
 

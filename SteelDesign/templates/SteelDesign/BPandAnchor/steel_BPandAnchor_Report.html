@@ -94,6 +94,7 @@
         }
 
         .report-section img {
+            border: 1px solid #ccc;
             margin-top: 10px;
             margin-bottom: 10px;
         }
@@ -177,36 +178,56 @@
 
         .report-flex-container {
             display: flex;
+            flex-direction: row;
             flex-wrap: nowrap;
-            align-items: flex-start; /* 確保子元素頂部對齊 */
-            gap: 25px; /* 元素間距 */
+            justify-content: center;
+            align-items: flex-start;
+            gap: 12px; /* [微調] 間距稍微縮小，把空間留給內容 */
+            width: 99%;
             margin-bottom: 20px;
+            box-sizing: border-box;
         }
 
-        /* 圖片容器的樣式 */
+        /* 左側：圖片容器 (縮小) */
         .report-flex-container .figure-container {
-            flex-grow: 1;  /* 【1】允許放大以填滿多餘空間 */
-            flex-shrink: 1;/* 【2】允許縮小 */
-            flex-basis: 0;   /* 【3】初始寬度為 0，讓其寬度完全由內容（圖片）決定 */
-            min-width: 0;
-            text-align: center; /* 讓 figcaption 置中 */
+            flex: 0 0 50%; /* [修改] 從 60% 改為 50% */
+            max-width: 50%; /* [修改] 同步調整 */
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
 
-        /* 表格容器的樣式 */
+        /* 右側：表格容器 (放大) */
         .report-flex-container .table-container {
-            flex-grow: 0;  /* 【4】不允許放大 */
-            flex-shrink: 0;/* 【5】不允許縮小 */
-            /* 我們不再設定 flex-basis 或 width，讓其寬度自適應內容 */
-            max-height: 110mm;
+            flex: 0 0 45%; /* [修改] 從 35% 改為 45% */
+            max-width: 45%; /* [修改] 同步調整 */
             display: flex;
             flex-direction: column;
+            margin: 0;
+            padding: 0;
         }
 
+        /* [新增] 針對表格內容的微調，確保多欄位不換行 */
+        .report-flex-container .summary-table {
+            font-size: 10px; /* [修改] 字體稍微縮小 (原 12px 或 11px) */
+            width: 100%;
+            table-layout: auto; /* 讓瀏覽器自動計算最佳欄寬 */
+        }
+
+        .report-flex-container .summary-table th,
+        .report-flex-container .summary-table td {
+            padding: 6px 3px; /* [修改] 減少左右內邊距 (原本可能是 8px 10px) */
+            white-space: nowrap; /* [關鍵] 強制文字不換行，保持表格整齊 */
+        }
+
+        /* 圖片本身樣式 */
         .report-flex-container .figure-container img {
-            max-width: 99%;
-            height: auto;     /* 【6】高度自動，以保持原始比例 */
+            width: 100%;
+            height: auto;
             max-height: 100mm;
             border: 1px solid #ccc;
+            display: block;
+            margin: 0 auto;
         }
 
         .report-figure {
@@ -225,10 +246,13 @@
             margin-bottom: 8px;
         }
 
+        /* 圖說文字 */
         .report-figure figcaption {
-            font-size: 15px;
+            margin-top: 8px;
+            font-size: 14px;
             color: #555;
-        {#font-style: italic;#} text-align: center; /* 再次確認圖說文字本身是置中的 */
+            text-align: center;
+            width: 100%;
         }
 
         .norm-list li {
@@ -363,6 +387,39 @@
             text-align: center;
         }
 
+        /* 針對擁有 shear-component-layout 的容器進行覆寫 */
+        div.report-flex-container.shear-component-layout .figure-container {
+            flex: 0 0 40% !important;
+            max-width: 40% !important;
+            /* 如果之前有設定 min-width，這裡也要覆蓋 */
+            min-width: 0 !important;
+        }
+
+        div.report-flex-container.shear-component-layout .table-container {
+            flex: 0 0 58% !important;
+            max-width: 58% !important;
+            /* 確保表格容器有足夠空間 */
+            min-width: 0 !important;
+        }
+
+        /* 表格內容微調 */
+        div.report-flex-container.shear-component-layout .summary-table {
+            font-size: 9px !important;
+            width: 100% !important;
+            table-layout: auto !important;
+        }
+
+        div.report-flex-container.shear-component-layout .summary-table th,
+        div.report-flex-container.shear-component-layout .summary-table td {
+            padding: 4px 2px !important;
+            white-space: nowrap !important;
+        }
+
+        /* [新增] 強制隱藏表格容器的橫向捲軸 (如果內容真的超出，就讓它被切掉一點，優先保證不出現捲軸) */
+        div.report-flex-container.shear-component-layout .table-container > div {
+            overflow-x: hidden !important;
+        }
+
         /* 在列印模式下應用頁碼 */
         @media print {
             body {
@@ -392,21 +449,45 @@
             }
 
             .report-flex-container {
-                gap: 10px; /* 在列印時稍微縮小間距 */
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                gap: 12px !important;
             }
 
             .report-flex-container .figure-container {
-                /* 關鍵修正：使用 calc() 精確計算寬度 */
-                /* 意思是：50% 的父容器寬度，再減去間距的一半 (10px / 2 = 5px) */
-                flex-basis: calc(50% - 5px);
-                width: calc(50% - 5px);
+                flex: 0 0 50% !important; /* [修改] 同步更新列印設定 */
+                max-width: 50% !important;
+                width: 50% !important;
+            }
 
-                /* 覆蓋掉瀏覽器模式下的 flex-grow 和 flex-shrink */
-                flex-grow: 0;
-                flex-shrink: 0;
+            .report-flex-container .table-container {
+                flex: 0 0 45% !important; /* [修改] 同步更新列印設定 */
+                max-width: 45% !important;
+                width: 45% !important;
+            }
+
+            div.report-flex-container.shear-component-layout .figure-container {
+                flex: 0 0 40% !important;
+                max-width: 40% !important;
+                width: 40% !important;
+            }
+
+            div.report-flex-container.shear-component-layout .table-container {
+                flex: 0 0 58% !important;
+                max-width: 58% !important;
+                width: 58% !important;
+            }
+
+            /* 確保列印時隱藏捲軸並顯示完整內容 */
+            .loads-table-wrapper,
+            .table-container div {
+                overflow: visible !important;
+                max-height: none !important;
             }
 
         }
+
 
     </style>
 {% endblock %}
@@ -792,8 +873,15 @@
                 <!-- [核心新增] 插入幾何關係示意圖 -->
                 {% if geometry_plot_base64 %}
                     <div style="text-align: center; margin-top: 25px; page-break-inside: avoid;">
-                        <img src="data:image/png;base64,{{ geometry_plot_base64|safe }}" alt="幾何關係示意圖"
-                             style="max-width: 90%; border: 1px solid #ccc; padding: 5px; border-radius: 8px;">
+                        <!-- [修正點] 變數名稱改為 geometry_plot_base64 -->
+                        <img src="data:image/svg+xml;base64,{{ geometry_plot_base64|safe }}"
+                             alt="配置幾何示意圖"
+                             style="max-width: 80%; height: auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px; background-color: #fff;">
+
+                        <p class="table-caption"
+                           style="text-align: center; margin-top: 10px; font-size: 14px; color: #333; font-weight: bold;">
+                            圖 2.1 配置幾何示意圖
+                        </p>
                     </div>
                 {% endif %}
             </div>

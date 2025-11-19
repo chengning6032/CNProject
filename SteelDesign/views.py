@@ -793,6 +793,7 @@ def bp_anchor_calculate_api(request):
                                         plot_plate_params,
                                         pedestal_params,  # <--- 新增
                                         column_params,  # <--- 新增
+                                        bolt_params,
                                         critical_bolt_index=critical_vcbx_info.get('anchor_index'),  # <-- 正確
                                         title=plot_title,
                                         unit_system=unit_system,
@@ -871,6 +872,7 @@ def bp_anchor_calculate_api(request):
                                     plot_plate_params_for_shear_plot,
                                     pedestal_params,
                                     column_params,
+                                    bolt_params,
                                     critical_bolt_index=critical_vcby_info.get('anchor_index'),  # <-- 正確
                                     title=plot_title,
                                     unit_system=unit_system,
@@ -1002,6 +1004,7 @@ def bp_anchor_calculate_api(request):
                                         plot_plate_params_for_shear_plot,
                                         pedestal_params,
                                         column_params,
+                                        bolt_params,
                                         critical_bolt_index=None,
                                         highlight_indices=anchor_indices,
                                         title=plot_title,
@@ -1122,6 +1125,7 @@ def bp_anchor_calculate_api(request):
                                         plot_plate_params_for_shear_plot,
                                         pedestal_params,
                                         column_params,
+                                        bolt_params,
                                         critical_bolt_index=None,
                                         title=plot_title,
                                         unit_system=unit_system,
@@ -1714,6 +1718,7 @@ def bp_anchor_calculate_api(request):
                             plate_params,
                             pedestal_params,
                             column_params,
+                            bolt_params,
                             critical_bolt_index=critical_bolt_info_for_pryout.get('index'),  # <-- 正確
                             title=plot_title
                         )
@@ -1818,6 +1823,7 @@ def bp_anchor_calculate_api(request):
                             plate_params,
                             pedestal_params,
                             column_params,
+                            bolt_params,
                             critical_bolt_index=critical_bolt_info.get('index'),  # <-- 補上
                             title=plot_title,
                             unit_system=unit_system
@@ -1850,6 +1856,7 @@ def bp_anchor_calculate_api(request):
                             plate_params,
                             pedestal_params,
                             column_params,
+                            bolt_params,
                             critical_bolt_index=critical_bolt_info.get('index'),  # <-- 補上
                             title=plot_title,
                             vector_type='resultant',
@@ -1909,6 +1916,7 @@ def bp_anchor_calculate_api(request):
                                 plate_params,
                                 pedestal_params,
                                 column_params,
+                                bolt_params,
                                 critical_bolt_index=critical_idx,      # <-- 傳入單根索引
                                 highlight_indices=highlight_idxs,  # <-- 傳入群組索引列表
                                 title=plot_title,
@@ -2123,6 +2131,7 @@ def generate_report_view(request):
                         plate_params,
                         pedestal_params,
                         column_params,
+                        bolt_params,
                         critical_bolt_index=critical_bolt_info.get('index'),
                         title=plot_title,
                         vector_type='components',
@@ -2372,6 +2381,7 @@ def generate_report_view(request):
                             plate_params,
                             pedestal_params,
                             column_params,
+                            bolt_params,
                             critical_bolt_index=critical_idx,  # <-- 傳入單根索引 (可能是 None)
                             highlight_indices=highlight_idxs,  # <-- 傳入群組索引列表 (可能是 None)
                             title=plot_title,

@@ -50,7 +50,7 @@
                             </p>
                             {% if check.plot_base64 %}
                                 <div style="text-align: center; margin: 15px 0;">
-                                    <img src="data:image/png;base64,{{ check.plot_base64|safe }}" alt="應力分布圖"
+                                    <img src="data:image/svg+xml;base64,{{ check.plot_base64|safe }}" alt="應力分布圖"
                                          style="max-width: 80%; max-height: 100mm;">
                                     <figcaption>圖 6.1 控制工況之應力分佈圖</figcaption>
                                 </div>
@@ -166,7 +166,7 @@
                             {% if check.plot_base64 %}
                                 <div style="text-align: center; margin: 15px 0;">
                                     <!-- [核心修正] 新增 max-height 屬性 -->
-                                    <img src="data:image/png;base64,{{ check.plot_base64|safe }}"
+                                    <img src="data:image/svg+xml;base64,{{ check.plot_base64|safe }}"
                                          alt="基礎版彎曲強度示意圖"
                                          style="max-width: 60%; max-height: 100mm; border: 1px solid #ccc;">
                                     <figcaption>圖 6.2 基礎版彎曲強度示意圖</figcaption>

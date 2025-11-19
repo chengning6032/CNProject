@@ -1519,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDynamicSections();
 
     // 添加預設的荷載和錨栓行
-    addLoadComboRow(-90.0, 300, 440.04, 63.0, 30.0, 30.0);
+    addLoadComboRow(-40.0, 300, 440.04, 63.0, 30.0, 30.0);
     addBoltRow(6.25, 8.75);
     addBoltRow(6.25, -8.75);
     addBoltRow(-6.25, 8.75);
