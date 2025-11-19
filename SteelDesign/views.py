@@ -15,6 +15,8 @@ from datetime import datetime  # 【核心新增】匯入 datetime 模組
 from django.utils import timezone
 from accounts.models import Profile
 
+import gc
+
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -1428,6 +1430,10 @@ def bp_anchor_calculate_api(request):
                                 check_results_for_combo)
 
                 all_combos_dc_ratios.append(current_combo_dcs)
+
+                del analysis_results
+                del check_results_for_combo
+                gc.collect()
 
             envelope_results['has_any_tension'] = has_any_tension
             envelope_results['has_any_shear'] = has_any_shear

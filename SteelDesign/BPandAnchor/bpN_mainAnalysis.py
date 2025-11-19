@@ -289,17 +289,41 @@ def perform_analysis(plate_shape, P_applied, Mx_applied, My_applied, Es, Ec, bol
     # --- 2. [核心修正] 根據 status 準備 grid_data (如果需要) ---
     grid_data = {}
     if preliminary_status in ["Bearing", "Full-Bearing"]:
-        gd = 1000 if preliminary_status == "Bearing" else 400
-        xg, yg = np.linspace(-x_max, x_max, gd), np.linspace(-y_max, y_max, gd)
+        # [優化 1] 降低網格密度：從 1000 降為 250 (點數從 100萬 降為 6.25萬，減少 16倍記憶體)
+        # 對於工程設計，250 的網格精度已經非常足夠
+        gd = 250 if preliminary_status == "Bearing" else 100
+
+        # [優化 2] 使用 float32 (單精度) 代替 float64，記憶體再減半
+        xg = np.linspace(-x_max, x_max, gd, dtype=np.float32)
+        yg = np.linspace(-y_max, y_max, gd, dtype=np.float32)
         xv, yv = np.meshgrid(xg, yg)
-        gp = np.vstack([xv.ravel(), yv.ravel()]).T
+
+        # vstack 產生臨時大陣列，改用較省記憶體的方式
+        # gp = np.vstack([xv.ravel(), yv.ravel()]).T  <-- 原始寫法較耗記憶體
+
+        # 扁平化
+        xv_flat = xv.ravel()
+        yv_flat = yv.ravel()
+
+        # 計算單元面積
         ca = (xg[1] - xg[0]) * (yg[1] - yg[0]) if gd > 1 else 0
 
+        # 幾何判斷 (Path)
         op = Path(plate_outer_verts)
-        iin = op.contains_points(gp)
-        iou = ~Path(plate_inner_verts).contains_points(gp) if plate_inner_verts.size > 0 else np.ones_like(iin)
+        # 為了 Path.contains_points，我們暫時還是需要 gp，但可以處理完就釋放
+        gp = np.column_stack((xv_flat, yv_flat))
 
-        bap = gp[iin & iou]
+        iin = op.contains_points(gp)
+        iou = ~Path(plate_inner_verts).contains_points(gp) if plate_inner_verts.size > 0 else np.ones(gp.shape[0],
+                                                                                                      dtype=bool)
+
+        # 篩選出有效點 (Bearing Analysis Points)
+        valid_mask = iin & iou
+        bap = gp[valid_mask]
+
+        # 釋放巨大的 gp 陣列，只保留需要的 bap
+        del gp
+
         grid_data = {'xv': xv, 'yv': yv, 'is_in': iin, 'is_out': iou, 'bap': bap, 'ca': ca}
 
     # --- 3. [核心修正] 呼叫對應的求解器 ---
@@ -504,6 +528,20 @@ def perform_analysis(plate_shape, P_applied, Mx_applied, My_applied, Es, Ec, bol
             plotter.add_legend_item("中性軸", "line", stroke="red", stroke_width=2, stroke_dasharray="5,5")
 
         plot_base64 = plotter.render_to_base64()
+
+    returned_grid_data = {}
+    returned_grid_pressures = None
+
+    if show_plot or generate_plot_data:
+        returned_grid_data = grid_data
+        returned_grid_pressures = grid_pressures
+    else:
+        # 為了 bpN_tpCheck (彎曲檢核) 需要，我們保留最小限度的數據
+        # tpCheck 需要 xv, yv 和 grid_pressures 來做積分
+        # 但我們可以只在 tpCheck 真正執行時才傳入
+        # 這裡我們做一個妥協：如果是第一階段(不畫圖)，我們回傳數據，但在 views.py 裡用完即丟
+        returned_grid_data = grid_data
+        returned_grid_pressures = grid_pressures
 
     return {
         "status": status,

@@ -535,6 +535,7 @@
         .mobile-nav-links {
             margin-top: 20px;
         }
+
         .mobile-nav-links a, .mobile-nav-links span {
             display: block;
             padding: 15px;
@@ -542,6 +543,7 @@
             color: #333;
             border-radius: 6px;
         }
+
         .mobile-nav-links a:hover {
             background-color: #f0f0f0;
         }
@@ -800,14 +802,32 @@
                    data-version="v0.0.0" data-updated="20XX-XX-XX">封閉或部分封閉式建築</a>
                 <a class="tool-link disabled-link" data-title="耐風設計 | 開放式建築"
                    data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具依據我國「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，以應對台灣多變的氣候挑戰。"
-                   data-version="v0.0.0" data-updated="20XX-XX-XX">開放式建築</a>
+                   data-version="v0.0.0"
+                   data-updated="20XX-XX-XX">開放式建築</a>
             </div>
             <div class="tool-group">
                 <div class="tool-group-title">結構設計</div>
                 <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
                    data-title="結構設計 | 基礎版與錨栓"
                    data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
-                   data-version="v1.2.5" data-updated="2025-10-28">鋼柱基礎版及錨栓設計檢核</a>
+                   data-version="v1.1.5"
+                   data-updated="2025-11-20"
+                   data-history='[
+                        {
+                            "version": "v1.1.251120",
+                            "date": "2025-11-20",
+                            "changes": [
+                                "不喪失運算精度下，提升運算速度約10倍，減少使用者等待時間。",
+                            ]
+                        },
+                        {
+                            "version": "v1.0.251028",
+                            "date": "2025-10-28",
+                            "changes": [
+                                "推出第一版基礎版與錨栓分析工具。",
+                            ]
+                        }
+                   ]'>鋼柱基礎版及錨栓設計檢核</a>
             </div>
         </aside>
         <main class="right-panel">

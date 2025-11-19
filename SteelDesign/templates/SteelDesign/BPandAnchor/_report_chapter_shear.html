@@ -96,7 +96,7 @@
                             <p>錨栓受剪有效面積 $A_{se,V}= {{ check.Ase_V|floatformat:"-2" }}\ \text{cm}^2 $</p>
                             $f_{uta} = min \left(f_{uta}, 1.9f_{ya}, 8750\right)
                             = min \left( {{ check.futa_eff|floatformat:"-2" }} , 1.9 \times
-                            {{ check.fya_ksi|floatformat:"-2" }}, 8750\right)
+                            {{ check.fya|floatformat:"-2" }}, 8750\right)
                             = {{ check.futa_eff|floatformat:"-2" }}\  \text{kgf/cm}^2$
 
                             <p>標稱抗剪強度
@@ -141,7 +141,7 @@
                             <p>錨栓受剪有效面積 $A_{se,V}= {{ check.Ase_V|floatformat:"-4" }} \text{ in}^2 $</p>
                             $f_{uta} = min \left(f_{uta}, 1.9f_{ya}, 125\right)
                             = min \left( {{ check.futa_eff|floatformat:"-2" }} , 1.9 \times
-                            {{ check.fya_ksi|floatformat:"-2" }}, 125\right)
+                            {{ check.fya|floatformat:"-2" }}, 125\right)
                             = {{ check.futa_eff|floatformat:"-2" }} \text{ ksi}$
 
                             <p>標稱抗剪強度 $V_{sa} = 0.6 A_{se,V} f_{uta} = 0.6
