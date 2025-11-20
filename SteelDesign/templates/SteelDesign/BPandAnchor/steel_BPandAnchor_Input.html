@@ -168,6 +168,92 @@
         }
 
         /* ===== END: 核心修正区域 ===== */
+        /* ========================================= */
+        /* ====      Mobile Responsive Fix      ==== */
+        /* ========================================= */
+
+        @media (max-width: 768px) {
+            /* 1. 佈局改為單欄 */
+            .main-layout-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .section-container {
+                padding: 15px;
+                grid-column: span 1 !important; /* 強制單欄 */
+            }
+
+            /* 2. 輸入欄位優化：標籤與輸入框上下堆疊 */
+            .section-container .input-group {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .section-container .input-group label {
+                width: 100%;
+                padding-right: 0;
+                margin-bottom: 2px;
+                font-weight: 600; /* 標籤加粗比較好看 */
+            }
+
+            .section-container .input-group input[type="number"],
+            .section-container .input-group select {
+                width: 100%; /* 輸入框佔滿寬度 */
+                height: 40px; /* 加大高度，方便手指點擊 */
+            }
+
+            /* Radio Group 也要調整 */
+            .section-container .input-group .radio-group {
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: 5px;
+            }
+
+            /* 3. 表格響應式處理 (關鍵) */
+            /* 給表格外層加上橫向捲軸，防止撐開頁面 */
+            .loads-table-wrapper,
+            #bolt-layout-custom {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* iOS 順暢滑動 */
+                width: 100%;
+                display: block;
+            }
+
+            .input-table {
+                min-width: 600px; /* 強制表格最小寬度，讓使用者滑動查看 */
+            }
+
+            /* 4. 按鈕調整 */
+            .action-buttons-container {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .calculate-button {
+                width: 100%;
+                height: 50px;
+            }
+
+            /* 預覽視窗 */
+            #realtime-preview-container {
+                height: 300px; /* 手機上稍微矮一點 */
+            }
+
+            /* 麵包屑隱藏或簡化 (選用) */
+            .breadcrumb-container {
+                font-size: 0.9em;
+            }
+
+            /* 單位切換器堆疊 */
+            .unit-switcher-container {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>

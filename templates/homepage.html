@@ -7,23 +7,23 @@
     <title>OLI | Optimal Lean Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
     <style>
-        /* ... (桌面版的 CSS 樣式保持不變，此處省略以保持簡潔) ... */
+        /* ==========================================================
+           1. 全域設定 (Global Settings)
+           ========================================================== */
+        html, body {
+            overflow-x: hidden; /* 強制隱藏水平捲軸，防止頁面滑動 */
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: #f4f7f9;
             font-family: '微軟正黑體', 'Microsoft JhengHei', Arial, sans-serif;
             color: #333;
-            margin: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            flex-grow: 1;
         }
 
         a {
@@ -31,6 +31,9 @@
             transition: all 0.3s ease;
         }
 
+        /* ==========================================================
+           2. 頁首導覽列 (Header & Navigation) - 桌面版
+           ========================================================== */
         .top-header {
             display: flex;
             justify-content: space-between;
@@ -74,6 +77,7 @@
             align-items: center;
             transition: color 0.3s ease;
             z-index: 1;
+            cursor: pointer;
         }
 
         .main-nav-link:hover {
@@ -85,10 +89,7 @@
             font-weight: bold;
         }
 
-        .main-nav-link.active::after {
-            display: none;
-        }
-
+        /* 導覽列下劃線動畫效果 */
         .main-nav::after {
             content: '';
             position: absolute;
@@ -97,12 +98,12 @@
             background-color: #0056b3;
             border-radius: 2px;
             transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
+            /* JS 會動態控制這兩個變數 */
+            left: var(--underline-left, 0);
+            width: var(--underline-width, 0);
         }
 
-        .nav-link-requires-auth {
-            cursor: pointer;
-        }
-
+        /* 會員資訊區塊 (桌面版) */
         .user-auth-section {
             display: flex;
             align-items: center;
@@ -187,12 +188,25 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
+        /* ==========================================================
+           3. 主內容佈局 (Main Layout)
+           ========================================================== */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+
         .main-container {
             display: flex;
             gap: 30px;
             margin-top: 30px;
         }
 
+        /* 左側工具列表面板 */
         .left-panel {
             flex: 1;
             max-width: 320px;
@@ -223,6 +237,7 @@
             margin-bottom: 8px;
             font-size: 1em;
             border-left: 4px solid transparent;
+            cursor: pointer;
         }
 
         .tool-group a:hover, .tool-group a.active {
@@ -238,7 +253,7 @@
             position: relative;
         }
 
-        .tool-group a.disabled-link:hover, .tool-group a.disabled-link.active {
+        .tool-group a.disabled-link:hover {
             background-color: transparent;
             color: #aaa;
             border-left: 4px solid transparent;
@@ -258,6 +273,7 @@
             vertical-align: middle;
         }
 
+        /* 右側說明面板 */
         .right-panel {
             flex: 2;
             background-color: #ffffff;
@@ -317,6 +333,9 @@
             color: #457b9d;
         }
 
+        /* ==========================================================
+           4. 更新日誌 (Changelog) 與頁尾
+           ========================================================== */
         .changelog-container {
             margin-top: 25px;
         }
@@ -454,21 +473,11 @@
             border-top: 1px solid #e0e0e0;
         }
 
-        .nav-link-requires-auth {
-            cursor: pointer;
-        }
+        /* ==========================================================
+           5. 響應式設計與漢堡選單 (Responsive & Mobile Nav)
+           ========================================================== */
 
-        .tool-link-disabled {
-            cursor: pointer;
-        }
-
-        /*
-        ================================================================
-        ====   【核心新增】漢堡選單相關 CSS 樣式                  ====
-        ================================================================
-        */
-
-        /* 漢堡按鈕 (預設在桌面版隱藏) */
+        /* 漢堡按鈕 (預設隱藏) */
         .mobile-nav-toggle {
             display: none;
             background: none;
@@ -478,6 +487,7 @@
             color: #1d3557;
         }
 
+        /* 遮罩層 */
         .mobile-nav-overlay {
             position: fixed;
             top: 0;
@@ -488,7 +498,7 @@
             z-index: 1999;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s; /* 延遲隱藏 */
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
         }
 
         .mobile-nav-overlay.active {
@@ -497,11 +507,13 @@
             transition: opacity 0.3s ease;
         }
 
+        /* 側邊滑出選單 */
         .mobile-nav {
             position: fixed;
             top: 0;
-            right: 0; /* 起始位置就在右邊 */
-            width: 300px;
+            right: 0;
+            width: 280px;
+            max-width: 80%;
             height: 100%;
             background-color: #fff;
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
@@ -509,20 +521,21 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            /* 使用 transform 來實現滑出效果，這不會影響頁面佈局 */
-            transform: translateX(100%);
+            transform: translateX(100%); /* 預設藏在右側 */
             transition: transform 0.3s ease-in-out;
         }
 
         .mobile-nav.active {
-            transform: translateX(0); /* 滑入到可見位置 */
+            transform: translateX(0); /* 滑入 */
         }
 
         .mobile-nav-header {
             display: flex;
-            justify-content: flex-end;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #f0f0f0;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
         }
 
         .mobile-nav-close {
@@ -530,134 +543,177 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
+            color: #555;
         }
 
         .mobile-nav-links {
-            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
-        .mobile-nav-links a, .mobile-nav-links span {
-            display: block;
-            padding: 15px;
-            font-size: 1.1em;
+        .mobile-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
             color: #333;
+            text-decoration: none;
             border-radius: 6px;
+            transition: background 0.2s;
+            font-size: 1em;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
         }
 
-        .mobile-nav-links a:hover {
-            background-color: #f0f0f0;
+        .mobile-nav-item:hover {
+            background-color: #f0f4f8;
+            color: #0056b3;
         }
 
-        /*
-        ================================================================
-        ====   【核心修改】全新的響應式設計規則                   ====
-        ================================================================
-        */
-
-        /* --- 1. 平板電腦樣式 (寬度小於 1024px) --- */
-        @media (max-width: 1024px) {
-            .container {
-                padding: 15px;
-            }
-
-            .main-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .left-panel {
-                max-width: 100%;
-            }
-
-            .right-panel {
-                padding: 30px;
-            }
-
-            .right-panel::before {
-                display: none;
-            }
+        .mobile-nav-item.special {
+            color: #e63946;
+            background-color: #fff5f5;
         }
 
-        /* --- 2. 較窄的桌面/平板橫式 (寬度小於 820px) --- */
-        @media (max-width: 820px) {
-            /* 隱藏桌面版導覽列 */
-            .main-nav {
+        .mobile-nav-item.logout {
+            color: #666;
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+
+        .mobile-nav-item.disabled {
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.2em;
+            color: #457b9d;
+        }
+
+        /* 手機版會員資訊區塊 */
+        .mobile-user-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mobile-welcome {
+            margin-bottom: 10px;
+            color: #1d3557;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mobile-auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mobile-btn-login, .mobile-btn-signup {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .mobile-btn-login {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #555;
+        }
+
+        .mobile-btn-signup {
+            background: #1d3557;
+            color: #fff;
+            border: 1px solid #1d3557;
+        }
+
+        /* === 媒體查詢 (Media Queries) === */
+
+        /* 平板直向 (小於 992px) */
+        @media (max-width: 992px) {
+            .top-header {
+                padding: 0 20px;
+                height: 65px; /* 稍微增加高度以容納放大的 Logo */
+                position: relative; /* 關鍵：為了讓內部的 Logo 絕對定位 */
+                justify-content: flex-end; /* 讓漢堡按鈕靠右對齊 */
+            }
+
+            .logo-container {
+                position: absolute; /* 脫離文檔流 */
+                left: 50%; /* 水平 50% */
+                top: 50%; /* 垂直 50% */
+                transform: translate(-50%, -50%); /* 精確修正回中心點 */
+                width: auto; /* 重置寬度 */
+                z-index: 1; /* 確保在底層但可見 */
+            }
+
+            .logo-img {
+                height: 52px; /* [需求] 放大 Logo (原桌機版為 40px) */
+                width: auto;
+                transition: height 0.3s ease;
+            }
+
+            /* 隱藏桌面版導覽與會員區塊 */
+            .main-nav,
+            .user-auth-section {
                 display: none;
             }
 
             /* 顯示漢堡按鈕 */
             .mobile-nav-toggle {
                 display: block;
-            }
-
-            .user-auth-section .welcome-msg strong {
-                display: none;
-            }
-
-            .top-header {
-                padding: 0 20px;
-            }
-
-            /* 隱藏主導覽列，為使用者區塊騰出空間 */
-            .main-nav {
-                display: none;
-            }
-
-            .user-auth-section .welcome-msg strong {
-                display: none; /* 只顯示 "歡迎," */
+                font-size: 28px; /* 按鈕也可以稍微大一點 */
+                color: #1d3557;
+                z-index: 2; /* 確保按鈕在最上層可點擊 */
             }
         }
 
-        /* --- 3. 手機樣式 (寬度小於 600px) --- */
+        /* 手機版 (小於 768px) */
         @media (max-width: 600px) {
+            /* 覆蓋原本的垂直排列，強制保持橫向 */
             .top-header {
-                flex-direction: column;
-                height: auto;
-                padding: 15px;
-                gap: 15px;
+                flex-direction: row;
+                height: 65px;
+                gap: 0;
             }
 
+            /* 修正原本 600px 以下 logo width: 100% 的設定，避免跑版 */
             .logo-container {
-                width: 100%;
-                justify-content: center; /* Logo 置中 */
-            }
-
-            /* 讓使用者區塊重新可見並垂直堆疊 */
-            .user-auth-section {
-                width: 100%;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .user-auth-section .welcome-msg {
-                order: 1; /* 將歡迎訊息放在最上面 */
-                width: 100%;
+                width: auto;
                 justify-content: center;
             }
 
-            .user-auth-section .welcome-msg strong {
-                display: inline; /* 重新顯示使用者名稱 */
-            }
-
-            .user-auth-section form {
-                order: 2; /* 登出按鈕在中間 */
-            }
-
-            /* 如果是未登入狀態，將兩個按鈕並排 */
-            .user-auth-buttons-wrapper {
-                display: flex;
-                gap: 15px;
-                width: 100%;
-                justify-content: center;
-            }
-
-            .user-auth-buttons-wrapper > a {
-                flex-grow: 1;
-                text-align: center;
+            .container {
+                padding: 15px;
             }
 
             .main-container {
-                margin-top: 20px;
+                flex-direction: column; /* 上下排列 */
+                gap: 20px;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+                max-width: 100%;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+
+            .right-panel::before {
+                display: none; /* 隱藏左側裝飾條 */
             }
 
             #description-title {
@@ -667,11 +723,7 @@
 
             #description-text {
                 font-size: 1em;
-                line-height: 1.7;
-            }
-
-            .right-panel {
-                padding: 20px;
+                line-height: 1.6;
             }
 
             .back-to-company-btn {
@@ -741,20 +793,62 @@
 </header>
 
 <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+<!-- homepage.html 的 mobile-nav 部分 -->
 <nav class="mobile-nav" id="mobile-nav">
     <div class="mobile-nav-header">
+        <!-- 這裡也可以放一個小的 Logo -->
+        <span style="font-weight:bold; color:#1d3557; font-size:1.2em;">OLI Menu</span>
         <button class="mobile-nav-close" id="mobile-nav-close">
             <i class="ri-close-line"></i>
         </button>
     </div>
-    <div class="mobile-nav-links">
-        <a href="{% url 'homepage' %}">工具總覽</a>
+
+    <!-- 手機版會員資訊區塊 (新增) -->
+    <div class="mobile-user-info">
         {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}">會員中心</a>
-            <a href="{% url 'products:list' %}">購買/續訂</a>
+            <div class="mobile-welcome">
+                <i class="ri-user-smile-line"></i>
+                <span>嗨，<strong>{{ user.username }}</strong></span>
+            </div>
+
+            {% if user.is_superuser %}
+                <a href="{% url 'admin:index' %}" class="mobile-nav-item special">
+                    <i class="ri-settings-3-line"></i> 後台管理
+                </a>
+            {% endif %}
         {% else %}
-            <span class="nav-link-requires-auth">會員中心</span>
-            <span class="nav-link-requires-auth">購買/續訂</span>
+            <div class="mobile-auth-buttons">
+                <a href="{% url 'login' %}" class="mobile-btn-login">登入</a>
+                <a href="{% url 'signup' %}" class="mobile-btn-signup">註冊</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mobile-nav-links">
+        <a href="{% url 'homepage' %}" class="mobile-nav-item">
+            <i class="ri-apps-line"></i> 工具總覽
+        </a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="mobile-nav-item">
+                <i class="ri-account-circle-line"></i> 會員中心
+            </a>
+            <a href="{% url 'products:list' %}" class="mobile-nav-item">
+                <i class="ri-vip-crown-line"></i> 購買/續訂
+            </a>
+            <!-- 登出按鈕 -->
+            <form method="post" action="{% url 'logout' %}" style="width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="mobile-nav-item logout">
+                    <i class="ri-logout-box-r-line"></i> 登出
+                </button>
+            </form>
+        {% else %}
+            <span class="mobile-nav-item disabled">
+                <i class="ri-account-circle-line"></i> 會員中心 (請先登入)
+            </span>
+            <span class="mobile-nav-item disabled">
+                <i class="ri-vip-crown-line"></i> 購買/續訂 (請先登入)
+            </span>
         {% endif %}
     </div>
 </nav>
@@ -810,14 +904,26 @@
                 <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
                    data-title="結構設計 | 基礎版與錨栓"
                    data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
-                   data-version="v1.1.5"
+                   data-version="v1.2.251120"
                    data-updated="2025-11-20"
                    data-history='[
                         {
-                            "version": "v1.1.251120",
+                            "version": "v1.2.251120",
                             "date": "2025-11-20",
                             "changes": [
-                                "不喪失運算精度下，提升運算速度約10倍，減少使用者等待時間。",
+                                "不喪失運算精度下，大幅優化運算核心，速度提升約 10 倍。",
+                                "全面升級繪圖引擎，採用 SVG 向量圖技術，報告書圖片清晰度與列印品質顯著提升。",
+                                "優化報告書排版，解決表格過寬溢出問題，並支援圖例說明與數值標註。",
+                                "新增錨栓群組剪力破壞錐 (Vcbg) 的精確幾何可視化功能。"
+                            ]
+                        },
+                        {
+                            "version": "v1.1.251110",
+                            "date": "2025-11-10",
+                            "changes": [
+                                "新增 MKS (公制) 與 Imperial (英制) 單位即時切換功能。",
+                                "支援圓形與八邊形基礎版形狀。",
+                                "修正混凝土承壓強度計算中，關於 A2 (支承面積) 的幾何判定邏輯。"
                             ]
                         },
                         {
@@ -825,6 +931,7 @@
                             "date": "2025-10-28",
                             "changes": [
                                 "推出第一版基礎版與錨栓分析工具。",
+                                "支援 本國鋼筋混凝土設計規範之錨栓拉力 (Tension) 與剪力 (Shear) 檢核。"
                             ]
                         }
                    ]'>鋼柱基礎版及錨栓設計檢核</a>
