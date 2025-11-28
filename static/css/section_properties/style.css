@@ -1,306 +1,198 @@
-/* static/section_properties/css/style.css */
+/* section_properties/static/section_properties/css/style.css */
 
-/* ... (保留原本的 :root 設定) ... */
 :root {
-    /* 沿用原本設定，這裡微調深色以符合截圖 */
-    --font-primary: 'Noto Sans JP', 'Microsoft JhengHei', sans-serif;
-    --color-brand-dark: #103154; /* 截圖中的深藏青色 */
-    --color-brand-main: #34495e;
-    --color-accent: #2980b9; /* 連結藍色 */
-    --color-bg-screen: #fbfbfb; /* 背景稍微白一點 */
-    --color-bg-breadcrumb: #eff2f5; /* 麵包屑的淺灰背景 */
-    --color-text-secondary: #7f8c8d;
-    --color-white: #ffffff;
-    --color-border: #e9ecef;
+    --primary: #0f172a;      /* 深邃藍黑 */
+    --primary-light: #334155;
+    --accent: #2563eb;       /* 工程藍 */
+    --accent-hover: #1d4ed8;
+    --bg-app: #f1f5f9;       /* 應用程式背景 */
+    --bg-panel: #ffffff;
+    --border: #e2e8f0;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --font-ui: 'Noto Sans TC', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 }
+
+* { box-sizing: border-box; }
 
 body {
-    font-family: var(--font-primary);
-    background-color: var(--color-bg-screen);
-    color: #333;
     margin: 0;
-    padding: 20px;
-    line-height: 1.5;
-}
-
-.main-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-bottom: 80px;
-}
-
-/* --- 1. 麵包屑導航 (Breadcrumb) - 新增 --- */
-.breadcrumb-nav {
-    background-color: var(--color-bg-breadcrumb);
-    padding: 12px 20px;
-    border-radius: 6px;
-    margin-bottom: 30px;
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg-app);
+    font-family: var(--font-ui);
+    color: var(--text-main);
     display: flex;
+    flex-direction: column;
+}
+
+/* --- Header --- */
+.app-header {
+    height: 48px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 20px;
+    flex-shrink: 0;
+    z-index: 10;
 }
 
-.breadcrumb-nav a {
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
+.header-left { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.back-link { text-decoration: none; color: var(--text-sub); display: flex; align-items: center; gap: 4px; transition: 0.2s; }
+.back-link:hover { color: var(--accent); }
+.divider { color: #cbd5e1; }
+.current-page { font-weight: 500; color: var(--primary); }
+.app-title { font-size: 1rem; font-weight: 700; color: var(--primary-light); margin: 0; }
+
+/* --- Main Workspace --- */
+.main-workspace {
+    flex: 1;
+    padding: 12px;
+    min-height: 0;
+    display: flex;
 }
 
-.breadcrumb-nav a:hover {
-    color: var(--color-brand-dark);
-    text-decoration: underline;
-}
-
-.breadcrumb-separator {
-    margin: 0 10px;
-    color: #bdc3c7;
-    font-size: 0.8rem;
-}
-
-.breadcrumb-current {
-    color: var(--color-text-secondary);
-    font-weight: 400;
-}
-
-/* --- 2. 標題區域 (Header) - 修改 --- */
-.main-title-container {
-    text-align: left; /* 改為靠左對齊，符合截圖 */
-    margin-bottom: 30px;
-    border-bottom: 1px solid #dee2e6; /* 底部灰色分隔線 */
-    padding-bottom: 15px;
-}
-
-.main-title {
-    color: var(--color-brand-dark);
-    font-size: 2rem; /* 32px */
-    font-weight: 800; /* 特粗體 */
-    margin: 0;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-}
-
-.sub-title {
-    color: var(--color-text-secondary);
-    font-size: 1rem;
-    margin-top: 8px;
-    font-weight: 400;
-    font-family: var(--font-primary);
-}
-
-/* ... (以下的 Grid, Input, Table 等樣式保持原本的不變) ... */
-/* 為了確保完整性，請確保以下樣式存在 */
-.main-layout-grid {
+.workspace-grid {
+    width: 100%;
+    height: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    align-items: start;
+    /* [修正] 左側 360px，右側加大至 400px，中間自適應 */
+    grid-template-columns: 360px 1fr 400px;
+    gap: 12px;
 }
 
-@media (max-width: 992px) {
-    .main-layout-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .section-result {
-        grid-column: span 2;
-    }
-}
-
-@media (max-width: 768px) {
-    .main-layout-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section-result {
-        grid-column: span 1;
-    }
-}
-
-.section-container {
-    background-color: var(--color-white);
+/* --- Panel Styles --- */
+.panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    padding: 20px;
-    border: 1px solid var(--color-border);
-    height: 100%; /* 撐滿 Grid 的高度 */
-    display: flex; /* 啟用 Flexbox */
-    flex-direction: column; /* 垂直排列內容 */
-}
-
-.section-title {
-    font-size: 1.1rem;
-    color: var(--color-brand-dark);
-    font-weight: 700;
-    border-left: 5px solid var(--color-accent);
-    padding-left: 10px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-}
-
-/* Input styles... */
-.input-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
 }
 
-.input-group {
+.panel-header {
+    padding: 10px 15px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
     display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
 }
 
-.input-group label {
+.panel-header h3 {
+    margin: 0;
     font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-brand-main);
-    margin-bottom: 5px;
-}
-
-.input-group input {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-.unit {
-    font-size: 0.8rem;
-    color: #888;
-    margin-left: 5px;
-}
-
-/* Canvas wrapper */
-.canvas-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #fafafa;
-    border: 1px dashed #ccc;
-    border-radius: 4px;
-    min-height: 300px;
-    flex: 1; /* 自動伸展填滿剩餘垂直空間 */
-}
-
-.section-result {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Result Table */
-.result-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-
-.result-table th, .result-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.result-table th {
-    text-align: left;
-    background-color: #f8f9fa;
-    color: var(--color-brand-main);
-
-    /* 修改這裡：將原本的 50% 改為 35% (甚至 30%) */
-    width: 35%;
-
-    font-weight: 600;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.result-table td {
-    text-align: right;
-    font-family: monospace;
-    font-size: 1rem;
-    color: var(--color-brand-dark);
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--color-border);
-
-    /* 新增這裡：強制內容不換行，讓單位永遠跟在數字後面 */
-    white-space: nowrap;
-}
-
-/* Buttons */
-.action-buttons-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 15px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: center;
-    z-index: 100;
-    backdrop-filter: blur(5px);
-}
-
-.calculate-button {
-    background-color: var(--color-brand-dark);
-    color: white;
-    border: none;
-    padding: 12px 40px;
-    font-size: 1.1rem;
     font-weight: 700;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
-    transition: all 0.3s ease;
-}
-
-.calculate-button:hover {
-    background-color: var(--color-accent);
-    transform: translateY(-2px);
-}
-
-/* Radio Button 樣式 */
-.unit-toggle-container {
-    display: flex;
-    gap: 15px;
-    font-size: 0.9rem;
-    background-color: #f8f9fa;
-    padding: 5px 10px;
-    border-radius: 20px;
-}
-
-.radio-label {
-    cursor: pointer;
+    color: var(--primary-light);
     display: flex;
     align-items: center;
-    gap: 5px;
-    color: var(--color-brand-main);
-    font-weight: 500;
+    gap: 6px;
 }
 
-.radio-label input {
-    accent-color: var(--color-accent); /* 設定選取顏色為藍色 */
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
 }
 
-/* 單位文字樣式 */
-.unit-text {
-    font-size: 0.85rem;
-    color: #95a5a6;
-    margin-left: 5px;
-    font-weight: normal;
-    display: inline-block;
-    width: 35px; /* 固定寬度讓數字對齊更整齊 */
-    text-align: left;
-}
+/* Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
 
+/* --- Inputs --- */
+.control-group { margin-bottom: 15px; }
+.control-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; }
+.form-select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; background-color: #fff; }
+.divider-line { height: 1px; background: var(--border); margin: 15px 0; }
+
+.row-2-col { display: flex; gap: 12px; margin-bottom: 10px; }
+.input-group { flex: 1; min-width: 0; }
+.input-group label {
+    display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .section-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 1rem;
-    box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
+    width: 100%; padding: 6px 8px;
+    border: 1px solid #cbd5e1; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 0.9rem; text-align: right;
+}
+.section-input:focus { outline: none; border-color: var(--accent); }
+.input-group-header {
+    font-size: 0.8rem; font-weight: 700; color: var(--primary-light);
+    margin: 12px 0 6px 0; border-left: 3px solid var(--accent); padding-left: 6px;
 }
 
+.panel-footer {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    background: #f8fafc;
+    flex-shrink: 0;
+}
+.btn-calculate {
+    width: 100%; padding: 10px; background: var(--primary); color: #fff;
+    border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
+    display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;
+}
+.btn-calculate:hover { background: #0f172a; transform: translateY(-1px); }
+
+/* --- Canvas --- */
+.canvas-panel {
+    background-color: #e5e7eb;
+    position: relative;
+    display: flex;
+}
+.canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+canvas {
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.canvas-legend {
+    position: absolute; bottom: 10px; left: 10px;
+    background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px;
+    font-size: 0.75rem; color: var(--text-sub); border: 1px solid #e2e8f0;
+}
+
+/* --- Results --- */
+.unit-toggle { display: flex; gap: 8px; font-size: 0.8rem; background: #e2e8f0; padding: 2px; border-radius: 4px; }
+.unit-toggle label { padding: 2px 8px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; }
+.unit-toggle input { display: none; }
+.unit-toggle label:has(input:checked) { background: #fff; color: var(--accent); font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+/* [修正] 使用 table-layout: fixed 和寬度調整來避免橫向捲軸 */
+.result-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.result-table th, .result-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+.result-table th {
+    text-align: left; font-weight: 500; font-size: 0.85rem; color: var(--text-sub);
+    width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.result-table td {
+    text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.table-group-header td { background: #f8fafc; color: var(--primary-light); font-size: 0.8rem; font-weight: 700; padding: 6px 10px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.unit-text { font-size: 0.75rem; color: #94a3b8; margin-left: 4px; display: inline-block; width: 30px; text-align: left;}
+
+/* RWD */
+@media (max-width: 1024px) {
+    body { height: auto; overflow: auto; }
+    .main-workspace { padding: 0; display: block; }
+    .workspace-grid { display: flex; flex-direction: column; gap: 0; }
+    .panel { border-radius: 0; border: none; border-bottom: 1px solid var(--border); box-shadow: none; }
+    .canvas-panel { height: 400px; }
+}

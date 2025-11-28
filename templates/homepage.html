@@ -6,489 +6,478 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OLI | Optimal Lean Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+          rel="stylesheet">
+
     <style>
         /* ==========================================================
-           1. 全域設定 (Global Settings)
+           1. 設計系統變數 (Design Tokens)
+           ========================================================== */
+        :root {
+            --primary-dark: #0f172a;
+            --primary-main: #334155;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-blue: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-pill: 50px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ==========================================================
+           2. 全域設定 (Global Reset)
            ========================================================== */
         html, body {
-            overflow-x: hidden; /* 強制隱藏水平捲軸，防止頁面滑動 */
+            overflow-x: hidden;
             width: 100%;
             margin: 0;
             padding: 0;
+            scroll-behavior: smooth;
         }
 
         body {
-            background-color: #f4f7f9;
-            font-family: '微軟正黑體', 'Microsoft JhengHei', Arial, sans-serif;
-            color: #333;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            line-height: 1.6;
         }
 
         a {
             text-decoration: none;
-            transition: all 0.3s ease;
+            color: inherit;
+            transition: var(--transition-fast);
+        }
+
+        .mono-font, .version-tag, .date {
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* ==========================================================
-           2. 頁首導覽列 (Header & Navigation) - 桌面版
+           3. 頁首導覽列 (Header)
            ========================================================== */
         .top-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 40px;
-            height: 70px;
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 0 5%;
+            height: 72px;
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-sm);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         .logo-img {
-            height: 40px;
+            height: 42px;
         }
 
         .main-nav {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             height: 100%;
             position: relative;
         }
 
         .main-nav-link {
-            padding: 8px 16px;
-            color: #555;
+            padding: 8px 20px;
+            color: var(--text-secondary);
             font-weight: 500;
-            border-radius: 6px;
+            font-size: 0.95rem;
+            border-radius: var(--radius-pill);
             position: relative;
-            display: flex;
-            align-items: center;
-            transition: color 0.3s ease;
             z-index: 1;
-            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .main-nav-link:hover {
-            color: #0056b3;
+            color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.05);
         }
 
         .main-nav-link.active {
-            color: #0056b3;
-            font-weight: bold;
+            color: var(--accent-color);
+            font-weight: 700;
         }
 
-        /* 導覽列下劃線動畫效果 */
         .main-nav::after {
             content: '';
             position: absolute;
-            bottom: 20px;
-            height: 3px;
-            background-color: #0056b3;
-            border-radius: 2px;
-            transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
-            /* JS 會動態控制這兩個變數 */
+            bottom: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-color), #60a5fa);
             left: var(--underline-left, 0);
             width: var(--underline-width, 0);
+            transition: left 0.4s ease, width 0.4s ease;
         }
 
-        /* 會員資訊區塊 (桌面版) */
+        /* User Auth */
         .user-auth-section {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 24px;
         }
 
-        .user-auth-section .welcome-msg {
-            font-weight: 500;
-            color: #333;
-            display: inline-flex;
-            align-items: center;
-            gap: 15px;
+        .user-auth-section .welcome-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
-        .user-auth-section .welcome-msg strong {
-            color: #1d3557;
+        .user-auth-section .welcome-text strong {
+            color: var(--primary-dark);
         }
 
-        .user-auth-section .logout-btn {
+        .logout-btn {
             background: none;
             border: none;
-            padding: 0;
-            font-family: inherit;
-            font-size: 1.2em;
+            color: var(--text-light);
+            font-size: 1.25rem;
             cursor: pointer;
-            color: #888;
-            transition: color 0.2s;
+            padding: 4px;
+            transition: var(--transition-fast);
         }
 
-        .user-auth-section .logout-btn:hover {
-            color: #e63946;
+        .logout-btn:hover {
+            color: #ef4444;
         }
 
-        .user-auth-section .login-btn {
-            color: #555;
-            padding: 8px 18px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
+        .btn-base {
+            padding: 8px 24px;
+            border-radius: var(--radius-pill);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .login-btn {
+            color: var(--primary-main);
+            border: 1px solid #cbd5e1;
+            background: transparent;
+        }
+
+        .login-btn:hover {
             background-color: #fff;
+            border-color: var(--primary-main);
         }
 
-        .user-auth-section .login-btn:hover {
-            background-color: #f8f9fa;
-            border-color: #ccc;
-        }
-
-        .user-auth-section .signup-btn {
-            background-color: #1d3557;
+        .signup-btn {
+            background-color: var(--primary-dark);
             color: white;
-            border-radius: 20px;
-            padding: 9px 20px;
-            border: none;
+            border: 1px solid var(--primary-dark);
         }
 
-        .user-auth-section .signup-btn:hover {
+        .signup-btn:hover {
             background-color: #000;
+            transform: translateY(-1px);
         }
 
-        .user-auth-section .admin-btn {
+        .admin-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            background-color: #fffbe6;
-            color: #721c24;
-            border: 1px solid #ffeeba;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .user-auth-section .admin-btn i {
-            font-size: 1.1em;
-        }
-
-        .user-auth-section .admin-btn:hover {
-            background-color: #ffeeba;
-            border-color: #ffc107;
-            color: #000;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 6px 14px;
+            background-color: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #ffedd5;
+            border-radius: var(--radius-pill);
+            font-size: 0.85rem;
+            margin-left: 10px;
         }
 
         /* ==========================================================
-           3. 主內容佈局 (Main Layout)
+           4. 主內容 (Main Layout)
            ========================================================== */
         .container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 24px;
             flex-grow: 1;
             box-sizing: border-box;
         }
 
         .main-container {
-            display: flex;
-            gap: 30px;
-            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 40px;
+            align-items: start;
         }
 
-        /* 左側工具列表面板 */
+        /* 左側卡片 */
         .left-panel {
-            flex: 1;
-            max-width: 320px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-        }
-
-        .tool-group {
-            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
         }
 
         .tool-group-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #1d3557;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 15px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-left: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tool-group-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            margin-right: 8px;
         }
 
         .tool-group a {
-            display: block;
-            color: #333;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 1em;
-            border-left: 4px solid transparent;
-            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
         }
 
         .tool-group a:hover, .tool-group a.active {
-            background-color: #eaf2f6;
-            color: #1d3557;
-            border-left: 4px solid #457b9d;
-            transform: translateX(5px);
+            background-color: #fff;
+            color: var(--accent-color);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: var(--shadow-blue);
+            transform: translateY(-2px) translateX(4px);
+        }
+
+        .tool-group a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-color);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .tool-group a.active::before {
+            transform: scaleY(1);
         }
 
         .tool-group a.disabled-link {
-            color: #aaa;
+            background-color: rgba(255, 255, 255, 0.4);
+            color: var(--text-light);
+            box-shadow: none;
+            border: 1px dashed #cbd5e1;
             cursor: not-allowed;
-            position: relative;
         }
 
         .tool-group a.disabled-link:hover {
-            background-color: transparent;
-            color: #aaa;
-            border-left: 4px solid transparent;
             transform: none;
+            box-shadow: none;
         }
 
-        .tool-group a.disabled-link::after {
-            content: 'Coming Soon';
-            display: inline-block;
-            background-color: #fca311;
-            color: #fff;
+        .badge {
             font-size: 0.7em;
-            font-weight: bold;
+            background-color: #f1f5f9;
+            color: #64748b;
             padding: 2px 8px;
-            border-radius: 10px;
-            margin-left: 10px;
-            vertical-align: middle;
+            border-radius: 4px;
+            font-weight: bold;
         }
 
-        /* 右側說明面板 */
+        /* 右側面板 */
         .right-panel {
-            flex: 2;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 40px;
-            position: relative;
-        }
-
-        .description-content {
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        #description-title {
-            font-size: 2em;
-            color: #1d3557;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        #description-text {
-            font-size: 1.1em;
-            line-height: 1.8;
-            color: #555;
+            background-color: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 50px;
+            position: sticky;
+            top: 100px;
+            min-height: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
 
         .right-panel::before {
             content: '';
             position: absolute;
-            top: 20px;
-            left: -10px;
-            width: 20px;
-            height: 60px;
-            background-color: #457b9d;
-            border-radius: 5px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--accent-color), #60a5fa);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        #description-title {
+            font-size: 2.2rem;
+            color: var(--primary-dark);
+            margin: 0 0 24px 0;
+            font-weight: 700;
+        }
+
+        #description-text {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
         }
 
         .description-meta {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9em;
-            color: #777;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 30px;
+            padding: 12px 20px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
         }
 
         .meta-item i {
-            font-size: 1.2em;
-            color: #457b9d;
+            color: var(--accent-color);
+            margin-right: 6px;
         }
 
-        /* ==========================================================
-           4. 更新日誌 (Changelog) 與頁尾
-           ========================================================== */
+        /* Changelog */
         .changelog-container {
-            margin-top: 25px;
+            margin-top: 40px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 30px;
         }
 
         .changelog-container details {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .changelog-container summary {
+            padding: 16px 20px;
+            background-color: #f8fafc;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary-main);
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 15px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            font-weight: bold;
-            color: #333;
-            transition: background-color 0.2s;
-            list-style: none;
-        }
-
-        .changelog-container summary:hover {
-            background-color: #e9ecef;
-        }
-
-        .changelog-container summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .changelog-container summary i {
-            font-size: 1.2em;
-            color: #457b9d;
-        }
-
-        .changelog-container details summary::after {
-            content: '\ea6a';
-            font-family: 'remixicon';
-            margin-left: auto;
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .changelog-container details[open] summary::after {
-            transform: rotate(180deg);
         }
 
         .changelog-list {
-            padding: 15px 20px 20px 20px;
-            background-color: #fff;
-            list-style: none;
+            padding: 24px;
             margin: 0;
+            list-style: none;
         }
 
         .changelog-version {
-            font-weight: bold;
-            color: #1d3557;
-            margin-top: 15px;
-        }
-
-        .changelog-version:first-child {
-            margin-top: 0;
-        }
-
-        .changelog-version .date {
-            font-weight: normal;
-            font-size: 0.85em;
-            color: #888;
-            margin-left: 8px;
-        }
-
-        .changelog-details {
-            list-style: none;
-            padding-left: 20px;
-            margin-top: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-top: 24px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f1f5f9;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .changelog-details li {
             position: relative;
-            padding-bottom: 10px;
-            font-size: 0.95em;
+            padding: 8px 0 8px 28px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
         }
 
         .changelog-details li::before {
             content: '\ec5c';
             font-family: 'remixicon';
             position: absolute;
-            left: -25px;
-            top: 2px;
-            color: #28a745;
+            left: 0;
+            top: 10px;
+            color: #10b981;
         }
 
+        /* Footer & Buttons */
         .back-to-company-section {
             text-align: center;
-            margin-top: 40px;
+            margin: 60px 0 40px;
         }
 
         .back-to-company-btn {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 15px 35px;
-            background-image: linear-gradient(to right, #457b9d 0%, #1d3557 100%);
+            gap: 12px;
+            padding: 16px 40px;
+            background-image: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-dark) 100%);
             color: #ffffff;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(69, 123, 157, 0.3);
-            background-size: 200% auto;
-            transition: all 0.4s ease;
-        }
-
-        .back-to-company-btn i {
-            font-size: 1.3em;
-            transition: transform 0.3s ease;
-        }
-
-        .back-to-company-btn:hover {
-            background-position: right center;
-            box-shadow: 0 6px 20px rgba(29, 53, 87, 0.4);
-            transform: translateY(-3px);
-        }
-
-        .back-to-company-btn:hover i {
-            transform: translateX(-5px);
+            border-radius: var(--radius-pill);
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px -5px rgba(30, 41, 59, 0.4);
         }
 
         .footer {
             text-align: center;
-            padding: 20px;
-            font-size: 0.9em;
-            color: #aaa;
-            background-color: #ffffff;
-            margin-top: 30px;
-            border-top: 1px solid #e0e0e0;
+            padding: 30px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            background-color: var(--bg-card);
+            border-top: 1px solid #e2e8f0;
+            margin-top: auto;
         }
 
         /* ==========================================================
-           5. 響應式設計與漢堡選單 (Responsive & Mobile Nav)
+           5. 響應式與手機選單 (Responsive & Mobile Menu)
            ========================================================== */
 
-        /* 漢堡按鈕 (預設隱藏) */
+        /* 漢堡按鈕 - 預設隱藏 (桌機版) */
         .mobile-nav-toggle {
             display: none;
             background: none;
             border: none;
-            font-size: 28px;
+            font-size: 24px;
+            color: var(--primary-dark);
             cursor: pointer;
-            color: #1d3557;
         }
 
-        /* 遮罩層 */
+        /* 手機選單容器 - 預設隱藏 (桌機版) */
+        .mobile-nav {
+            display: none; /* 關鍵修正：桌機版完全隱藏 */
+        }
+
         .mobile-nav-overlay {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -498,237 +487,179 @@
             z-index: 1999;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s;
+            transition: opacity 0.3s ease;
         }
 
         .mobile-nav-overlay.active {
             opacity: 1;
             visibility: visible;
-            transition: opacity 0.3s ease;
+            display: block;
         }
 
-        /* 側邊滑出選單 */
-        .mobile-nav {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 280px;
-            max-width: 80%;
-            height: 100%;
-            background-color: #fff;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            z-index: 2000;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%); /* 預設藏在右側 */
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .mobile-nav.active {
-            transform: translateX(0); /* 滑入 */
-        }
-
-        .mobile-nav-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 15px;
-        }
-
-        .mobile-nav-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #555;
-        }
-
-        .mobile-nav-links {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .mobile-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: #333;
-            text-decoration: none;
-            border-radius: 6px;
-            transition: background 0.2s;
-            font-size: 1em;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-        }
-
-        .mobile-nav-item:hover {
-            background-color: #f0f4f8;
-            color: #0056b3;
-        }
-
-        .mobile-nav-item.special {
-            color: #e63946;
-            background-color: #fff5f5;
-        }
-
-        .mobile-nav-item.logout {
-            color: #666;
-            border-top: 1px solid #eee;
-            margin-top: 10px;
-        }
-
-        .mobile-nav-item.disabled {
-            color: #aaa;
-            cursor: not-allowed;
-        }
-
-        .mobile-nav-item i {
-            font-size: 1.2em;
-            color: #457b9d;
-        }
-
-        /* 手機版會員資訊區塊 */
-        .mobile-user-info {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .mobile-welcome {
-            margin-bottom: 10px;
-            color: #1d3557;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .mobile-auth-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .mobile-btn-login, .mobile-btn-signup {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .mobile-btn-login {
-            background: #fff;
-            border: 1px solid #ddd;
-            color: #555;
-        }
-
-        .mobile-btn-signup {
-            background: #1d3557;
-            color: #fff;
-            border: 1px solid #1d3557;
-        }
-
-        /* === 媒體查詢 (Media Queries) === */
-
-        /* 平板直向 (小於 992px) */
+        /* 當螢幕小於 992px 時，啟動 RWD 模式 */
         @media (max-width: 992px) {
             .top-header {
                 padding: 0 20px;
-                height: 65px; /* 稍微增加高度以容納放大的 Logo */
-                position: relative; /* 關鍵：為了讓內部的 Logo 絕對定位 */
-                justify-content: flex-end; /* 讓漢堡按鈕靠右對齊 */
             }
 
-            .logo-container {
-                position: absolute; /* 脫離文檔流 */
-                left: 50%; /* 水平 50% */
-                top: 50%; /* 垂直 50% */
-                transform: translate(-50%, -50%); /* 精確修正回中心點 */
-                width: auto; /* 重置寬度 */
-                z-index: 1; /* 確保在底層但可見 */
-            }
-
-            .logo-img {
-                height: 52px; /* [需求] 放大 Logo (原桌機版為 40px) */
-                width: auto;
-                transition: height 0.3s ease;
-            }
-
-            /* 隱藏桌面版導覽與會員區塊 */
-            .main-nav,
-            .user-auth-section {
+            /* 隱藏桌機版導覽 */
+            .main-nav, .user-auth-section {
                 display: none;
             }
 
             /* 顯示漢堡按鈕 */
             .mobile-nav-toggle {
                 display: block;
-                font-size: 28px; /* 按鈕也可以稍微大一點 */
-                color: #1d3557;
-                z-index: 2; /* 確保按鈕在最上層可點擊 */
-            }
-        }
-
-        /* 手機版 (小於 768px) */
-        @media (max-width: 600px) {
-            /* 覆蓋原本的垂直排列，強制保持橫向 */
-            .top-header {
-                flex-direction: row;
-                height: 65px;
-                gap: 0;
             }
 
-            /* 修正原本 600px 以下 logo width: 100% 的設定，避免跑版 */
-            .logo-container {
-                width: auto;
-                justify-content: center;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
+            /* 切換佈局為單欄 */
             .main-container {
-                flex-direction: column; /* 上下排列 */
+                grid-template-columns: 1fr;
                 gap: 20px;
             }
 
-            .left-panel, .right-panel {
-                width: 100%;
-                max-width: 100%;
-                padding: 20px;
+            .left-panel {
+                order: 1;
+            }
+
+            .right-panel {
+                order: 2;
+                padding: 30px;
+                min-height: auto;
+            }
+
+            /* === 手機選單 CSS (關鍵修正區) === */
+            .mobile-nav {
+                display: flex; /* 恢復顯示屬性 */
+                flex-direction: column;
+                position: fixed; /* 絕對定位，浮在最上層 */
+                top: 0;
+                right: 0;
+                width: 280px;
+                max-width: 80%;
+                height: 100vh;
+                background-color: #fff;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                z-index: 2000;
+                padding: 24px;
                 box-sizing: border-box;
+                transform: translateX(100%); /* 預設藏在右側 */
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            .right-panel::before {
-                display: none; /* 隱藏左側裝飾條 */
+            .mobile-nav.active {
+                transform: translateX(0); /* 滑入 */
             }
 
-            #description-title {
-                font-size: 1.6em;
+            .mobile-nav-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 15px;
+            }
+
+            .mobile-nav-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: var(--text-secondary);
+            }
+
+            .mobile-user-info {
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
                 text-align: center;
             }
 
-            #description-text {
-                font-size: 1em;
-                line-height: 1.6;
+            .mobile-welcome {
+                margin-bottom: 10px;
+                color: var(--primary-dark);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
             }
 
-            .back-to-company-btn {
-                padding: 12px 25px;
-                font-size: 1em;
+            .mobile-auth-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            .mobile-btn-login, .mobile-btn-signup {
+                flex: 1;
+                padding: 10px;
+                border-radius: 6px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 0.9rem;
+            }
+
+            .mobile-btn-login {
+                border: 1px solid #cbd5e1;
+                color: var(--text-main);
+            }
+
+            .mobile-btn-signup {
+                background: var(--primary-dark);
+                color: #fff;
+            }
+
+            .mobile-nav-links {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .mobile-nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 15px;
+                color: var(--text-main);
+                border-radius: 8px;
+                transition: background 0.2s;
+                background: none;
+                border: none;
+                width: 100%;
+                text-align: left;
+                font-size: 1rem;
+            }
+
+            .mobile-nav-item:hover {
+                background-color: #f1f5f9;
+                color: var(--accent-color);
+            }
+
+            .mobile-nav-item.logout {
+                margin-top: 10px;
+                border-top: 1px solid #f1f5f9;
+                color: var(--text-secondary);
+            }
+
+            .mobile-nav-item i {
+                color: var(--accent-color);
+                font-size: 1.2rem;
+            }
+
+            .mobile-nav-item.disabled {
+                opacity: 0.5;
+            }
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            #description-title {
+                font-size: 1.6rem;
             }
         }
     </style>
@@ -749,65 +680,58 @@
             <a href="{% url 'products:list' %}"
                class="main-nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">購買/續訂</a>
         {% else %}
-            <span class="main-nav-link nav-link-requires-auth">會員中心</span>
-            <span class="main-nav-link nav-link-requires-auth">購買/續訂</span>
+            <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">會員中心</span>
+            <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">購買/續訂</span>
         {% endif %}
     </nav>
 
-    <!--
-    ================================================================
-    ====   【核心修改】刪除重複的 user-auth-section 區塊        ====
-    ================================================================
-    -->
     <div class="user-auth-section">
         {% if user.is_authenticated %}
             <div class="welcome-msg">
                 <span class="welcome-text">
-                    歡迎, <strong>{{ user.username }}</strong>
+                    Hello, <strong>{{ user.username }}</strong>
                 </span>
                 {% if user.is_superuser %}
                     <a href="{% url 'admin:index' %}" class="admin-btn" title="後台管理">
-                        <i class="ri-settings-3-line"></i>
-                        <span>後台管理</span>
+                        <i class="ri-settings-3-fill"></i>
+                        <span>Admin</span>
                     </a>
                 {% endif %}
             </div>
-            <form method="post" action="{% url 'logout' %}">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" class="logout-btn" title="登出">
                     <i class="ri-logout-box-r-line"></i>
                 </button>
             </form>
         {% else %}
-            <div class="user-auth-buttons-wrapper">
-                <a href="{% url 'login' %}" class="login-btn">登入</a>
-                <a href="{% url 'signup' %}" class="signup-btn">註冊</a>
+            <div class="user-auth-buttons-wrapper" style="display:flex; gap:10px;">
+                <a href="{% url 'login' %}" class="btn-base login-btn">登入</a>
+                <a href="{% url 'signup' %}" class="btn-base signup-btn">免費註冊</a>
             </div>
         {% endif %}
     </div>
 
-    <!-- 漢堡按鈕 -->
+    <!-- 漢堡按鈕 (Mobile Only) -->
     <button class="mobile-nav-toggle" id="mobile-nav-toggle">
         <i class="ri-menu-line"></i>
     </button>
 </header>
 
+<!-- Mobile Navigation Overlay & Menu -->
 <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
-<!-- homepage.html 的 mobile-nav 部分 -->
 <nav class="mobile-nav" id="mobile-nav">
     <div class="mobile-nav-header">
-        <!-- 這裡也可以放一個小的 Logo -->
-        <span style="font-weight:bold; color:#1d3557; font-size:1.2em;">OLI Menu</span>
+        <span style="font-weight:800; color:var(--primary-dark); font-size:1.4em; letter-spacing: -0.5px;">OLI MENU</span>
         <button class="mobile-nav-close" id="mobile-nav-close">
-            <i class="ri-close-line"></i>
+            <i class="ri-close-large-line"></i>
         </button>
     </div>
 
-    <!-- 手機版會員資訊區塊 (新增) -->
     <div class="mobile-user-info">
         {% if user.is_authenticated %}
             <div class="mobile-welcome">
-                <i class="ri-user-smile-line"></i>
+                <i class="ri-user-smile-line" style="color:var(--accent-color); font-size:1.2em;"></i>
                 <span>嗨，<strong>{{ user.username }}</strong></span>
             </div>
 
@@ -835,7 +759,6 @@
             <a href="{% url 'products:list' %}" class="mobile-nav-item">
                 <i class="ri-vip-crown-line"></i> 購買/續訂
             </a>
-            <!-- 登出按鈕 -->
             <form method="post" action="{% url 'logout' %}" style="width: 100%;">
                 {% csrf_token %}
                 <button type="submit" class="mobile-nav-item logout">
@@ -853,9 +776,9 @@
     </div>
 </nav>
 
-<!-- ... (後續的 HTML 和 JavaScript 保持不變) ... -->
 <div class="container">
     <div class="main-container" id="main-container">
+        <!-- 左側工具面板 -->
         <aside class="left-panel">
             <div class="tool-group">
                 <div class="tool-group-title">耐震設計規範</div>
@@ -866,124 +789,90 @@
                    data-version="v1.1.251119"
                    data-updated="2025-11-19"
                    data-history='[
-                        {
-                            "version": "v1.1.251119",
-                            "date": "2025-11-19",
-                            "changes": [
-                                "新增「地盤分類」選項，Fa 及 Fv 值現在依據使用者選擇動態計算。",
-                                "簡化計算器結果頁面，聚焦於最終係數，版面更清晰。",
-                                "全面優化報告書排版引擎，實現更精確的「所見即所得」預覽與分頁控制。",
-                                "為報告書新增完整的垂直地震力計算過程章節。"
-                            ]
-                        },
-                        {
-                            "version": "v1.0.251028",
-                            "date": "2025-10-28",
-                            "changes": [
-                                "推出第一版靜力分析工具。",
-                                "整合全台灣鄉鎮市區地震參數。",
-                                "支援近斷層效應調整計算。",
-                                "支援臺北盆地專屬設計譜。"
-                            ]
-                        }
-                   ]'
-                >靜力分析</a>
+                        {"version": "v1.1.251119", "date": "2025-11-19", "changes": ["新增「地盤分類」選項，Fa 及 Fv 值現在依據使用者選擇動態計算。", "簡化計算器結果頁面，聚焦於最終係數，版面更清晰。", "全面優化報告書排版引擎。", "為報告書新增完整的垂直地震力計算過程章節。"]},
+                        {"version": "v1.0.251028", "date": "2025-10-28", "changes": ["推出第一版靜力分析工具。", "整合全台灣鄉鎮市區地震參數。", "支援近斷層效應調整計算。", "支援臺北盆地專屬設計譜。"]}
+                   ]'>
+                    <span>靜力分析</span>
+                </a>
             </div>
+
             <div class="tool-group">
                 <div class="tool-group-title">耐風設計規範</div>
                 <a href="{% url 'wind_calculation_close' %}" class="tool-link"
                    data-title="耐風設計 | 封閉式建築"
                    data-description="針對封閉式或部分封閉式建築，依據「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，涵蓋各種地形、陣風反應因子等複雜參數，提供設計風力評估。"
                    data-version="v1.0.251128"
-                   data-updated="2025-11-28" data-history='[
-                        {
-                            "version": "v1.0.251128",
-                            "date": "2025-11-28",
-                            "changes": [
-                                "推出第一版封閉式或部分封閉式建築風力計算器。",
-                                "目前只提供山型(gable)屋頂建築物之風力計算。",
-                                "提供主結構及局部構材及披覆物之風力(壓)計算。",
-                                "依據規範支援山脊、山與懸崖之地形效應。",
-                                "山牆可以單一面積或是精細分割計算。"
-                            ]
-                        }
-                   ]'>封閉或部分封閉式建築</a>
+                   data-updated="2025-11-28"
+                   data-history='[
+                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["推出第一版封閉式或部分封閉式建築風力計算器。", "目前只提供山型(gable)屋頂建築物之風力計算。", "提供主結構及局部構材及披覆物之風力(壓)計算。", "依據規範支援山脊、山與懸崖之地形效應。", "山牆可以單一面積或是精細分割計算。"]}
+                   ]'>
+                    <span>封閉或部分封閉式建築</span>
+                </a>
+
                 <a class="tool-link disabled-link"
                    data-title="耐風設計 | 開放式建築"
-                   data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具依據我國「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，以應對台灣多變的氣候挑戰。"
+                   data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具將依據我國「建築物耐風設計規範及解說」，提供精確設計風壓。"
                    data-version="v0.0.0"
-                   data-updated="20XX-XX-XX">開放式建築</a>
+                   data-updated="Coming Soon">
+                    <span>開放式建築</span>
+                    <span class="badge">Coming Soon</span>
+                </a>
             </div>
+
             <div class="tool-group">
                 <div class="tool-group-title">結構設計</div>
                 <a href="{% url 'section_index' %}" class="tool-link"
                    data-title="結構設計 | 斷面性質計算"
-                   data-description="提供各類常見結構斷面（H型鋼、槽鋼、C型鋼、角鋼、T型鋼、Z型鋼、圓管、方管）之幾何性質計算工具。即時繪製斷面圖形，並自動計算斷面積、慣性矩、迴轉半徑、塑性斷面模數及翹曲常數等關鍵參數，支援 mm/cm 單位切換。"
+                   data-description="提供各類常見結構斷面（H型鋼、槽鋼、C型鋼、角鋼、T型鋼、Z型鋼、圓管、方管）之幾何性質計算工具。即時繪製斷面圖形，並自動計算斷面積、慣性矩、迴轉半徑、塑性斷面模數及翹曲常數等關鍵參數。"
                    data-version="v1.0.251128"
                    data-updated="2025-11-28"
                    data-history='[
-                        {
-                            "version": "v1.0.251128",
-                            "date": "2025-11-28",
-                            "changes": [
-                                "推出第一版斷面性質計算器。",
-                                "支援 8 種常見結構斷面 (H, Channel, C, Angle, T, Z, Pipe, Box)。",
-                                "提供即時斷面繪圖與動態參數輸入介面。",
-                                "支援 mm 與 cm 單位即時切換顯示。",
-                                "包含塑性斷面模數 (Zx, Zy) 與翹曲常數 (Cw) 計算。"
-                            ]
-                        }
-                   ]'>斷面性質計算器</a>
+                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["推出第一版斷面性質計算器。", "支援 8 種常見結構斷面。", "提供即時斷面繪圖與動態參數輸入介面。", "支援 mm 與 cm 單位即時切換顯示。", "包含塑性斷面模數 (Zx, Zy) 與翹曲常數 (Cw) 計算。"]}
+                   ]'>
+                    <span>斷面性質計算器</span>
+                </a>
+
                 <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
                    data-title="結構設計 | 基礎版與錨栓"
-                   data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"
+                   data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告。"
                    data-version="v1.2.251120"
                    data-updated="2025-11-20"
                    data-history='[
-                        {
-                            "version": "v1.2.251120",
-                            "date": "2025-11-20",
-                            "changes": [
-                                "不喪失運算精度下，大幅優化運算核心，速度提升約 10 倍。",
-                                "全面升級繪圖引擎，採用 SVG 向量圖技術，報告書圖片清晰度與列印品質顯著提升。",
-                                "優化報告書排版，解決表格過寬溢出問題，並支援圖例說明與數值標註。",
-                                "新增錨栓群組剪力破壞錐 (Vcbg) 的精確幾何可視化功能。"
-                            ]
-                        },
-                        {
-                            "version": "v1.1.251110",
-                            "date": "2025-11-10",
-                            "changes": [
-                                "新增 MKS (公制) 與 Imperial (英制) 單位即時切換功能。",
-                                "支援圓形與八邊形基礎版形狀。",
-                                "修正混凝土承壓強度計算中，關於 A2 (支承面積) 的幾何判定邏輯。"
-                            ]
-                        },
-                        {
-                            "version": "v1.0.251028",
-                            "date": "2025-10-28",
-                            "changes": [
-                                "推出第一版基礎版與錨栓分析工具。",
-                                "支援 本國鋼筋混凝土設計規範之錨栓拉力 (Tension) 與剪力 (Shear) 檢核。"
-                            ]
-                        }
-                   ]'>鋼柱基礎版及錨栓設計檢核</a>
+                        {"version": "v1.2.251120", "date": "2025-11-20", "changes": ["大幅優化運算核心，速度提升約 10 倍。", "全面升級繪圖引擎，採用 SVG 向量圖技術。", "優化報告書排版。", "新增錨栓群組剪力破壞錐 (Vcbg) 的精確幾何可視化功能。"]},
+                        {"version": "v1.1.251110", "date": "2025-11-10", "changes": ["新增 MKS (公制) 與 Imperial (英制) 單位即時切換功能。", "支援圓形與八邊形基礎版形狀。", "修正混凝土承壓強度計算邏輯。"]},
+                        {"version": "v1.0.251028", "date": "2025-10-28", "changes": ["推出第一版基礎版與錨栓分析工具。"]}
+                   ]'>
+                    <span>鋼柱基礎版及錨栓設計檢核</span>
+                </a>
             </div>
         </aside>
+
+        <!-- 右側詳細說明面板 -->
         <main class="right-panel">
             <div class="description-content" id="description-content">
                 <h2 id="description-title">歡迎使用 OLi 平台</h2>
+
                 <div class="description-meta" id="description-meta" style="display: none;">
-                    <div class="meta-item"><i class="ri-price-tag-3-line"></i><span id="meta-version"></span></div>
-                    <div class="meta-item"><i class="ri-calendar-2-line"></i><span>最後更新: <span
-                            id="meta-updated"></span></span></div>
+                    <div class="meta-item">
+                        <i class="ri-price-tag-3-fill"></i>
+                        <span id="meta-version"></span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="ri-calendar-2-fill"></i>
+                        <span>最後更新: <span id="meta-updated"></span></span>
+                    </div>
                 </div>
-                <p id="description-text">OLI (Optimal Lean Interface)
-                    是一個專為結構工程師打造的線上輔助設計平台。<br><br>請將滑鼠移至左方的工具連結上，這裡將會顯示該工具的詳細說明與介紹。我們的目標是提供一個簡潔、高效且符合最新設計規範的計算環境，協助您應對日常工作中的各種挑戰。
+
+                <p id="description-text">
+                    OLI (Optimal Lean Interface) 是一個專為結構工程師打造的線上輔助設計平台。<br><br>
+                    請將滑鼠移至左方的工具連結上，這裡將會即時顯示該工具的詳細功能說明、版本歷史與最新更動。
                 </p>
+
                 <div class="changelog-container" id="changelog-container" style="display: none;">
                     <details>
-                        <summary id="changelog-summary"><i class="ri-history-line"></i><span>版本更新日誌</span>
+                        <summary id="changelog-summary">
+                            <i class="ri-git-repository-commits-line"></i>
+                            <span>版本更新日誌</span>
                         </summary>
                         <ul class="changelog-list" id="changelog-list"></ul>
                     </details>
@@ -991,16 +880,19 @@
             </div>
         </main>
     </div>
+
     <div class="back-to-company-section">
         <a href="{% url 'CZ_homepage' %}" class="back-to-company-btn">
-            <i class="ri-arrow-left-line"></i>
+            <i class="ri-building-4-line"></i>
             <span>返回 勤築工程實業 主頁</span>
         </a>
     </div>
 </div>
-<footer class="footer">&copy; {% now "Y" %} OLi | Optimal Lean Interface. All Rights Reserved.</footer>
 
-<!-- ... JavaScript 內容保持不變 ... -->
+<footer class="footer">
+    &copy; {% now "Y" %} OLi | Optimal Lean Interface. <br>Design with Logic, Build with Precision.
+</footer>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const toolLinks = document.querySelectorAll('.tool-link');
@@ -1022,58 +914,53 @@
 
         toolLinks.forEach(link => {
             link.addEventListener('mouseover', function () {
+                if (this.classList.contains('disabled-link')) return;
+
                 toolLinks.forEach(l => l.classList.remove('active'));
                 this.classList.add('active');
                 const title = this.dataset.title;
                 const description = this.dataset.description;
                 const version = this.dataset.version;
                 const updated = this.dataset.updated;
-
-                // --- 【核心修改】讀取 data-history 屬性 ---
                 const historyData = this.dataset.history;
 
                 descriptionContent.style.opacity = 0;
+                descriptionContent.style.transform = 'translateY(5px)';
+                descriptionContent.style.transition = 'opacity 0.2s, transform 0.2s';
+
                 setTimeout(() => {
                     descriptionTitle.innerHTML = title;
                     descriptionText.innerHTML = description.replace(/\n/g, '<br>');
-                    if (version && updated) {
-                        metaVersion.textContent = `版本 ${version}`;
+                    if (version && updated && version !== 'v0.0.0') {
+                        metaVersion.textContent = version;
                         metaUpdated.textContent = updated;
-                        metaContainer.style.display = 'flex';
+                        metaContainer.style.display = 'inline-flex';
                     } else {
                         metaContainer.style.display = 'none';
                     }
 
-                    // --- 【核心修改】重構日誌生成邏輯 ---
                     if (historyData) {
                         try {
                             const history = JSON.parse(historyData);
-                            changelogList.innerHTML = ''; // 清空舊列表
-
+                            changelogList.innerHTML = '';
                             history.forEach(entry => {
-                                // 創建版本標題 li
                                 const versionLi = document.createElement('li');
                                 versionLi.className = 'changelog-version';
-                                versionLi.innerHTML = `${entry.version} <span class="date">(${entry.date})</span>`;
+                                versionLi.innerHTML = `${entry.version} <span class="date">${entry.date}</span>`;
                                 changelogList.appendChild(versionLi);
 
-                                // 創建包含更新項目的 ul
                                 const detailsUl = document.createElement('ul');
                                 detailsUl.className = 'changelog-details';
-
                                 entry.changes.forEach(changeText => {
                                     const changeLi = document.createElement('li');
                                     changeLi.textContent = changeText.trim();
                                     detailsUl.appendChild(changeLi);
                                 });
-
                                 changelogList.appendChild(detailsUl);
                             });
-
                             changelogContainer.style.display = 'block';
-
                         } catch (e) {
-                            console.error("解析 JSON 歷史數據時出錯:", e);
+                            console.error("JSON Error", e);
                             changelogContainer.style.display = 'none';
                         }
                     } else {
@@ -1081,13 +968,12 @@
                     }
 
                     descriptionContent.style.opacity = 1;
-                }, 150);
+                    descriptionContent.style.transform = 'translateY(0)';
+                }, 200);
             });
         });
 
-        // ... (後續的 JS 邏輯保持不變) ...
         const authRequiredLinks = document.querySelectorAll('.nav-link-requires-auth');
-
         authRequiredLinks.forEach(link => {
             link.addEventListener('click', function (event) {
                 event.preventDefault();
@@ -1097,38 +983,16 @@
             });
         });
 
-        const disabledToolLinks = document.querySelectorAll('.tool-link-disabled');
-
-        disabledToolLinks.forEach(link => {
-            link.addEventListener('click', function (event) {
-                event.preventDefault();
-                if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
-                    window.location.href = "{% url 'login' %}";
-                }
-            });
-        });
-
-
-        const mainContainer = document.getElementById('main-container');
-        mainContainer.addEventListener('mouseleave', function () {
-            toolLinks.forEach(l => l.classList.remove('active'));
-            descriptionContent.style.opacity = 0;
-            setTimeout(() => {
-                descriptionTitle.innerHTML = defaultTitle;
-                descriptionText.innerHTML = defaultText;
-                metaContainer.style.display = 'none';
-                changelogContainer.style.display = 'none';
-                descriptionContent.style.opacity = 1;
-            }, 150);
-        });
-
+        // 導覽列底線動畫邏輯
         const mainNav = document.querySelector('.main-nav');
         const navLinks = mainNav.querySelectorAll('.main-nav-link');
         const activeLink = mainNav.querySelector('.main-nav-link.active');
-        const underline = mainNav.style;
 
         function moveUnderline(target) {
-            if (!target) return;
+            if (!target) {
+                mainNav.style.setProperty('--underline-width', '0');
+                return;
+            }
             const targetLeft = target.offsetLeft;
             const targetWidth = target.offsetWidth;
             mainNav.style.setProperty('--underline-left', `${targetLeft}px`);
@@ -1137,19 +1001,8 @@
 
         if (activeLink) {
             setTimeout(() => {
-                const targetLeft = activeLink.offsetLeft;
-                const targetWidth = activeLink.offsetWidth;
-                mainNav.style.setProperty('--underline-left-initial', `${targetLeft}px`);
-                mainNav.style.setProperty('--underline-width-initial', `${targetWidth}px`);
-                const style = document.createElement('style');
-                style.innerHTML = `
-                    .main-nav::after {
-                        left: ${targetLeft}px;
-                        width: ${targetWidth}px;
-                    }
-                `;
-                document.head.appendChild(style);
-            }, 50);
+                moveUnderline(activeLink);
+            }, 100);
         }
 
         navLinks.forEach(link => {
@@ -1159,32 +1012,33 @@
         });
 
         mainNav.addEventListener('mouseleave', () => {
-            moveUnderline(activeLink);
+            if (activeLink) {
+                moveUnderline(activeLink);
+            } else {
+                mainNav.style.setProperty('--underline-width', '0');
+            }
         });
 
+        // 手機選單控制
         function openMenu() {
             mobileNav.classList.add('active');
             overlay.classList.add('active');
+            // 防止背景滾動
+            document.body.style.overflow = 'hidden';
         }
 
         function closeMenu() {
             mobileNav.classList.remove('active');
             overlay.classList.remove('active');
+            // 恢復背景滾動
+            document.body.style.overflow = '';
         }
 
         toggleButton.addEventListener('click', openMenu);
         closeButton.addEventListener('click', closeMenu);
         overlay.addEventListener('click', closeMenu);
-
-
     });
 </script>
-<style>
-    .main-nav::after {
-        left: var(--underline-left, 0);
-        width: var(--underline-width, 0);
-    }
-</style>
 
 </body>
 </html>

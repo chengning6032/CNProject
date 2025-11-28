@@ -4,49 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斷面性質計算器</title>
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;800&display=swap">
+    <title>斷面性質計算器 | OLi</title>
+    <!-- 引入 Noto Sans TC 與 JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"/>
     <link rel="stylesheet" href="{% static 'css/section_properties/style.css' %}">
 </head>
 <body>
 
-<main class="main-content">
-    {% csrf_token %}
-
-    <!-- 1. 麵包屑導航 (Breadcrumbs) -->
-    <!-- 樣式模仿截圖：淺灰背景、藍色連結 -->
-    <nav class="breadcrumb-nav">
-        <!-- 連結到 OLI 首頁 -->
-        <a href="{% url 'homepage' %}">OLI 首頁</a>
-
-        <span class="breadcrumb-separator">/</span>
-
-        <!-- 若有中間層級可加在這邊，例如： -->
-        <!-- <a href="#">結構計算工具</a> <span class="breadcrumb-separator">/</span> -->
-
-        <span class="breadcrumb-current">斷面性質計算器</span>
-    </nav>
-
-    <!-- 2. 標題區域 -->
-    <!-- 樣式模仿截圖：深藍色粗體大標題 + 灰色英文副標題 + 底部線條 -->
-    <div class="main-title-container">
-        <!-- 修改標題文字 -->
-        <h1 class="main-title">斷面性質計算</h1>
-        <p class="sub-title">Section Properties Calculator</p>
+<!-- 頂部導覽列 -->
+<header class="app-header">
+    <div class="header-left">
+        <a href="{% url 'homepage' %}" class="back-link"><i class="ri-arrow-left-line"></i> OLI 首頁</a>
+        <span class="divider">/</span>
+        <span class="current-page">斷面性質計算器</span>
     </div>
+    <div class="header-right">
+        <h1 class="app-title">OLi - Section Properties Calculator</h1>
+    </div>
+</header>
 
-    <!-- 主版面網格 (以下保持不變) -->
-    <div class="main-layout-grid">
+<!-- 主內容區 -->
+<main class="main-workspace">
+    {% csrf_token %}
+    <div class="workspace-grid">
 
-        <!-- 左欄：輸入參數 -->
-        <div class="section-container">
-            <!-- 1. 新增：斷面形式選擇 -->
-            <h3 class="section-title">斷面設定</h3>
-            <div class="input-container mb-3">
-                <div class="input-group">
-                    <label for="sectionTypeSelect">斷面形式選擇</label>
-                    <select id="sectionTypeSelect" class="form-select section-input" onchange="toggleInputFields()">
+        <!-- 左欄：參數設定 (加寬至 360px) -->
+        <aside class="panel input-panel">
+            <div class="panel-header">
+                <h3><i class="ri-settings-4-line"></i> 參數設定 (mm)</h3>
+            </div>
+
+            <div class="panel-content custom-scrollbar">
+                <!-- 斷面選擇 -->
+                <div class="control-group">
+                    <label class="control-label">斷面形式</label>
+                    <select id="sectionTypeSelect" class="form-select section-input">
                         <option value="H" selected>H 型鋼 (H-Beam)</option>
                         <option value="Channel">槽鋼 (Channel)</option>
                         <option value="C">C 型鋼 (C-Channel)</option>
@@ -57,370 +51,358 @@
                         <option value="Box">矩形管 (Box/Tube)</option>
                     </select>
                 </div>
-            </div>
-            <br>
-            <!-- 2. 動態輸入欄位區 -->
-            <h3 class="section-title">幾何尺寸輸入 (mm)</h3>
-            <div class="input-container">
+
+                <div class="divider-line"></div>
+
+                <!-- 動態輸入欄位 -->
                 <form id="sectionForm" data-api-url="{% url 'calculate_h' %}">
 
-                    <!-- H 型鋼 (H) - 改為支援非對稱 -->
+                    <!-- 1. H 型鋼 -->
                     <div id="inputs-H" class="shape-group">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_h" class="section-input" value="300">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>全高 H</label><input type="number" id="inp_H_h"
+                                                                                 class="section-input" value="300">
+                            </div>
+                            <div class="input-group"><label>腹板 tw</label><input type="number" id="inp_H_tw"
+                                                                                  class="section-input" value="10">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>腹板厚 tw <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_tw" class="section-input" value="10">
+                        <div class="input-group-header">上翼板 (Top Flange)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>寬度 Bft</label><input type="number" id="inp_H_bft"
+                                                                                   class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>厚度 tft</label><input type="number" id="inp_H_tft"
+                                                                                   class="section-input" value="16">
+                            </div>
                         </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <div class="input-group">
-                            <label>上翼板寬 Bft <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_bft" class="section-input" value="200">
+                        <div class="input-group-header">下翼板 (Bottom Flange)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>寬度 Bfb</label><input type="number" id="inp_H_bfb"
+                                                                                   class="section-input" value="250">
+                            </div>
+                            <div class="input-group"><label>厚度 tfb</label><input type="number" id="inp_H_tfb"
+                                                                                   class="section-input" value="20">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>上翼板厚 tft <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_tft" class="section-input" value="16">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <div class="input-group">
-                            <label>下翼板寬 Bfb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_bfb" class="section-input" value="250">
-                        </div>
-                        <div class="input-group">
-                            <label>下翼板厚 tfb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_H_tfb" class="section-input" value="20">
-                        </div>
-                        <div class="input-group">
-                            <label>圓角半徑 r <span class="unit">(mm)</span></label>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>圓角半徑 r</label>
                             <input type="number" id="inp_H_r" class="section-input" value="13" min="0">
                         </div>
                     </div>
 
-                    <!-- 槽鋼 (Channel) -->
+                    <!-- 2. Channel 槽鋼 -->
                     <div id="inputs-Channel" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_h" class="section-input" value="200">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>全高 H</label><input type="number" id="inp_Channel_h"
+                                                                                 class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>腹板 tw</label><input type="number" id="inp_Channel_tw"
+                                                                                  class="section-input" value="8"></div>
                         </div>
-                        <div class="input-group">
-                            <label>腹板厚 tw <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_tw" class="section-input" value="6">
+                        <div class="input-group-header">上翼板</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>寬度 Bft</label><input type="number" id="inp_Channel_bft"
+                                                                                   class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>厚度 tft</label><input type="number" id="inp_Channel_tft"
+                                                                                   class="section-input" value="12">
+                            </div>
                         </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 上翼板 -->
-                        <div class="input-group">
-                            <label>上翼板寬 Bft <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_bft" class="section-input" value="75">
+                        <div class="input-group-header">下翼板</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>寬度 Bfb</label><input type="number" id="inp_Channel_bfb"
+                                                                                   class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>厚度 tfb</label><input type="number" id="inp_Channel_tfb"
+                                                                                   class="section-input" value="12">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>上翼板厚 tft <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_tft" class="section-input" value="10">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 下翼板 -->
-                        <div class="input-group">
-                            <label>下翼板寬 Bfb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_bfb" class="section-input" value="75">
-                        </div>
-                        <div class="input-group">
-                            <label>下翼板厚 tfb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_tfb" class="section-input" value="10">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <div class="input-group">
-                            <label>圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Channel_r" class="section-input" value="8" min="0">
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>圓角半徑 r</label>
+                            <input type="number" id="inp_Channel_r" class="section-input" value="10">
                         </div>
                     </div>
 
-                    <!-- C 型鋼 (C) - 冷軋帶唇 -->
+                    <!-- 3. C 型鋼 (冷軋) -->
                     <div id="inputs-C" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_h" class="section-input" value="200">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>全高 H</label><input type="number" id="inp_C_h"
+                                                                                 class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>厚度 t</label><input type="number" id="inp_C_t"
+                                                                                 class="section-input" value="3.2">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>厚度 t <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_t" class="section-input" value="3.2">
+                        <div class="input-group-header">上部 (Top)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>翼寬 Bt</label><input type="number" id="inp_C_bt"
+                                                                                  class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>唇深 Ct</label><input type="number" id="inp_C_ct"
+                                                                                  class="section-input" value="20">
+                            </div>
                         </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 上部 -->
-                        <div class="input-group">
-                            <label>上翼板寬 Bt <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_bt" class="section-input" value="75">
+                        <div class="input-group-header">下部 (Bottom)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>翼寬 Bb</label><input type="number" id="inp_C_bb"
+                                                                                  class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>唇深 Cb</label><input type="number" id="inp_C_cb"
+                                                                                  class="section-input" value="20">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>上唇深 Ct <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_ct" class="section-input" value="20">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 下部 -->
-                        <div class="input-group">
-                            <label>下翼板寬 Bb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_bb" class="section-input" value="75">
-                        </div>
-                        <div class="input-group">
-                            <label>下唇深 Cb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_cb" class="section-input" value="20">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <div class="input-group">
-                            <label>內圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_C_r" class="section-input" value="5" min="0">
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>內圓角半徑 r</label>
+                            <input type="number" id="inp_C_r" class="section-input" value="5">
                         </div>
                     </div>
 
-                    <!-- L 型鋼 (Angle) -->
+                    <!-- 4. L 型鋼 -->
                     <div id="inputs-L" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>長邊 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_L_h" class="section-input" value="100">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>高度 H</label><input type="number" id="inp_L_h"
+                                                                                 class="section-input" value="100">
+                            </div>
+                            <div class="input-group"><label>寬度 B</label><input type="number" id="inp_L_b"
+                                                                                 class="section-input" value="100">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>短邊 B <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_L_b" class="section-input" value="100">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>垂直厚 tv</label><input type="number" id="inp_L_tv"
+                                                                                    class="section-input" value="10">
+                            </div>
+                            <div class="input-group"><label>水平厚 th</label><input type="number" id="inp_L_th"
+                                                                                    class="section-input" value="10">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>垂直厚 tv <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_L_tv" class="section-input" value="10">
-                        </div>
-                        <div class="input-group">
-                            <label>水平厚 th <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_L_th" class="section-input" value="10">
-                        </div>
-                        <div class="input-group">
-                            <label>圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_L_r" class="section-input" value="8" min="0">
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>圓角半徑 r</label>
+                            <input type="number" id="inp_L_r" class="section-input" value="8">
                         </div>
                     </div>
 
-                    <!-- T 型鋼 (T) -->
+                    <!-- 5. T 型鋼 -->
                     <div id="inputs-T" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_T_h" class="section-input" value="150">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>全高 H</label><input type="number" id="inp_T_h"
+                                                                                 class="section-input" value="150">
+                            </div>
+                            <div class="input-group"><label>翼寬 Bf</label><input type="number" id="inp_T_bf"
+                                                                                  class="section-input" value="150">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>翼板寬 Bf <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_T_bf" class="section-input" value="150">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>腹板厚 tw</label><input type="number" id="inp_T_tw"
+                                                                                    class="section-input" value="9">
+                            </div>
+                            <div class="input-group"><label>翼板厚 tf</label><input type="number" id="inp_T_tf"
+                                                                                    class="section-input" value="12">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>腹板厚 tw <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_T_tw" class="section-input" value="6.5">
-                        </div>
-                        <div class="input-group">
-                            <label>翼板厚 tf <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_T_tf" class="section-input" value="9">
-                        </div>
-                        <div class="input-group">
-                            <label>圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_T_r" class="section-input" value="10" min="0">
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>圓角半徑 r</label>
+                            <input type="number" id="inp_T_r" class="section-input" value="10">
                         </div>
                     </div>
 
-
-                    <!-- Z 型鋼 (Z) - 冷軋帶唇 (全參數化) -->
+                    <!-- 6. Z 型鋼 -->
                     <div id="inputs-Z" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_h" class="section-input" value="200">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>全高 H</label><input type="number" id="inp_Z_h"
+                                                                                 class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>厚度 t</label><input type="number" id="inp_Z_t"
+                                                                                 class="section-input" value="3.2">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>厚度 t <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_t" class="section-input" value="3.2">
+                        <div class="input-group-header">上部 (Top)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>翼寬 Bt</label><input type="number" id="inp_Z_bt"
+                                                                                  class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>唇深 Ct</label><input type="number" id="inp_Z_ct"
+                                                                                  class="section-input" value="20">
+                            </div>
                         </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 上部 -->
-                        <div class="input-group">
-                            <label>上翼板寬 Bt <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_bt" class="section-input" value="75">
+                        <div class="input-group-header">下部 (Bottom)</div>
+                        <div class="row-2-col">
+                            <div class="input-group"><label>翼寬 Bb</label><input type="number" id="inp_Z_bb"
+                                                                                  class="section-input" value="75">
+                            </div>
+                            <div class="input-group"><label>唇深 Cb</label><input type="number" id="inp_Z_cb"
+                                                                                  class="section-input" value="20">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>上唇深 Ct <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_ct" class="section-input" value="20">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <!-- 下部 -->
-                        <div class="input-group">
-                            <label>下翼板寬 Bb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_bb" class="section-input" value="75">
-                        </div>
-                        <div class="input-group">
-                            <label>下唇深 Cb <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_cb" class="section-input" value="20">
-                        </div>
-                        <hr style="border-top: 1px dashed #ccc; margin: 10px 0;">
-                        <div class="input-group">
-                            <label>內圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Z_r" class="section-input" value="5" min="0">
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>內圓角半徑 r</label>
+                            <input type="number" id="inp_Z_r" class="section-input" value="5">
                         </div>
                     </div>
 
-                    <!-- 圓管 (Pipe) -->
+                    <!-- 7. Pipe 圓管 -->
                     <div id="inputs-Pipe" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>外徑 D <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Pipe_d" class="section-input" value="200">
-                        </div>
-                        <div class="input-group">
-                            <label>管壁厚 t <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Pipe_t" class="section-input" value="6">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>外徑 D</label><input type="number" id="inp_Pipe_d"
+                                                                                 class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>厚度 t</label><input type="number" id="inp_Pipe_t"
+                                                                                 class="section-input" value="6"></div>
                         </div>
                     </div>
 
-                    <!-- 矩形管 (Box) -->
+                    <!-- 8. Box 矩形管 -->
                     <div id="inputs-Box" class="shape-group" style="display:none;">
-                        <div class="input-group">
-                            <label>全高 H <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Box_h" class="section-input" value="200">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>高度 H</label><input type="number" id="inp_Box_h"
+                                                                                 class="section-input" value="200">
+                            </div>
+                            <div class="input-group"><label>寬度 B</label><input type="number" id="inp_Box_b"
+                                                                                 class="section-input" value="100">
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label>寬度 B <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Box_b" class="section-input" value="100">
-                        </div>
-                        <div class="input-group">
-                            <label>管壁厚 t <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Box_t" class="section-input" value="6">
-                        </div>
-                        <!-- 新增：內圓角半徑 -->
-                        <div class="input-group">
-                            <label>內圓角半徑 r <span class="unit">(mm)</span></label>
-                            <input type="number" id="inp_Box_r" class="section-input" value="10" min="0">
+                        <div class="row-2-col">
+                            <div class="input-group"><label>管壁厚 t</label><input type="number" id="inp_Box_t"
+                                                                                   class="section-input" value="6">
+                            </div>
+                            <div class="input-group"><label>內圓角 r</label><input type="number" id="inp_Box_r"
+                                                                                   class="section-input" value="10">
+                            </div>
                         </div>
                     </div>
 
                 </form>
             </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 15px; line-height: 1.6;">
-                輸入尺寸後系統將自動繪製斷面圖。點擊下方「開始計算」以取得慣性矩、迴轉半徑、塑性斷面模數及翹曲常數等詳細數據。
-            </p>
-        </div>
 
-        <!-- 中欄：即時繪圖 -->
-        <div class="section-container">
-            <h3 class="section-title">斷面示意圖 (Scale Drawing)</h3>
-            <div class="canvas-wrapper">
-                <canvas id="sectionCanvas" width="320" height="400"></canvas>
+            <div class="panel-footer">
+                <button id="calculate-button" class="btn-calculate" onclick="calculateAndDraw()">
+                    <i class="ri-calculator-line"></i> 開始計算
+                </button>
             </div>
-        </div>
+        </aside>
 
-        <!-- 右欄：計算結果 -->
-        <div class="section-container section-result">
-            <div class="result-header-row"
-                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                <h3 class="section-title" style="margin: 0; border: none; padding: 0;">計算結果</h3>
+        <!-- 中欄：視覺化 (彈性縮放) -->
+        <section class="panel canvas-panel">
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="sectionCanvas"></canvas>
+            </div>
+            <div class="canvas-legend">
+                <span><i class="ri-ruler-2-line"></i> Auto Scale</span>
+            </div>
+        </section>
 
-                <!-- 新增：單位切換按鈕 -->
-                <div class="unit-toggle-container">
-                    <label class="radio-label">
-                        <input type="radio" name="resultUnit" value="mm" checked onchange="renderResults()">
-                        mm 單位
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="resultUnit" value="cm" onchange="renderResults()">
-                        cm 單位
-                    </label>
+        <!-- 右欄：計算結果 (300px) -->
+        <aside class="panel result-panel">
+            <div class="panel-header">
+                <h3><i class="ri-file-list-3-line"></i> 計算結果</h3>
+                <div class="unit-toggle">
+                    <label><input type="radio" name="resultUnit" value="mm" checked onchange="renderResults()">
+                        mm</label>
+                    <label><input type="radio" name="resultUnit" value="cm" onchange="renderResults()"> cm</label>
                 </div>
             </div>
 
-            <table class="result-table">
-                <tbody>
-                <tr>
-                    <th>斷面積 (A)</th>
-                    <td><span id="res-area">-</span><span class="unit-text unit-area">mm²</span></td>
-                </tr>
+            <div class="panel-content custom-scrollbar">
+                <table class="result-table">
+                    <tbody>
+                    <tr>
+                        <th>斷面積 A</th>
+                        <td><span id="res-area">-</span> <span class="unit-text unit-area">mm²</span></td>
+                    </tr>
 
-                <!-- 形心座標 -->
-                <tr>
-                    <th>彈性形心 (cx, cy)</th>
-                    <td>
-                        (<span id="res-cx">-</span>, <span id="res-cy">-</span>)
-                        <span class="unit-text unit-len">mm</span>
-                    </td>
-                </tr>
-                <tr>
-                    <th>塑性形心 (pcx, pcy)</th>
-                    <td>
-                        (<span id="res-pcx">-</span>, <span id="res-pcy">-</span>)
-                        <span class="unit-text unit-len">mm</span>
-                    </td>
-                </tr>
+                    <tr class="table-group-header">
+                        <td colspan="2">幾何中心</td>
+                    </tr>
+                    <tr>
+                        <th>彈性形心 (cx, cy)</th>
+                        <td><span id="res-cx">-</span>, <span id="res-cy">-</span> <span
+                                class="unit-text unit-len">mm</span></td>
+                    </tr>
+                    <tr>
+                        <th>塑性形心 (pcx, pcy)</th>
+                        <td><span id="res-pcx">-</span>, <span id="res-pcy">-</span> <span
+                                class="unit-text unit-len">mm</span></td>
+                    </tr>
 
-                <!-- 慣性矩 -->
-                <tr>
-                    <th>慣性矩 (Ixx)</th>
-                    <td><span id="res-ixx">-</span><span class="unit-text unit-inertia">mm⁴</span></td>
-                </tr>
-                <tr>
-                    <th>慣性矩 (Iyy)</th>
-                    <td><span id="res-iyy">-</span><span class="unit-text unit-inertia">mm⁴</span></td>
-                </tr>
-                <tr>
-                    <th>極慣性矩 (Ixy)</th>
-                    <td><span id="res-ixy">-</span><span class="unit-text unit-inertia">mm⁴</span></td>
-                </tr>
+                    <tr class="table-group-header">
+                        <td colspan="2">慣性矩 (I)</td>
+                    </tr>
+                    <tr>
+                        <th>Ixx</th>
+                        <td><span id="res-ixx">-</span> <span class="unit-text unit-inertia">mm⁴</span></td>
+                    </tr>
+                    <tr>
+                        <th>Iyy</th>
+                        <td><span id="res-iyy">-</span> <span class="unit-text unit-inertia">mm⁴</span></td>
+                    </tr>
+                    <tr>
+                        <th>Ixy</th>
+                        <td><span id="res-ixy">-</span> <span class="unit-text unit-inertia">mm⁴</span></td>
+                    </tr>
 
-                <!-- 迴轉半徑 -->
-                <tr>
-                    <th>迴轉半徑 (rx)</th>
-                    <td><span id="res-rx">-</span><span class="unit-text unit-len">mm</span></td>
-                </tr>
-                <tr>
-                    <th>迴轉半徑 (ry)</th>
-                    <td><span id="res-ry">-</span><span class="unit-text unit-len">mm</span></td>
-                </tr>
+                    <tr class="table-group-header">
+                        <td colspan="2">迴轉半徑 (r)</td>
+                    </tr>
+                    <tr>
+                        <th>rx</th>
+                        <td><span id="res-rx">-</span> <span class="unit-text unit-len">mm</span></td>
+                    </tr>
+                    <tr>
+                        <th>ry</th>
+                        <td><span id="res-ry">-</span> <span class="unit-text unit-len">mm</span></td>
+                    </tr>
 
-                <!-- 彈性模數 (細分) -->
-                <tr>
-                    <th>彈性模數 (Sx-top)</th>
-                    <td><span id="res-sx-top">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
-                <tr>
-                    <th>彈性模數 (Sx-bot)</th>
-                    <td><span id="res-sx-bot">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
-                <tr>
-                    <th>彈性模數 (Sy-right)</th>
-                    <td><span id="res-sy-right">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
-                <tr>
-                    <th>彈性模數 (Sy-left)</th>
-                    <td><span id="res-sy-left">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
+                    <tr class="table-group-header">
+                        <td colspan="2">彈性模數 (S)</td>
+                    </tr>
+                    <tr>
+                        <th>Sx (top)</th>
+                        <td><span id="res-sx-top">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
+                    <tr>
+                        <th>Sx (bot)</th>
+                        <td><span id="res-sx-bot">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
+                    <tr>
+                        <th>Sy (right)</th>
+                        <td><span id="res-sy-right">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
+                    <tr>
+                        <th>Sy (left)</th>
+                        <td><span id="res-sy-left">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
 
-                <!-- 塑性模數 -->
-                <tr>
-                    <th>塑性模數 (Zx)</th>
-                    <td><span id="res-zx">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
-                <tr>
-                    <th>塑性模數 (Zy)</th>
-                    <td><span id="res-zy">-</span><span class="unit-text unit-modulus">mm³</span></td>
-                </tr>
+                    <tr class="table-group-header">
+                        <td colspan="2">塑性模數 (Z)</td>
+                    </tr>
+                    <tr>
+                        <th>Zx</th>
+                        <td><span id="res-zx">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
+                    <tr>
+                        <th>Zy</th>
+                        <td><span id="res-zy">-</span> <span class="unit-text unit-modulus">mm³</span></td>
+                    </tr>
 
-                <tr>
-                    <th>扭轉常數 (J)</th>
-                    <td><span id="res-j">-</span><span class="unit-text unit-inertia">mm⁴</span></td>
-                </tr>
-                <tr>
-                    <th>翹曲常數 (Cw)</th>
-                    <td><span id="res-cw">-</span><span class="unit-text unit-warp">mm⁶</span></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+                    <tr class="table-group-header">
+                        <td colspan="2">扭轉與翹曲</td>
+                    </tr>
+                    <tr>
+                        <th>J (Torsion)</th>
+                        <td><span id="res-j">-</span> <span class="unit-text unit-inertia">mm⁴</span></td>
+                    </tr>
+                    <tr>
+                        <th>Cw (Warping)</th>
+                        <td><span id="res-cw">-</span> <span class="unit-text unit-warp">mm⁶</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </aside>
 
     </div>
 </main>
 
-<!-- 底部懸浮按鈕區 -->
-<div class="action-buttons-container">
-    <button id="calculate-button" class="calculate-button" onclick="calculateAndDraw()">開始計算</button>
-</div>
-
-<!-- JS 引用 -->
 <script src="{% static 'js/section_properties/main.js' %}"></script>
 </body>
 </html>
