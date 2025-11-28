@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 is_at_ground_level: document.querySelector('input[name="is_at_ground_level"]:checked') ? document.querySelector('input[name="is_at_ground_level"]:checked').value === 'true' : false,
             };
 
-            fetch('/windTW/calculate/', {
+            fetch('/OLi/windTW/calculate/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
                 body: JSON.stringify(formData)
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ======================================================
     // 區域 4: 結果顯示與報告書邏輯 (無變更)
     // ======================================================
-    if (reportButtonModal) {
+if (reportButtonModal) {
         reportButtonModal.addEventListener('click', () => {
             if (!lastSuccessfulData) {
                 alert("沒有可用的計算結果可生成報告。");
@@ -657,35 +657,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentTown = document.getElementById('town-select').value;
             const inputs = lastSuccessfulData.inputs;
             const results = lastSuccessfulData.results;
-            const firstCaseKey = Object.keys(results.general_data_cases)[0];
-            const summaryData = results.general_data_cases[firstCaseKey]?.summary || {};
+
+            // 取得通用法資料 (兼容新舊變數名稱)
+            const dataCases = results.data_by_case || results.general_data_cases;
+
+            // 取得第一個工況的 key 與 summary 資料，用於填充報告書基本參數
+            const firstCaseKey = Object.keys(dataCases)[0];
+            const summaryData = dataCases[firstCaseKey]?.summary || {};
+
             const params = new URLSearchParams({
-                county: currentCounty, town: currentTown, v10c: inputs.v10c || 0,
-                terrain: inputs.terrain || 'C', topo_x_type: inputs.topoX.type,
-                topo_x_h: inputs.topoX.H, topo_x_lh: inputs.topoX.Lh, topo_x_x: inputs.topoX.x,
-                topo_y_type: inputs.topoY.type, topo_y_h: inputs.topoY.H, topo_y_lh: inputs.topoY.Lh,
-                topo_y_x: inputs.topoY.x, dim_x: inputs.buildingDimX || 0,
-                dim_y: inputs.buildingDimY || 0, roof_shape: inputs.roofShape || 'flat',
-                eave_height: inputs.eaveHeight || 0, ridge_height: inputs.ridgeHeight || 0,
+                county: currentCounty,
+                town: currentTown,
+                v10c: inputs.v10c || 0,
+                terrain: inputs.terrain || 'C',
+                topo_x_type: inputs.topoX.type,
+                topo_x_h: inputs.topoX.H,
+                topo_x_lh: inputs.topoX.Lh,
+                topo_x_x: inputs.topoX.x,
+                topo_y_type: inputs.topoY.type,
+                topo_y_h: inputs.topoY.H,
+                topo_y_lh: inputs.topoY.Lh,
+                topo_y_x: inputs.topoY.x,
+                dim_x: inputs.buildingDimX || 0,
+                dim_y: inputs.buildingDimY || 0,
+                roof_shape: inputs.roofShape || 'flat',
+                eave_height: inputs.eaveHeight || 0,
+                ridge_height: inputs.ridgeHeight || 0,
                 calculated_h: results.calculated_h || inputs.eaveHeight,
                 theta: summaryData.theta !== undefined ? summaryData.theta : '0',
                 theta_x: summaryData.theta_X !== undefined ? summaryData.theta_X : '0',
                 theta_y: summaryData.theta_Y !== undefined ? summaryData.theta_Y : '0',
                 ridge_direction: inputs.roofShape === 'hip' ? inputs.hipRoofOptions.ridgeDirection : inputs.ridgeDirection,
                 ridge_length: inputs.roofShape === 'hip' ? inputs.hipRoofOptions.ridgeLength : 'N/A',
-                has_overhang: inputs.has_overhang, num_spans: inputs.sawtooth_uniform_span_count || 1,
-                enclosure_status: inputs.enclosureStatus, importance_factor: inputs.importanceFactor,
-                damping_ratio: inputs.dampingRatio, fn_x: inputs.fnX, fn_y: inputs.fnY, ft: inputs.ft,
+                has_overhang: inputs.has_overhang,
+                num_spans: inputs.sawtooth_uniform_span_count || 1,
+                enclosure_status: inputs.enclosureStatus,
+                importance_factor: inputs.importanceFactor,
+                damping_ratio: inputs.dampingRatio,
+                fn_x: inputs.fnX,
+                fn_y: inputs.fnY,
+                ft: inputs.ft,
                 use_asce7_c_and_c: inputs.use_asce7_c_and_c,
+                simplify_gable: document.querySelector('input[name="simplify_gable"]:checked').value,
             });
-            const reportUrl = `/windTW/report/?${params.toString()}`;
+
+            // ★★★ 核心修正：將報告書路徑指向 V2 版本 ★★★
+            const reportUrl = `/OLi/windTW/report_v2/?${params.toString()}`;
             window.open(reportUrl, '_blank', 'width=900,height=800,scrollbars=yes,resizable=yes');
         });
     }
 
     function displayGeneralResults(data) {
         if (!resultsModalBody) return;
-        const generalDataCases = data.general_data_cases;
+        const generalDataCases = data.data_by_case || data.general_data_cases;
         if (!generalDataCases || Object.keys(generalDataCases).length === 0) {
             resultsModalBody.innerHTML = '<p class="result-message error">收到的通用法結果數據格式不正確。</p>';
             return;

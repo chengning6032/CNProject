@@ -1,0 +1,80 @@
+<h2 class="chapter-title">{{ title }}</h2>
+<div class="report-content-block">
+    <div class="math-container" style="font-size: 12px; line-height: 1.8;">
+        <!-- 1. 基礎參數 -->
+        <h3 class="sub-chapter-title" style="font-size: 1.1em; margin-bottom: 10px;">1. 基礎參數與紊流特性</h3>
+        <ul style="list-style-type: disc; padding-left: 20px;">
+            <li>建築物高度 $h = {{ details.h|floatformat:2 }}\text{ m}$</li>
+            <li>迎風面寬度 $B = {{ details.B|floatformat:2 }}\text{ m}$ (用於計算背景反應因子)</li>
+            <li>順風向深度 $L = {{ details.L|floatformat:2 }}\text{ m}$</li>
+            <li>等效結構高度 $\bar{z} = \max(0.6h, z_{min}) = {{ details.z_bar|floatformat:2 }}\text{ m}$</li>
+            <li>基本設計風速 $V_{10}(C) = {{ details.V10_C }}\text{ m/s}$，用途係數 $I = {{ details.I }}$</li>
+            <li>紊流強度 $I_{\bar{z}} = c (10/\bar{z})^{1/6} = {{ details.I_z|floatformat:3 }}$</li>
+            <li>紊流積分尺度 $L_{\bar{z}} = \ell (\bar{z}/10)^{\bar{\epsilon}} = {{ details.L_z|floatformat:2 }}\text{
+                m}$
+            </li>
+            <li>背景反應因子 $Q = \sqrt{\dfrac{1}{1 + 0.63 (\dfrac{B+h}{L_{\bar{z}}})^{0.63}}}
+                = {{ details.Q|floatformat:3 }}$
+            </li>
+        </ul>
+
+        <!-- 2. 剛性建築計算 -->
+        {% if details.rigidity != '柔性' %}
+            <h3 class="sub-chapter-title" style="font-size: 1.1em; margin-bottom: 10px;">2. 陣風反應因子 $G$ 計算</h3>
+            <p>依據規範公式 (2.9)，取尖峰因子 $g_Q = g_v = 3.4$：</p>
+            <p>
+                $$ G = 1.927 \left[ \dfrac{1 + 1.7 g_Q I_{\bar{z}} Q}{1 + 1.7 g_v I_{\bar{z}}} \right] $$
+            </p>
+            <p>代入數值：</p>
+            <p>
+                $$ G = 1.927 \left[ \dfrac{1 + 1.7(3.4)({{ details.I_z|floatformat:3 }})({{ details.Q|floatformat:3 }})}{1
+                + 1.7(3.4)({{ details.I_z|floatformat:3 }})} \right] = \mathbf{ {{ details.final_value|floatformat:3 }}
+                } $$
+            </p>
+
+            <!-- 3. 柔性建築計算 -->
+        {% else %}
+            <h3 class="sub-chapter-title" style="font-size: 1.1em; margin-bottom: 10px;">2. 共振反應參數計算</h3>
+            <ul style="list-style-type: disc; padding-left: 20px;">
+                <li>自然頻率 $n_1 = {{ details.fn|floatformat:3 }}\text{ Hz}$</li>
+                <li>阻尼比 $\beta = {{ details.beta }}$</li>
+                <li>平均風速 $\bar{V}_{\bar{z}} = \bar{b} (\dfrac{\bar{z}}{10})^\alpha V_{10}(C)
+                    = {{ details.V_z_bar|floatformat:2 }}\text{ m/s}$
+                </li>
+                <li>折減頻率 $N_1 = \dfrac{n_1 L_{\bar{z}}}{\bar{V}_{\bar{z}}} = {{ details.N1|floatformat:3 }}$</li>
+                <li>共振能量因子 $R_n = \dfrac{7.47 N_1}{(1 + 10.3 N_1)^{5/3}} = {{ details.Rn|floatformat:3 }}$</li>
+                <li>空氣動力導納函數：
+                    <br>$\eta_h = 4.6 n_1 h / \bar{V}_{\bar{z}} = {{ details.eta_h|floatformat:3 }} \Rightarrow R_h
+                    = {{ details.Rh|floatformat:3 }}$
+                    <br>$\eta_B = 4.6 n_1 B / \bar{V}_{\bar{z}} = {{ details.eta_B|floatformat:3 }} \Rightarrow R_B
+                    = {{ details.RB|floatformat:3 }}$
+                    <br>$\eta_L = 15.4 n_1 L / \bar{V}_{\bar{z}} = {{ details.eta_L|floatformat:3 }} \Rightarrow R_L
+                    = {{ details.RL|floatformat:3 }}$
+                </li>
+                <li>共振反應因子 $R = \sqrt{\dfrac{1}{\beta} R_n R_h R_B (0.53 + 0.47 R_L)}
+                    = {{ details.R|floatformat:3 }}$
+                </li>
+                <li>共振尖峰因子 $g_R = \sqrt{2 \ln(3600 n_1)} + \dfrac{0.577}{\sqrt{2 \ln(3600 n_1)}}
+                    = {{ details.gR|floatformat:3 }}$
+                </li>
+            </ul>
+
+            <h3 class="sub-chapter-title" style="font-size: 1.1em; margin-bottom: 10px; margin-top: 20px;">3. 陣風反應因子
+                $G_f$ 計算</h3>
+            <p>依據規範公式 (2.13)，取尖峰因子 $g_Q = g_v = 3.4$：</p>
+            <p>
+                $$ G_f = 1.927 \left[ \dfrac{1 + 1.7 I_{\bar{z}} \sqrt{g_Q^2 Q^2 + g_R^2 R^2}}{1 + 1.7 g_v I_{\bar{z}}}
+                \right] $$
+            </p>
+            <p>代入數值：</p>
+            <p>
+                $$ G_f = 1.927 \left[ \dfrac{1 + 1.7({{ details.I_z|floatformat:3 }}) \sqrt{(3.4)^2
+                ({{ details.Q|floatformat:3 }})^2 + ({{ details.gR|floatformat:3 }})^2 ({{ details.R|floatformat:3 }})^2}}{1
+                + 1.7(3.4)({{ details.I_z|floatformat:3 }})} \right] $$
+            </p>
+            <p style="font-size: 1.2em; text-align: center; margin-top: 10px;">
+                $$ \Rightarrow \mathbf{ G_f = {{ details.final_value|floatformat:3 }} } $$
+            </p>
+        {% endif %}
+    </div>
+</div>

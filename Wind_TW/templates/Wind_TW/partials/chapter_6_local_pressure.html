@@ -1,0 +1,119 @@
+{% load static %}
+
+<div class="report-page">
+    <div class="page-content">
+        <h2 class="chapter-title">第六章 局部構材及外部被覆物設計風壓</h2>
+
+        <div class="report-content-block">
+            <!-- 6.1 計算參數與依據 -->
+            <div class="summary-box" style="background-color: #f8f9fa; border-left: 5px solid #1d3557;">
+                <p><strong>6.1 計算參數與依據</strong></p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.8;">
+                    <li><strong>建築物幾何：</strong>高度 $h = {{ chapter_6_data.h|floatformat:2 }} \text{ m}$，屋頂角
+                        $\theta = {{ chapter_6_data.theta|floatformat:1 }}^\circ$。
+                    </li>
+
+                    {% if chapter_6_data.path == 'h_le_18' %}
+                        <li><strong>適用規範：</strong>$h \le 18 \text{ m}$，依據規範 3.2 節公式 (3.1)。</li>
+                        <li class="math-formula">$ p = q(h)[(GC_p) - (GC_{pi})] $</li>
+                    {% else %}
+                        <li><strong>適用規範：</strong>$h > 18 \text{ m}$，依據規範 3.2 節公式 (3.2)。</li>
+                        <li class="math-formula">$ p = q(GC_p) - q_i(GC_{pi}) $</li>
+                        <li style="color: #666; font-size: 0.85em;">註：對於 $h>18\text{m}$ 之迎風面牆，風壓隨高度 $z$ 變化
+                            ($q=q(z)$)。下表風壓值係以頂層 $z=h$ 處之 $q(h)$ 計算，代表該區域之最大設計風壓包絡值。
+                        </li>
+                    {% endif %}
+
+                    <li><strong>計算參數：</strong>
+                        <ul>
+                            <li>平均屋頂高度風速壓 $q(h) = \mathbf{ {{ chapter_6_data.q_h|floatformat:2 }} } \text{
+                                kgf/m}^2$。
+                            </li>
+                            <li>內風壓係數 $GC_{pi} = \{
+                                {% for val in chapter_4_data.gcpi %}{{ val|floatformat:3 }}{% if not forloop.last %},
+                                {% endif %}{% endfor %} \}$。
+                            </li>
+                            {% if chapter_6_data.path == 'h_le_18' %}
+                                <li>最大設計正風壓 $ p^{+} = q(h)[(GC_p)^{+} - (GC_{pi})^{-}]
+                                    = {{ chapter_6_data.q_h|floatformat:2 }} [(GC_p)^{+} -
+                                    ({{ chapter_6_data.gcp_i_neg|floatformat:3 }})] $
+                                </li>
+                                <li>最大設計負風壓 $ p^{-} = q(h)[(GC_p)^{-} - (GC_{pi})^{+}]
+                                    = {{ chapter_6_data.q_h|floatformat:2 }} [(GC_p)^{-} -
+                                    ({{ chapter_6_data.gcp_i_pos|floatformat:3 }})] $
+                                </li>
+                            {% else %}
+                                <li>最大設計正風壓 $ p^{+} = q(GC_p)^{+} - q_i(GC_{pi})^{-} = q(GC_p)^{+}
+                                    - {{ chapter_6_data.q_h|floatformat:2 }}({{ chapter_6_data.gcp_i_neg|floatformat:3 }})
+                                    $
+                                </li>
+                                <li>最大設計負風壓 $ p^{-} = q(GC_p)^{-} - q_i(GC_{pi})^{+} = q(GC_p)^{-}
+                                    - {{ chapter_6_data.q_h|floatformat:2 }}({{ chapter_6_data.gcp_i_pos|floatformat:3 }})
+                                    $
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    <li><strong>區域寬度 $a$ 值計算：</strong>
+                        <ul>
+                            <li>公式：$a = \max( 0.4h, 0.1 \times \min(B, L) )$，且不小於 $0.9\text{m}$ (或
+                                $0.04\min(B,L)$)。
+                            </li>
+                            <li>結果：$a = \mathbf{ {{ chapter_6_data.a_val|floatformat:3 }} \text{ m} }$。</li>
+                            <li style="color: #666; font-size: 0.85em;">(此寬度 $a$ 用於定義牆角區 Zone 5 或屋頂邊緣區
+                                Zone 2, 3 之範圍)
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 6.2 外牆局部風壓 -->
+        <div class="report-content-block" style="margin-top: 20px;">
+            <h3 class="sub-chapter-title">6.2 外牆局部風壓計算結果 (Wall)</h3>
+            <p style="font-size: 0.85rem; color: #555; margin-bottom: 5px;">
+                說明：Zone 4 為一般牆面區域，Zone 5
+                為牆角區域。表格數值為考慮內外風壓組合之<strong>最不利設計淨風壓</strong>。<br>
+                正風壓於各區域係數相同，故合併列表。
+            </p>
+            <table class="data-table" style="font-size: 0.75rem;">
+                <thead>
+                <tr>
+                    <th rowspan="2" style="vertical-align: middle; width: 14%;">有效受風面積<br> $A$ (m²)</th>
+                    <th colspan="2" style="background-color: #e3f2fd;">Zone 4 (一般區域)</th>
+                    <th colspan="2" style="background-color: #fce4ec;">Zone 5 (牆角區域)</th>
+                    <th colspan="2" style="background-color: #f0f4c3;">Zone 4 & 5</th>
+                </tr>
+                <tr>
+                    <!-- 縮小 GCp 欄位寬度 -->
+                    <th style="background-color: #e3f2fd; width: 12%;">$GC_p$<br>(負)</th>
+                    <th style="background-color: #bbdefb;">設計負風壓<br>(kgf/m²)</th>
+                    <th style="background-color: #fce4ec; width: 12%;">$GC_p$<br>(負)</th>
+                    <th style="background-color: #f8bbd0;">設計負風壓<br>(kgf/m²)</th>
+                    <th style="background-color: #f0f4c3; width: 12%;">$GC_p$<br>(正)</th>
+                    <th style="background-color: #dce775;">設計正風壓<br>(kgf/m²)</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in chapter_6_data.wall_rows %}
+                    <tr>
+                        <td>{{ row.area }}</td>
+                        <!-- Zone 4 Negative -->
+                        <td>{{ row.gcp_4_neg|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #1565c0;">{{ row.p_w4_neg|floatformat:1 }}</td>
+                        <!-- Zone 5 Negative -->
+                        <td>{{ row.gcp_5_neg|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #c2185b;">{{ row.p_w5_neg|floatformat:1 }}</td>
+                        <!-- Positive (Shared) -->
+                        <td>{{ row.gcp_4_pos|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #33691e;">{{ row.p_w4_pos|floatformat:1 }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="page-number">第 11 頁</div>
+</div>

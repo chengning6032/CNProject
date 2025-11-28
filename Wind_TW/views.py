@@ -1,5 +1,4 @@
 # Wind_TW/views.py
-
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
@@ -7,7 +6,9 @@ import pandas as pd
 import numpy as np
 import os
 import json
-from . import wind_calculations  # 引入我們的計算模組
+import math  # 確保引入 math 模組
+from . import wind_calculations
+from . import services
 
 
 def wind_calculation_close_view(request):
@@ -44,640 +45,509 @@ def wind_calculation_open_view(request):
 
 def calculate_api_view(request):
     """
-    這是一個新的 API View，專門用來接收 POST 請求並執行計算。
+    封閉式建築計算 API (重構後)
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': '僅接受 POST 請求'}, status=405)
 
     try:
-        # 1. 從前端接收 JSON 資料
         data = json.loads(request.body)
 
-        landform_map = {
-            'hill': '山丘',
-            'ridge': '山脊',
-            'escarpment': '懸崖',
-            'not_considered': None  # 或者其他你认为合适的默认值
-        }
+        # 使用與開放式建築相同的 Service 入口！
+        # 因為 process_calculation_request 已經能夠處理所有類型
+        result = services.process_calculation_request(data)
 
-        eave_height = float(data.get('eaveHeight'))
-        ridge_height = float(data.get('ridgeHeight', eave_height))
-        building_dim_x = float(data.get('buildingDimX'))
-        building_dim_y = float(data.get('buildingDimY'))
-        ridge_direction = data.get('ridgeDirection')
-        roof_shape = data.get('roofShape')
-
-        topo_x_data = data.get('topoX', {})
-        x_val_x = float(topo_x_data.get('x', 0))
-
-        topo_y_data = data.get('topoY', {})
-        x_val_y = float(topo_y_data.get('x', 0))
-
-        params = {
-            'V10_C': float(data.get('v10c')),
-            'terrain': data.get('terrain'),
-            'roof_type': roof_shape,
-            'eave_height': eave_height,
-            'has_overhang': data.get('has_overhang'),
-            'ridge_height': ridge_height,
-            'ridge_orientation': ridge_direction,
-            'B_X': building_dim_x,
-            'B_Y': building_dim_y,
-            'I': float(data.get('importanceFactor')),
-            'enclosure_status': data.get('enclosureStatus', '部分封閉式建築'),
-            'beta': float(data.get('dampingRatio')),
-            'fn_X': float(data.get('fnX')),
-            'fn_Y': float(data.get('fnY')),
-            'is_topo_site_X': data['topoX'].get('type') != 'not_considered',
-            'landform_X': landform_map.get(data['topoX'].get('type')),
-            'H_X': float(data['topoX'].get('H', 0)),
-            'Lh_X': float(topo_x_data.get('Lh', 0)),
-            'x_X': x_val_x,  # 直接使用未經處理的 x 值
-            'is_topo_site_Y': data['topoY'].get('type') != 'not_considered',
-            'landform_Y': landform_map.get(data['topoY'].get('type')),
-            'H_Y': float(data['topoY'].get('H', 0)),
-            'Lh_Y': float(topo_y_data.get('Lh', 0)),
-            'x_Y': x_val_y,  # 直接使用未經處理的 x 值
-            'hip_roof_options': data.get('hipRoofOptions', {}),
-
-            # ==== 接收鋸齒屋頂的資料 ====
-            'sawtooth_is_uniform': data.get('roofShape') == 'sawtooth_uniform',
-            'num_spans': int(data.get('sawtooth_uniform_span_count', 0)),
-            'sawtooth_details': data.get('sawtooth_irregular_details', []),
-
-            'calculation_method': data.get('calculationMethod', 'auto'),
-            'simplify_gable': data.get('simplifyGable', False),
-            'segmentHeight': int(data.get('segmentHeight')),
-            'use_asce7_c_and_c': data.get('use_asce7_c_and_c', False)
-        }
-
-        print(params)
-        print("")
-
-        # 3. 根據前端選項決定 h 的值
-        if data.get('buildingHeightMode') == 'manual':
-            params['h'] = float(data.get('manualHeight'))
-        else:
-            if roof_shape == 'flat':
-                params['h'] = eave_height
-                theta = 0
-            elif roof_shape == 'sawtooth_irregular':
-                sawtooth_details = data.get('sawtoothDetails', [])
-                if not sawtooth_details:
-                    max_ridge_height = eave_height
-                else:
-                    # 從傳來的詳細資料中，找出最高的屋脊高
-                    heights = [float(item.get('ridge_height', eave_height)) for item in sawtooth_details]
-                    max_ridge_height = max(heights) if heights else eave_height
-
-                # 使用最高的屋脊高來計算 h
-                delta_h = max_ridge_height - eave_height
-
-                theta = []
-                for i in range(0, params['num_spans']):
-                    span_delta_h = float(params['sawtooth_details'][i]['ridge_height']) - eave_height
-                    span_width_h_helf = float(params['sawtooth_details'][i]['span_width']) / 2
-                    theta_i = np.rad2deg(np.arctan(span_delta_h / span_width_h_helf))
-                    theta.append(theta_i)
-
-                if max(theta) < 10:
-                    params['h'] = eave_height
-                else:
-                    params['h'] = (max_ridge_height + eave_height) / 2
-
-            elif roof_shape == 'hip':
-                theta = 0
-                delta_h = ridge_height - eave_height
-                params['h'] = (eave_height + ridge_height) / 2
-                planeDimX = float(params['hip_roof_options']['planeDimX'])
-                planeDimY = float(params['hip_roof_options']['planeDimY'])
-                theta_X = np.rad2deg(np.arctan(delta_h / ((building_dim_y - planeDimY) / 2)))
-                theta_Y = np.rad2deg(np.arctan(delta_h / ((building_dim_x - planeDimX) / 2)))
-
-                ridgeLength = float(params['hip_roof_options']['ridgeLength'])
-                if params['hip_roof_options']['ridgeDirection'] == "X" and params['hip_roof_options'][
-                    'topType'] == 'ridge':
-                    planeDimY = 0
-                    theta_X = np.rad2deg(np.arctan(delta_h / ((building_dim_y - planeDimY) / 2)))
-                    theta_Y = np.rad2deg(np.arctan(delta_h / ((building_dim_x - ridgeLength) / 2)))
-                if params['hip_roof_options']['ridgeDirection'] == "Y" and params['hip_roof_options'][
-                    'topType'] == 'ridge':
-                    planeDimX = 0
-                    theta_X = np.rad2deg(np.arctan(delta_h / ((building_dim_y - ridgeLength) / 2)))
-                    theta_Y = np.rad2deg(np.arctan(delta_h / ((building_dim_x - planeDimX) / 2)))
-
-                params['theta_X'] = theta_X
-                params['theta_Y'] = theta_Y
-
-                if theta_X < 10 and theta_Y < 10:
-                    params['h'] = eave_height
-            else:
-                theta = 0
-                if ridge_height > eave_height:
-                    base_width = building_dim_y if ridge_direction == 'X' else building_dim_x
-                    if roof_shape == "sawtooth_uniform":
-                        base_width = building_dim_y / params[
-                            'num_spans'] if ridge_direction == 'X' else building_dim_x / params['num_spans']
-
-                    if base_width > 0:
-                        delta_h = ridge_height - eave_height
-                        if roof_shape in ['gable', 'arched', 'sawtooth_uniform']:
-                            half_base = base_width / 2
-                            if half_base > 0:
-                                theta = np.rad2deg(np.arctan(delta_h / half_base))
-                        elif roof_shape == 'shed':
-                            theta = np.rad2deg(np.arctan(delta_h / base_width))
-
-                if theta < 10:
-                    params['h'] = eave_height
-                else:
-                    params['h'] = (eave_height + ridge_height) / 2
-
-        params['theta'] = theta
-        # print(f"屋頂角度 = {theta}")
-
-        if data.get('fnMode') == 'formula':
-            params['fnX'] = 22.86 / params['h']
-            params['fnY'] = 22.86 / params['h']
-            params['ft'] = 1.3 * params['fnX']
-
-        # --- 主要計算迴圈，此處邏輯不變，但現在能正確處理簡化後的輸入 ---
-        all_main_analysis_results = {}
-        all_local_analysis_results = {}
-
-        # 根據是否有地形，決定要跑哪些工況
-        wind_directions_to_run = {
-            'X': ['positive'],
-            'Y': ['positive']
-        }
-        if params['is_topo_site_X']:
-            wind_directions_to_run['X'] = ['positive', 'negative']
-        if params['is_topo_site_Y']:
-            wind_directions_to_run['Y'] = ['positive', 'negative']
-
-        print("\n>>> 將要執行的計算工況:", wind_directions_to_run)
-
-        # 遍歷所有需要执行的工况
-        for wind_axis in ['X', 'Y']:
-            for wind_sign in wind_directions_to_run[wind_axis]:
-                case_params = params.copy()
-                original_x = case_params.get(f'x_{wind_axis}', 0)
-
-                # 'positive' 代表風從+向吹來，地形的影響由 x 的正負號決定
-                # 'negative' 代表風從-向吹來，等效於將建築物放在地形的另一側，即 -x 的位置
-                final_x = original_x if wind_sign == 'positive' else -original_x
-
-                case_params[f'x_{wind_axis}'] = final_x  # 更新這個工況的 x 值
-                case_params['H'] = case_params.get(f'H_{wind_axis}', 0)
-                case_params['Lh'] = case_params.get(f'Lh_{wind_axis}', 0)
-                case_params['landform'] = case_params.get(f'landform_{wind_axis}')
-
-                case_id = f"{wind_axis}_{wind_sign}"
-                print(f"\n--- 正在執行工況: {case_id} (地形計算用 x = {final_x}) ---")
-
-                is_low_rise, _ = wind_calculations.check_low_rise_building_conditions(case_params)
-
-                if is_low_rise and case_params.get('calculation_method') == 'simplified_2_13':
-                    main_results = wind_calculations.run_low_rise_building_analysis(case_params,
-                                                                                    wind_calculations.setup_databases())
-                else:
-                    main_results = wind_calculations.run_general_method_analysis(case_params)
-
-                # ** 核心修改: 根據選項決定是否執行 C&C 計算 **
-                local_results = {}
-                if params['use_asce7_c_and_c']:
-                    local_results = wind_calculations.run_local_pressure_analysis(case_params)
-                else:
-                    # 如果不計算，確保有一個空的成功狀態，避免後端出錯
-                    local_results = {'status': 'success', 'data': {}}
-
-                all_main_analysis_results[case_id] = main_results.get('data', {})
-                all_local_analysis_results[case_id] = local_results.get('data', {})
-
-        final_results = {
-            "status": "success",
-            "message": "所有工況計算完成。",
-            "general_data_cases": all_main_analysis_results,
-            "local_data_cases": all_local_analysis_results,
-            "calculated_h": params.get('h')
-        }
-
-        return JsonResponse(final_results)
+        return JsonResponse(result)
 
     except Exception as e:
         import traceback
-        traceback.print_exc()  # 這會在後端終端機印出詳細錯誤
+        traceback.print_exc() # 務必確保這行有執行
+        print(f"API Error: {e}") # 加上這行以便除錯
         return JsonResponse({'status': 'error', 'message': f'後端處理錯誤: {str(e)}'}, status=500)
 
 
-def wind_report_view(request):
-    """
-    接收 GET 请求中的参数，渲染獨立的報告書頁面。
-    【核心修正】: 精修 Shed 屋頂在第五章的示意圖判斷邏輯。
-    """
-    get_params = request.GET
-    db = wind_calculations.setup_databases()
-
-    # --- 參數準備 (此部分不變) ---
-    site_location = f"{get_params.get('county', '未知')} {get_params.get('town', '')}".strip()
-    terrain_category = get_params.get('terrain', 'C')
-    terrain_params = wind_calculations.get_terrain_parameters(terrain_category, db)
-    roof_shape_en = get_params.get('roof_shape')
-    roof_shape_map = {'flat': '平屋頂', 'gable': '雙邊單斜式(山形)屋頂', 'shed': '單邊單斜式屋頂',
-                      'hip': '雙斜(四坡水)屋頂', 'arched': '拱形屋頂', 'sawtooth_uniform': '鋸齒型屋頂 (一致)',
-                      'sawtooth_irregular': '不規則鋸齒型屋頂'}
-    ridge_dir_en = get_params.get('ridge_direction', 'null')
-    ridge_dir_zh = f"{ridge_dir_en}向" if ridge_dir_en in ['X', 'Y'] else '不適用'
-    ridge_len_str = get_params.get('ridge_length', 'N/A')
-    ridge_len_display = f"{ridge_len_str} m" if ridge_len_str != 'N/A' else '不適用'
-    calculated_h = float(get_params.get('calculated_h', 0))
-
-    full_params = {
-        'B_X': float(get_params.get('dim_x', 0)), 'B_Y': float(get_params.get('dim_y', 0)),
-        'eave_height': float(get_params.get('eave_height', 0)),
-        'ridge_height': float(get_params.get('ridge_height', 0)),
-        'h': calculated_h, 'roof_type': roof_shape_en, 'terrain': terrain_category,
-        'I': float(get_params.get('importance_factor', 0)), 'V10_C': float(get_params.get('v10c', 0)),
-        'beta': float(get_params.get('damping_ratio', 0)), 'theta': float(get_params.get('theta', 0)),
-        'theta_X': float(get_params.get('theta_x', 0)), 'theta_Y': float(get_params.get('theta_y', 0)),
-        'ridge_orientation': ridge_dir_en if ridge_dir_en in ['X', 'Y'] else None,
-        'hip_roof_options': {'topType': 'ridge'}, 'fn_X': float(get_params.get('fn_x', 0)),
-        'fn_Y': float(get_params.get('fn_y', 0)), 'ft': float(get_params.get('ft', 0)),
-        'enclosure_status': get_params.get('enclosure_status', '部分封閉式建築'), 'segmentHeight': 2.0,
-        'topo_x_type': get_params.get('topo_x_type'), 'topo_x_h': get_params.get('topo_x_h', 0),
-        'topo_x_lh': get_params.get('topo_x_lh', 0), 'topo_x_x': get_params.get('topo_x_x', 0),
-        'topo_y_type': get_params.get('topo_y_type'), 'topo_y_h': get_params.get('topo_y_h', 0),
-        'topo_y_lh': get_params.get('topo_y_lh', 0), 'topo_y_x': get_params.get('topo_y_x', 0),
-        'has_overhang': get_params.get('has_overhang', 'false').lower() == 'true',
-        'num_spans': int(get_params.get('num_spans', 1)),
-        'use_asce7_c_and_c': get_params.get('use_asce7_c_and_c', 'false').lower() == 'true',
-    }
-
-    geometry_params = {'dim_x': full_params['B_X'], 'dim_y': full_params['B_Y'], 'roof_shape_en': roof_shape_en,
-                       'roof_shape_zh': roof_shape_map.get(roof_shape_en, '未知'),
-                       'eave_height': full_params['eave_height'], 'ridge_height': full_params['ridge_height'],
-                       'calculated_h': full_params['h'], 'ridge_direction': ridge_dir_zh,
-                       'ridge_length': ridge_len_display, 'theta': full_params['theta'],
-                       'theta_x': full_params['theta_X'], 'theta_y': full_params['theta_Y'], }
-    basic_params = {'enclosure_status': full_params['enclosure_status'], 'importance_factor': full_params['I'],
-                    'damping_ratio': full_params['beta'], 'fn_x': full_params['fn_X'], 'fn_y': full_params['fn_Y'],
-                    'ft': full_params['ft'], }
-    landform_map_en_to_zh = {'hill': '山丘', 'ridge': '山脊', 'escarpment': '懸崖'}
-
-    def process_topo_data(axis: str):
-        # ... (此內部函式不變) ...
-        topo_type = get_params.get(f'topo_{axis}_type')
-        if topo_type == 'not_considered': return {'type_display': '未考量特殊地形', 'H': 0, 'Lh': 0, 'x': 0,
-                                                  'H_Lh': 'N/A', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A', 'K1': 0,
-                                                  'K2_pair': "0.000 / 0.000", 'K3_max': 0, 'Kzt_pair': "1.000 / 1.000"}
-        H = float(get_params.get(f'topo_{axis}_h', 0));
-        Lh = float(get_params.get(f'topo_{axis}_lh', 0));
-        x_physical = float(get_params.get(f'topo_{axis}_x', 0));
-        landform = landform_map_en_to_zh.get(topo_type)
-        if Lh == 0: return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical,
-                            'H_Lh': '∞' if H > 0 else '0.00', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A', 'K1': 0,
-                            'K2_pair': "N/A", 'K3_max': 0, 'Kzt_pair': "1.000 / 1.000"}
-        x_calc_pos = x_physical;
-        x_calc_neg = -x_physical
-        params_pos = {'H': H, 'Lh': Lh, 'x': x_calc_pos, 'terrain': terrain_category, 'landform': landform}
-        kzt_pos, k1, k2_pos, k3_max = wind_calculations.calculate_topography_factor(params_pos, calculated_h, db)
-        params_neg = {'H': H, 'Lh': Lh, 'x': x_calc_neg, 'terrain': terrain_category, 'landform': landform}
-        kzt_neg, _, k2_neg, _ = wind_calculations.calculate_topography_factor(params_neg, calculated_h, db)
-        return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical, 'H_Lh': f"{H / Lh:.3f}",
-                'x_Lh_pair': f"{x_calc_pos / Lh:.3f} / {x_calc_neg / Lh:.3f}", 'z_Lh_max': f"{calculated_h / Lh:.3f}",
-                'K1': k1, 'K2_pair': f"{k2_pos:.3f} / {k2_neg:.3f}", 'K3_max': k3_max,
-                'Kzt_pair': f"{kzt_pos:.3f} / {kzt_neg:.3f}"}
-
-    topo_x_data_ch2 = process_topo_data('x');
-    topo_y_data_ch2 = process_topo_data('y')
-    building_image_path = None;
-    has_overhang = full_params['has_overhang']
-    if roof_shape_en == 'flat':
-        building_image_path = 'img/Flat_roof_building.png'
-    elif roof_shape_en in ['gable', 'hip']:
-        overhang_suffix = '_overhang' if has_overhang else ''
-        if ridge_dir_en in ['X',
-                            'Y']: building_image_path = f'img/{roof_shape_en.capitalize()}_roof_{ridge_dir_en}_ridge{overhang_suffix}_building.png'
-    elif roof_shape_en == 'arched':
-        if ridge_dir_en in ['X', 'Y']: building_image_path = f'img/Arched_roof_{ridge_dir_en}_ridge_building.png'
-    elif roof_shape_en == 'shed':
-        if ridge_dir_en in ['X', 'Y']: building_image_path = f'img/Shed_roof_{ridge_dir_en}_ridge_building.png'
-    elif roof_shape_en == 'sawtooth_uniform':
-        if ridge_dir_en in ['X',
-                            'Y']: building_image_path = f'img/Sawtooth_uniform_roof_{ridge_dir_en}_ridge_building.png'
-
-    topo_images = [];
-    topo_image_map = {'hill': 'img/hill.png', 'ridge': 'img/ridge.png', 'escarpment': 'img/escarpment.png'}
-    topo_x_type = get_params.get('topo_x_type')
-    if topo_x_type in topo_image_map: topo_images.append({'path': topo_image_map[topo_x_type], 'caption': 'X方向地形'})
-    topo_y_type = get_params.get('topo_y_type')
-    if topo_y_type in topo_image_map: topo_images.append({'path': topo_image_map[topo_y_type], 'caption': 'Y方向地形'})
-
-    chapter_4_data = {'gcpi': wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db)}
-
-    def get_analysis_params_ch4(wind_dir, sign):
-        case_params = full_params.copy()
-        if wind_dir == 'X':
-            case_params['L'], case_params['B'], case_params['fn'] = case_params['B_X'], case_params['B_Y'], case_params[
-                'fn_X']
-        else:
-            case_params['L'], case_params['B'], case_params['fn'] = case_params['B_Y'], case_params['B_X'], case_params[
-                'fn_Y']
-        topo_type = get_params.get(f'topo_{wind_dir.lower()}_type');
-        is_topo = topo_type != 'not_considered';
-        topo_calc_params = {}
-        if is_topo:
-            x_physical = float(get_params.get(f'topo_{wind_dir.lower()}_x', 0));
-            topo_calc_params = {'H': float(get_params.get(f'topo_{wind_dir.lower()}_h', 0)),
-                                'Lh': float(get_params.get(f'topo_{wind_dir.lower()}_lh', 0)),
-                                'x': x_physical if sign == 'positive' else -x_physical, 'terrain': terrain_category,
-                                'landform': landform_map_en_to_zh.get(topo_type)}
-        kzt_at_h = wind_calculations.calculate_topography_factor(topo_calc_params, case_params['h'], db)[
-            0] if is_topo else 1.0
-        rigidity = '柔性' if case_params.get('fn', 1.0) < 1.0 else '普通'
-        common_gust_params = wind_calculations.calculate_gust_common_params(case_params, db)
-        g_factor = wind_calculations.calculate_Gf_factor(case_params, common_gust_params,
-                                                         db) if rigidity == '柔性' else wind_calculations.calculate_G_factor(
-            case_params, common_gust_params)
-        wall_cp = wind_calculations.calculate_wall_coeffs(case_params['L'], case_params['B'], db);
-        # ==== ▼▼▼ START: 【核心修正】第四章不進行篩選 ▼▼▼ ====
-        roof_cp = wind_calculations.calculate_roof_coeffs(case_params, db, wind_dir, sign, filter_by_sign=False)
-        # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
-        return {'rigidity': rigidity, 'B': case_params['B'], 'L': case_params['L'], 'G_factor': g_factor,
-                'L_B': case_params['L'] / case_params['B'] if case_params['B'] > 0 else 0,
-                'h_L': case_params['h'] / case_params['L'] if case_params['L'] > 0 else 0,
-                'h_B': case_params['h'] / case_params['B'] if case_params['B'] > 0 else 0,
-                'Cp_windward': wall_cp['windward'], 'Cp_leeward': wall_cp['leeward'], 'Cp_side': wall_cp['side'],
-                'roof_cp': roof_cp}
-
-    has_topo_x = get_params.get('topo_x_type') != 'not_considered';
-    has_topo_y = get_params.get('topo_y_type') != 'not_considered'
-    chapter_4_data['x_wind'] = {'has_neg_case': has_topo_x, 'pos': get_analysis_params_ch4('X', 'positive')}
-    if has_topo_x:
-        chapter_4_data['x_wind']['neg'] = get_analysis_params_ch4('X', 'negative');
-        chapter_4_data['x_wind'][
-            'pos_header'] = '順風向 (+X向)';
-        chapter_4_data['x_wind']['neg_header'] = '順風向 (-X向)'
-    else:
-        chapter_4_data['x_wind']['pos_header'] = '順風向 (±X向)'
-    chapter_4_data['y_wind'] = {'has_neg_case': has_topo_y, 'pos': get_analysis_params_ch4('Y', 'positive')}
-    if has_topo_y:
-        chapter_4_data['y_wind']['neg'] = get_analysis_params_ch4('Y', 'negative');
-        chapter_4_data['y_wind'][
-            'pos_header'] = '順風向 (+Y向)';
-        chapter_4_data['y_wind']['neg_header'] = '順風向 (-Y向)'
-    else:
-        chapter_4_data['y_wind']['pos_header'] = '順風向 (±Y向)'
-
-    gcpi_values = wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db)
-    chapter_5_data = {}
-
-    def get_detailed_case_data(wind_dir, sign):
-        tables = []
-        for gcpi in gcpi_values:
-            # ==== ▼▼▼ START: 【核心修正】第五章進行篩選 ▼▼▼ ====
-            # 這裡的 generate_report_table_data 內部會呼叫 calculate_roof_coeffs 並進行篩選
-            table_group_data = wind_calculations.generate_report_table_data(
-                full_params, db, wind_dir, sign, specific_gcpi=gcpi, filter_roof_cp=True
-            )
-            # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
-            table_group_data['gcpi'] = gcpi
-            tables.append(table_group_data)
-
-        # 圖片與角度判斷邏輯 (保持不變)
-        ridge_orientation = full_params.get('ridge_orientation');
-        roof_type = full_params.get('roof_type');
-        is_parallel = (wind_dir == ridge_orientation) if roof_type != 'flat' else False
-        theta = 0.0;
-        theta_name = "θ";
-        image_for_case = None
-        direction_suffix = 'parallel' if is_parallel else 'vertical'
-        if roof_type == 'shed':
-            if is_parallel:
-                side_suffix = "LH" if sign == 'positive' else "RH";
-                image_for_case = f'img/Shed_roof_ridge_parallel_wind_{side_suffix}.png'
-            else:
-                side_suffix = "L" if sign == 'positive' else "H";
-                image_for_case = f'img/Shed_roof_ridge_vertical_wind_{side_suffix}.png'
-        elif roof_type in ['gable', 'arched', 'hip'] or roof_type.startswith('sawtooth'):
-            shape_name_map = {'gable': 'Gable', 'arched': 'Arched', 'hip': 'Hip', 'sawtooth_uniform': 'Sawtooth',
-                              'sawtooth_irregular': 'Sawtooth'}
-            shape_name = shape_name_map.get(roof_type)
-            if shape_name: image_for_case = f'img/{shape_name}_roof_ridge_{direction_suffix}_wind.png'
-        elif roof_type == 'flat':
-            image_for_case = 'img/Flat_roof_ridge_parallel_wind.png' if wind_dir == 'X' else 'img/Flat_roof_ridge_vertical_wind.png'
-        if roof_type == 'hip':
-            if wind_dir == 'Y':
-                theta = full_params.get('theta_X', 0.0);
-                theta_name = "θx"
-            else:
-                theta = full_params.get('theta_Y', 0.0);
-                theta_name = "θy"
-        elif roof_type != 'flat':
-            theta = full_params.get('theta', 0.0)
-
-        # 其他計算 (保持不變)
-        topo_type = full_params.get(f'topo_{wind_dir.lower()}_type');
-        is_topo = topo_type != 'not_considered';
-        topo_calc_params = {}
-        if is_topo:
-            x_physical = float(full_params.get(f'topo_{wind_dir.lower()}_x', 0))
-            topo_calc_params = {'H': float(full_params.get(f'topo_{wind_dir.lower()}_h', 0)),
-                                'Lh': float(full_params.get(f'topo_{wind_dir.lower()}_lh', 0)),
-                                'x': x_physical if sign == 'positive' else -x_physical,
-                                'terrain': full_params['terrain'], 'landform': landform_map_en_to_zh.get(topo_type)}
-        k_h = wind_calculations.calculate_velocity_pressure_coeff(full_params['h'], full_params['terrain'], db)
-        kzt_at_h = wind_calculations.calculate_topography_factor(topo_calc_params, full_params['h'], db)[
-            0] if is_topo else 1.0
-        q_h = wind_calculations.calculate_velocity_pressure(full_params['h'], full_params['I'], full_params['V10_C'],
-                                                            full_params['terrain'], kzt_at_h, db)
-
-        return {'tables': tables, 'h': full_params['h'], 'theta': theta, 'is_parallel': is_parallel,
-                'theta_name': theta_name, 'k_h': k_h, 'q_h': q_h, 'image_for_case': image_for_case}
-
-    # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
-
-    chapter_5_data['plus_x'] = get_detailed_case_data('X', 'positive')
-    chapter_5_data['minus_x'] = get_detailed_case_data('X', 'negative')
-    chapter_5_data['plus_y'] = get_detailed_case_data('Y', 'positive')
-    chapter_5_data['minus_y'] = get_detailed_case_data('Y', 'negative')
-
-    chapter_6_data = {}
-    if full_params['use_asce7_c_and_c']:
-        local_pressure_results = wind_calculations.run_local_pressure_analysis(full_params)
-        chapter_6_data = local_pressure_results.get('data', {}) if local_pressure_results.get(
-            'status') == 'success' else {}
-
-    chapter_6_roof_image_path = None
-    if full_params['use_asce7_c_and_c']:
-        h = full_params.get('h', 0);
-        roof_type = full_params.get('roof_type');
-        ridge_dir = full_params.get('ridge_orientation');
-        wind_dir_for_cc = 'Y' if ridge_dir == 'X' else 'X';
-        theta_for_cc = 0
-        if roof_type == 'hip':
-            theta_for_cc = full_params.get('theta_X', 0) if wind_dir_for_cc == 'Y' else full_params.get('theta_Y', 0)
-        else:
-            theta_for_cc = full_params.get('theta', 0)
-        if roof_type == 'flat':
-            chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
-        elif roof_type == 'gable':
-            if theta_for_cc <= 7:
-                chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
-            elif 7 < theta_for_cc <= 27:
-                chapter_6_roof_image_path = 'img/Gable_roof_C&C_h_ls_18_theta_btween_7_27.png'
-            elif 27 < theta_for_cc <= 45:
-                chapter_6_roof_image_path = 'img/Gable_roof_C&C_h_ls_18_theta_btween_27_45.png'
-        elif roof_type == 'hip':
-            if theta_for_cc <= 7:
-                chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
-            elif 7 < theta_for_cc <= 45:
-                chapter_6_roof_image_path = 'img/Hip_roof_C&C_h_ls_18_theta_btween_7_45.png'
-        elif roof_type == 'shed':
-            if theta_for_cc <= 3:
-                chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
-            elif 3 < theta_for_cc <= 10:
-                chapter_6_roof_image_path = 'img/Shed_roof_C&C_h_ls_18_theta_btween_3_10.png'
-            elif 10 < theta_for_cc <= 30:
-                chapter_6_roof_image_path = 'img/Shed_roof_C&C_h_ls_18_theta_btween_10_30.png'
-
-    appendix_data = {}
-    if chapter_4_data.get('x_wind'):
-        x_params = chapter_4_data['x_wind']['pos']
-        params_for_g_x = {'h': full_params['h'], 'B': x_params['B'], 'L': x_params['L'],
-                          'terrain': full_params['terrain'], 'fn': full_params['fn_X'], 'beta': full_params['beta'],
-                          'V10_C': full_params['V10_C'], 'I': full_params['I']}
-        common_gust_x = wind_calculations.calculate_gust_common_params(params_for_g_x, db)
-        if x_params['rigidity'] == '柔性':
-            appendix_data['x_wind_g_details'] = wind_calculations.calculate_Gf_factor(params_for_g_x, common_gust_x, db)
-        else:
-            appendix_data['x_wind_g_details'] = wind_calculations.calculate_G_factor(params_for_g_x, common_gust_x)
-    if chapter_4_data.get('y_wind'):
-        y_params = chapter_4_data['y_wind']['pos']
-        params_for_g_y = {'h': full_params['h'], 'B': y_params['B'], 'L': y_params['L'],
-                          'terrain': full_params['terrain'], 'fn': full_params['fn_Y'], 'beta': full_params['beta'],
-                          'V10_C': full_params['V10_C'], 'I': full_params['I']}
-        common_gust_y = wind_calculations.calculate_gust_common_params(params_for_g_y, db)
-        if y_params['rigidity'] == '柔性':
-            appendix_data['y_wind_g_details'] = wind_calculations.calculate_Gf_factor(params_for_g_y, common_gust_y, db)
-        else:
-            appendix_data['y_wind_g_details'] = wind_calculations.calculate_G_factor(params_for_g_y, common_gust_y)
-
-    context = {
-        'site_location': site_location, 'v10c': get_params.get('v10c', '0'),
-        'terrain_category': terrain_category, 'terrain_params': terrain_params,
-        'geometry_params': geometry_params, 'basic_params': basic_params,
-        'topo_x_data': topo_x_data_ch2, 'topo_y_data': topo_y_data_ch2,
-        'chapter_4_data': chapter_4_data, 'chapter_5_data': chapter_5_data,
-        'chapter_6_data': chapter_6_data, 'topo_images': topo_images,
-        'building_image_path': building_image_path,
-        'show_chapter_6': full_params['use_asce7_c_and_c'],
-        'chapter_6_roof_image_path': chapter_6_roof_image_path,
-        'appendix_data': appendix_data,
-    }
-    return render(request, 'Wind_TW/wind_report_table_version.html', context)
+# def wind_report_view(request):
+#     """
+#     接收 GET 请求中的参数，渲染獨立的報告書頁面。
+#     【核心修正】: 精修 Shed 屋頂在第五章的示意圖判斷邏輯。
+#     """
+#     get_params = request.GET
+#     db = wind_calculations.setup_databases()
+# 
+#     # --- 參數準備 (此部分不變) ---
+#     site_location = f"{get_params.get('county', '未知')} {get_params.get('town', '')}".strip()
+# 
+#     b_x = float(get_params.get('dim_x', 0))
+#     b_y = float(get_params.get('dim_y', 0))
+#     h_eave = float(get_params.get('eave_height', 0))
+#     h_ridge = float(get_params.get('ridge_height', 0))
+#     roof_shape = get_params.get('roof_shape')
+#     ridge_dir = get_params.get('ridge_direction', 'X')  # 預設 X
+# 
+#     calculated_theta = 0.0
+#     calculated_theta_x = 0.0
+#     calculated_theta_y = 0.0
+# 
+#     delta_h = h_ridge - h_eave
+#     print(delta_h, "眉")
+# 
+#     # 只有當屋脊高 > 屋簷高時才計算角度，否則為 0 (平屋頂)
+#     if delta_h > 0.01:
+#         # Case A: 四坡水 (Hip) - 需分別計算 X 與 Y 向角度
+#         if roof_shape == 'hip':
+#             # 依據 hip_roof_options 邏輯 (簡化版：假設對稱)
+#             # X向角度: 對應 Y 邊長的一半 (tan = h / (By/2)) ??
+#             # 不，幾何上:
+#             # X向視圖看到的斜面，其底邊長度是 By 沒錯，但計算角度的底邊是 (By - Top_By)/2
+#             # 這裡我們採用簡化假設：屋頂頂點在中心
+# 
+#             if b_y > 0:
+#                 calculated_theta_x = math.degrees(math.atan(delta_h / (b_y / 2)))
+#             if b_x > 0:
+#                 calculated_theta_y = math.degrees(math.atan(delta_h / (b_x / 2)))
+# 
+#             # 為了通用參數顯示，取兩者較大值作為代表 θ
+#             calculated_theta = max(calculated_theta_x, calculated_theta_y)
+# 
+#         # Case B: 單斜 (Shed) - 底邊為全長
+#         elif roof_shape == 'shed':
+#             # 判斷跨度方向
+#             span = b_y if ridge_dir == 'X' else b_x
+#             if span > 0:
+#                 calculated_theta = math.degrees(math.atan(delta_h / span))
+# 
+#         # Case C: 山形 (Gable) / 拱形 (Arched) / 鋸齒 (Sawtooth) - 底邊為半長
+#         # 注意: Sawtooth 若為多跨，應除以跨數，這裡暫以單跨或總寬計算，
+#         # 若前端傳來的是單跨寬度則正確，若傳總寬需除以 num_spans
+#         else:
+#             span = b_y if ridge_dir == 'X' else b_x
+# 
+#             # 若為鋸齒且有多跨，需修正 span
+#             if roof_shape == 'sawtooth_uniform':
+#                 num_spans = int(get_params.get('num_spans', 1))
+#                 if num_spans > 0:
+#                     span = span / num_spans
+# 
+#             if span > 0:
+#                 calculated_theta = math.degrees(math.atan(delta_h / (span / 2)))
+# 
+#     # ==== ▲▲▲ END: 角度重算結束 ▲▲▲ ====
+#     calculated_h = float(get_params.get('calculated_h', 0))
+# 
+#     terrain_category = get_params.get('terrain', 'C')
+#     terrain_params = wind_calculations.get_terrain_parameters(terrain_category, db)
+#     roof_shape_en = get_params.get('roof_shape')
+#     roof_shape_map = {'flat': '平屋頂', 'gable': '雙邊單斜式(山形)屋頂', 'shed': '單邊單斜式屋頂',
+#                       'hip': '雙斜(四坡水)屋頂', 'arched': '拱形屋頂', 'sawtooth_uniform': '鋸齒型屋頂 (一致)',
+#                       'sawtooth_irregular': '不規則鋸齒型屋頂'}
+#     ridge_dir_en = get_params.get('ridge_direction', 'null')
+#     ridge_dir_zh = f"{ridge_dir_en}向" if ridge_dir_en in ['X', 'Y'] else '不適用'
+#     ridge_len_str = get_params.get('ridge_length', 'N/A')
+#     ridge_len_display = f"{ridge_len_str} m" if ridge_len_str != 'N/A' else '不適用'
+#     calculated_h = float(get_params.get('calculated_h', 0))
+# 
+#     full_params = {
+#         'B_X': b_x,
+#         'B_Y': b_y,
+#         'eave_height': h_eave,
+#         'ridge_height': h_ridge,
+#         'h': calculated_h,
+#         'roof_type': roof_shape_en,
+#         'terrain': terrain_category,
+#         'I': float(get_params.get('importance_factor', 0)),
+#         'V10_C': float(get_params.get('v10c', 0)),
+#         'beta': float(get_params.get('damping_ratio', 0)),
+# 
+#         'theta': calculated_theta,
+#         'theta_X': calculated_theta_x,
+#         'theta_Y': calculated_theta_y,
+# 
+#         'ridge_orientation': ridge_dir_en if ridge_dir_en in ['X', 'Y'] else None,
+# 
+#         'hip_roof_options': {'topType': 'ridge'}, 'fn_X': float(get_params.get('fn_x', 0)),
+#         'fn_Y': float(get_params.get('fn_y', 0)), 'ft': float(get_params.get('ft', 0)),
+#         'enclosure_status': get_params.get('enclosure_status', '部分封閉式建築'),
+#         'topo_x_type': get_params.get('topo_x_type'), 'topo_x_h': get_params.get('topo_x_h', 0),
+#         'topo_x_lh': get_params.get('topo_x_lh', 0), 'topo_x_x': get_params.get('topo_x_x', 0),
+#         'topo_y_type': get_params.get('topo_y_type'), 'topo_y_h': get_params.get('topo_y_h', 0),
+#         'topo_y_lh': get_params.get('topo_y_lh', 0), 'topo_y_x': get_params.get('topo_y_x', 0),
+#         'has_overhang': get_params.get('has_overhang', 'false').lower() == 'true',
+#         'num_spans': int(get_params.get('num_spans', 1)),
+#         'use_asce7_c_and_c': get_params.get('use_asce7_c_and_c', 'false').lower() == 'true',
+#         'segmentHeight': float(get_params.get('segment_height', 2.0)),
+#         'simplify_gable': get_params.get('simplify_gable', 'true').lower() == 'true',
+#     }
+# 
+#     geometry_params = {'dim_x': full_params['B_X'], 'dim_y': full_params['B_Y'], 'roof_shape_en': roof_shape_en,
+#                        'roof_shape_zh': roof_shape_map.get(roof_shape_en, '未知'),
+#                        'eave_height': full_params['eave_height'], 'ridge_height': full_params['ridge_height'],
+#                        'calculated_h': full_params['h'], 'ridge_direction': ridge_dir_zh,
+#                        'ridge_length': ridge_len_display, 'theta': full_params['theta'],
+#                        'theta_x': full_params['theta_X'], 'theta_y': full_params['theta_Y'], }
+#     basic_params = {'enclosure_status': full_params['enclosure_status'], 'importance_factor': full_params['I'],
+#                     'damping_ratio': full_params['beta'], 'fn_x': full_params['fn_X'], 'fn_y': full_params['fn_Y'],
+#                     'ft': full_params['ft'], }
+#     landform_map_en_to_zh = {'hill': '山丘', 'ridge': '山脊', 'escarpment': '懸崖'}
+# 
+#     def process_topo_data(axis: str):
+#         # ... (此內部函式不變) ...
+#         topo_type = get_params.get(f'topo_{axis}_type')
+#         if topo_type == 'not_considered': return {'type_display': '未考量特殊地形', 'H': 0, 'Lh': 0, 'x': 0,
+#                                                   'H_Lh': 'N/A', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A', 'K1': 0,
+#                                                   'K2_pair': "0.000 / 0.000", 'K3_max': 0, 'Kzt_pair': "1.000 / 1.000"}
+#         H = float(get_params.get(f'topo_{axis}_h', 0));
+#         Lh = float(get_params.get(f'topo_{axis}_lh', 0));
+#         x_physical = float(get_params.get(f'topo_{axis}_x', 0));
+#         landform = landform_map_en_to_zh.get(topo_type)
+#         if Lh == 0: return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical,
+#                             'H_Lh': '∞' if H > 0 else '0.00', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A', 'K1': 0,
+#                             'K2_pair': "N/A", 'K3_max': 0, 'Kzt_pair': "1.000 / 1.000"}
+#         x_calc_pos = x_physical;
+#         x_calc_neg = -x_physical
+#         params_pos = {'H': H, 'Lh': Lh, 'x': x_calc_pos, 'terrain': terrain_category, 'landform': landform}
+#         kzt_pos, k1, k2_pos, k3_max = wind_calculations.calculate_topography_factor(params_pos, calculated_h, db)
+#         params_neg = {'H': H, 'Lh': Lh, 'x': x_calc_neg, 'terrain': terrain_category, 'landform': landform}
+#         kzt_neg, _, k2_neg, _ = wind_calculations.calculate_topography_factor(params_neg, calculated_h, db)
+#         return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical, 'H_Lh': f"{H / Lh:.3f}",
+#                 'x_Lh_pair': f"{x_calc_pos / Lh:.3f} / {x_calc_neg / Lh:.3f}", 'z_Lh_max': f"{calculated_h / Lh:.3f}",
+#                 'K1': k1, 'K2_pair': f"{k2_pos:.3f} / {k2_neg:.3f}", 'K3_max': k3_max,
+#                 'Kzt_pair': f"{kzt_pos:.3f} / {kzt_neg:.3f}"}
+# 
+#     topo_x_data_ch2 = process_topo_data('x');
+#     topo_y_data_ch2 = process_topo_data('y')
+#     building_image_path = None;
+#     has_overhang = full_params['has_overhang']
+#     if roof_shape_en == 'flat':
+#         building_image_path = 'img/Flat_roof_building.png'
+#     elif roof_shape_en in ['gable', 'hip']:
+#         overhang_suffix = '_overhang' if has_overhang else ''
+#         if ridge_dir_en in ['X',
+#                             'Y']: building_image_path = f'img/{roof_shape_en.capitalize()}_roof_{ridge_dir_en}_ridge{overhang_suffix}_building.png'
+#     elif roof_shape_en == 'arched':
+#         if ridge_dir_en in ['X', 'Y']: building_image_path = f'img/Arched_roof_{ridge_dir_en}_ridge_building.png'
+#     elif roof_shape_en == 'shed':
+#         if ridge_dir_en in ['X', 'Y']: building_image_path = f'img/Shed_roof_{ridge_dir_en}_ridge_building.png'
+#     elif roof_shape_en == 'sawtooth_uniform':
+#         if ridge_dir_en in ['X',
+#                             'Y']: building_image_path = f'img/Sawtooth_uniform_roof_{ridge_dir_en}_ridge_building.png'
+# 
+#     topo_images = []
+#     topo_image_map = {
+#         'hill': 'img/hill.png',
+#         'ridge': 'img/ridge.png',
+#         'escarpment': 'img/escarpment.png'
+#     }
+#     landform_zh_map = {'hill': '山丘', 'ridge': '山脊', 'escarpment': '懸崖'}
+# 
+#     # 檢查 X 向地形
+#     topo_x_type = get_params.get('topo_x_type')
+#     if topo_x_type in topo_image_map:
+#         topo_images.append({
+#             'path': topo_image_map[topo_x_type],
+#             'caption': f'X向地形示意 ({landform_zh_map.get(topo_x_type)})'
+#         })
+# 
+#     # 檢查 Y 向地形
+#     topo_y_type = get_params.get('topo_y_type')
+#     if topo_y_type in topo_image_map:
+#         topo_images.append({
+#             'path': topo_image_map[topo_y_type],
+#             'caption': f'Y向地形示意 ({landform_zh_map.get(topo_y_type)})'
+#         })
+# 
+#     chapter_4_data = {'gcpi': wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db)}
+# 
+#     def get_analysis_params_ch4(wind_dir, sign):
+#         case_params = full_params.copy()
+#         if wind_dir == 'X':
+#             case_params['L'], case_params['B'], case_params['fn'] = case_params['B_X'], case_params['B_Y'], case_params[
+#                 'fn_X']
+#         else:
+#             case_params['L'], case_params['B'], case_params['fn'] = case_params['B_Y'], case_params['B_X'], case_params[
+#                 'fn_Y']
+#         topo_type = get_params.get(f'topo_{wind_dir.lower()}_type');
+#         is_topo = topo_type != 'not_considered';
+#         topo_calc_params = {}
+#         if is_topo:
+#             x_physical = float(get_params.get(f'topo_{wind_dir.lower()}_x', 0));
+#             topo_calc_params = {'H': float(get_params.get(f'topo_{wind_dir.lower()}_h', 0)),
+#                                 'Lh': float(get_params.get(f'topo_{wind_dir.lower()}_lh', 0)),
+#                                 'x': x_physical if sign == 'positive' else -x_physical, 'terrain': terrain_category,
+#                                 'landform': landform_map_en_to_zh.get(topo_type)}
+#         kzt_at_h = wind_calculations.calculate_topography_factor(topo_calc_params, case_params['h'], db)[
+#             0] if is_topo else 1.0
+#         rigidity = '柔性' if case_params.get('fn', 1.0) < 1.0 else '普通'
+#         common_gust_params = wind_calculations.calculate_gust_common_params(case_params, db)
+#         g_factor = wind_calculations.calculate_Gf_factor(case_params, common_gust_params,
+#                                                          db) if rigidity == '柔性' else wind_calculations.calculate_G_factor(
+#             case_params, common_gust_params)
+#         wall_cp = wind_calculations.calculate_wall_coeffs(case_params['L'], case_params['B'], db);
+#         # ==== ▼▼▼ START: 【核心修正】第四章不進行篩選 ▼▼▼ ====
+#         roof_cp = wind_calculations.calculate_roof_coeffs(case_params, db, wind_dir, sign, filter_by_sign=False)
+#         # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
+# 
+#         # roof_cp_zh = {}
+#         # for k, v in dir_result['roof_cp'].items():
+#         #     if k == 'Cp_flat':
+#         #         k_zh = '平屋頂 C_p'
+#         #     elif k == 'Cp_parallel':
+#         #         k_zh = '平行屋脊 C_p'
+#         #     elif k == 'windward_Cp':
+#         #         k_zh = '迎風面 C_p'
+#         #     elif k == 'leeward_Cp':
+#         #         k_zh = '背風面 C_p'
+#         #     elif k == 'windward_Cp_pos':
+#         #         k_zh = '迎風面 C_p (+)'
+#         #     elif k == 'windward_Cp_neg':
+#         #         k_zh = '迎風面 C_p (-)'
+#         #     else:
+#         #         k_zh = k
+#         #     roof_cp_zh[k_zh] = v
+# 
+#         return {
+#             'rigidity': rigidity,
+#             'B': case_params['B'],
+#             'L': case_params['L'],
+#             'G_factor': g_factor,  # 這是一個字典，包含 'final_value'
+#             'L_B': case_params['L'] / case_params['B'] if case_params['B'] > 0 else 0,
+#             'h_L': case_params['h'] / case_params['L'] if case_params['L'] > 0 else 0,
+#             'h_B': case_params['h'] / case_params['B'] if case_params['B'] > 0 else 0,
+# 
+#             # 確保 wall_cp 字典正確傳遞
+#             'Cp_windward': wall_cp.get('windward', 0.8),
+#             'Cp_leeward': wall_cp.get('leeward', -0.5),
+#             'Cp_side': wall_cp.get('side', -0.7),
+# 
+#             'roof_cp': roof_cp
+#         }
+# 
+#     has_topo_x = get_params.get('topo_x_type') != 'not_considered';
+#     has_topo_y = get_params.get('topo_y_type') != 'not_considered'
+#     chapter_4_data['x_wind'] = {'has_neg_case': has_topo_x, 'pos': get_analysis_params_ch4('X', 'positive')}
+#     if has_topo_x:
+#         chapter_4_data['x_wind']['neg'] = get_analysis_params_ch4('X', 'negative');
+#         chapter_4_data['x_wind'][
+#             'pos_header'] = '順風向 (+X向)';
+#         chapter_4_data['x_wind']['neg_header'] = '順風向 (-X向)'
+#     else:
+#         chapter_4_data['x_wind']['pos_header'] = '順風向 (±X向)'
+#     chapter_4_data['y_wind'] = {'has_neg_case': has_topo_y, 'pos': get_analysis_params_ch4('Y', 'positive')}
+#     if has_topo_y:
+#         chapter_4_data['y_wind']['neg'] = get_analysis_params_ch4('Y', 'negative');
+#         chapter_4_data['y_wind'][
+#             'pos_header'] = '順風向 (+Y向)';
+#         chapter_4_data['y_wind']['neg_header'] = '順風向 (-Y向)'
+#     else:
+#         chapter_4_data['y_wind']['pos_header'] = '順風向 (±Y向)'
+# 
+#     gcpi_values = wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db)
+#     chapter_5_data = {}
+# 
+#     def get_detailed_case_data(wind_dir, sign):
+#         tables = []
+#         for gcpi in gcpi_values:
+#             # ==== ▼▼▼ START: 【核心修正】第五章進行篩選 ▼▼▼ ====
+#             # 這裡的 generate_report_table_data 內部會呼叫 calculate_roof_coeffs 並進行篩選
+#             table_group_data = wind_calculations.generate_report_table_data(
+#                 full_params, db, wind_dir, sign, specific_gcpi=gcpi, filter_roof_cp=True
+#             )
+#             # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
+#             table_group_data['gcpi'] = gcpi
+#             tables.append(table_group_data)
+# 
+#         # 圖片與角度判斷邏輯 (保持不變)
+#         ridge_orientation = full_params.get('ridge_orientation');
+#         roof_type = full_params.get('roof_type');
+#         is_parallel = (wind_dir == ridge_orientation) if roof_type != 'flat' else False
+#         theta = 0.0;
+#         theta_name = "θ";
+#         image_for_case = None
+#         direction_suffix = 'parallel' if is_parallel else 'vertical'
+#         if roof_type == 'shed':
+#             if is_parallel:
+#                 side_suffix = "LH" if sign == 'positive' else "RH";
+#                 image_for_case = f'img/Shed_roof_ridge_parallel_wind_{side_suffix}.png'
+#             else:
+#                 side_suffix = "L" if sign == 'positive' else "H";
+#                 image_for_case = f'img/Shed_roof_ridge_vertical_wind_{side_suffix}.png'
+#         elif roof_type in ['gable', 'arched', 'hip'] or roof_type.startswith('sawtooth'):
+#             shape_name_map = {'gable': 'Gable', 'arched': 'Arched', 'hip': 'Hip', 'sawtooth_uniform': 'Sawtooth',
+#                               'sawtooth_irregular': 'Sawtooth'}
+#             shape_name = shape_name_map.get(roof_type)
+#             if shape_name: image_for_case = f'img/{shape_name}_roof_ridge_{direction_suffix}_wind.png'
+#         elif roof_type == 'flat':
+#             image_for_case = 'img/Flat_roof_ridge_parallel_wind.png' if wind_dir == 'X' else 'img/Flat_roof_ridge_vertical_wind.png'
+#         if roof_type == 'hip':
+#             if wind_dir == 'Y':
+#                 theta = full_params.get('theta_X', 0.0);
+#                 theta_name = "θx"
+#             else:
+#                 theta = full_params.get('theta_Y', 0.0);
+#                 theta_name = "θy"
+#         elif roof_type != 'flat':
+#             theta = full_params.get('theta', 0.0)
+# 
+#         # 其他計算 (保持不變)
+#         topo_type = full_params.get(f'topo_{wind_dir.lower()}_type');
+#         is_topo = topo_type != 'not_considered';
+#         topo_calc_params = {}
+#         if is_topo:
+#             x_physical = float(full_params.get(f'topo_{wind_dir.lower()}_x', 0))
+#             topo_calc_params = {'H': float(full_params.get(f'topo_{wind_dir.lower()}_h', 0)),
+#                                 'Lh': float(full_params.get(f'topo_{wind_dir.lower()}_lh', 0)),
+#                                 'x': x_physical if sign == 'positive' else -x_physical,
+#                                 'terrain': full_params['terrain'], 'landform': landform_map_en_to_zh.get(topo_type)}
+#         k_h = wind_calculations.calculate_velocity_pressure_coeff(full_params['h'], full_params['terrain'], db)
+#         kzt_at_h = wind_calculations.calculate_topography_factor(topo_calc_params, full_params['h'], db)[
+#             0] if is_topo else 1.0
+#         q_h = wind_calculations.calculate_velocity_pressure(full_params['h'], full_params['I'], full_params['V10_C'],
+#                                                             full_params['terrain'], kzt_at_h, db)
+# 
+#         return {'tables': tables, 'h': full_params['h'], 'theta': theta, 'is_parallel': is_parallel,
+#                 'theta_name': theta_name, 'k_h': k_h, 'q_h': q_h, 'image_for_case': image_for_case}
+# 
+#     # ==== ▲▲▲ END: 【核心修正】 ▲▲▲ ====
+# 
+#     chapter_5_data['plus_x'] = get_detailed_case_data('X', 'positive')
+#     chapter_5_data['minus_x'] = get_detailed_case_data('X', 'negative')
+#     chapter_5_data['plus_y'] = get_detailed_case_data('Y', 'positive')
+#     chapter_5_data['minus_y'] = get_detailed_case_data('Y', 'negative')
+# 
+#     chapter_6_data = {}
+#     if full_params['use_asce7_c_and_c']:
+#         local_pressure_results = wind_calculations.run_local_pressure_analysis(full_params)
+#         chapter_6_data = local_pressure_results.get('data', {}) if local_pressure_results.get(
+#             'status') == 'success' else {}
+# 
+#     chapter_6_roof_image_path = None
+#     if full_params['use_asce7_c_and_c']:
+#         h = full_params.get('h', 0);
+#         roof_type = full_params.get('roof_type');
+#         ridge_dir = full_params.get('ridge_orientation');
+#         wind_dir_for_cc = 'Y' if ridge_dir == 'X' else 'X';
+#         theta_for_cc = 0
+#         if roof_type == 'hip':
+#             theta_for_cc = full_params.get('theta_X', 0) if wind_dir_for_cc == 'Y' else full_params.get('theta_Y', 0)
+#         else:
+#             theta_for_cc = full_params.get('theta', 0)
+#         if roof_type == 'flat':
+#             chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
+#         elif roof_type == 'gable':
+#             if theta_for_cc <= 7:
+#                 chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
+#             elif 7 < theta_for_cc <= 27:
+#                 chapter_6_roof_image_path = 'img/Gable_roof_C&C_h_ls_18_theta_btween_7_27.png'
+#             elif 27 < theta_for_cc <= 45:
+#                 chapter_6_roof_image_path = 'img/Gable_roof_C&C_h_ls_18_theta_btween_27_45.png'
+#         elif roof_type == 'hip':
+#             if theta_for_cc <= 7:
+#                 chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
+#             elif 7 < theta_for_cc <= 45:
+#                 chapter_6_roof_image_path = 'img/Hip_roof_C&C_h_ls_18_theta_btween_7_45.png'
+#         elif roof_type == 'shed':
+#             if theta_for_cc <= 3:
+#                 chapter_6_roof_image_path = 'img/Roof_C&C_h_gt_18_theta_ls_7.png' if h > 18.3 else 'img/Roof_C&C_h_ls_18_theta_ls_7.png'
+#             elif 3 < theta_for_cc <= 10:
+#                 chapter_6_roof_image_path = 'img/Shed_roof_C&C_h_ls_18_theta_btween_3_10.png'
+#             elif 10 < theta_for_cc <= 30:
+#                 chapter_6_roof_image_path = 'img/Shed_roof_C&C_h_ls_18_theta_btween_10_30.png'
+# 
+#     appendix_data = {}
+#     if chapter_4_data.get('x_wind'):
+#         x_params = chapter_4_data['x_wind']['pos']
+#         params_for_g_x = {
+#             'h': full_params['h'],
+#             'B': full_params['B_Y'],  # 風向 X，迎風寬度 B 為 B_Y
+#             'L': full_params['B_X'],  # 風向 X，深長 L 為 B_X
+#             'terrain': full_params['terrain'],
+#             'fn': full_params['fn_X'],
+#             'beta': full_params['beta'],
+#             'V10_C': full_params['V10_C'],
+#             'I': full_params['I']
+#         }
+#         common_gust_x = wind_calculations.calculate_gust_common_params(params_for_g_x, db)
+# 
+#         if full_params['fn_X'] < 1.0:  # 柔性
+#             g_details_x = wind_calculations.calculate_Gf_factor(params_for_g_x, common_gust_x, db)
+#             g_details_x['rigidity'] = '柔性'
+#         else:  # 剛性
+#             g_details_x = wind_calculations.calculate_G_factor(params_for_g_x, common_gust_x)
+#             g_details_x['rigidity'] = '剛性'
+# 
+#         appendix_data['x_wind_g_details'] = g_details_x
+# 
+#     if chapter_4_data.get('y_wind'):
+#         y_params = chapter_4_data['y_wind']['pos']
+#         params_for_g_y = {
+#             'h': full_params['h'],
+#             'B': full_params['B_X'],  # 風向 Y，迎風寬度 B 為 B_X
+#             'L': full_params['B_Y'],
+#             'terrain': full_params['terrain'],
+#             'fn': full_params['fn_Y'],
+#             'beta': full_params['beta'],
+#             'V10_C': full_params['V10_C'],
+#             'I': full_params['I']
+#         }
+#         common_gust_y = wind_calculations.calculate_gust_common_params(params_for_g_y, db)
+# 
+#         if full_params['fn_Y'] < 1.0:
+#             g_details_y = wind_calculations.calculate_Gf_factor(params_for_g_y, common_gust_y, db)
+#             g_details_y['rigidity'] = '柔性'
+#         else:
+#             g_details_y = wind_calculations.calculate_G_factor(params_for_g_y, common_gust_y)
+#             g_details_y['rigidity'] = '剛性'
+# 
+#         appendix_data['y_wind_g_details'] = g_details_y
+# 
+#     context = {
+#         'site_location': site_location,
+#         'v10c': get_params.get('v10c', '0'),
+#         'terrain_category': terrain_category,
+#         'terrain_params': terrain_params,
+#         'geometry_params': geometry_params,
+#         'basic_params': basic_params,
+# 
+#         # 確保這裡傳遞的是 topo_x_data_ch2 (這是在前面 process_topo_data 計算出來的)
+#         'topo_x_data': topo_x_data_ch2,
+#         'topo_y_data': topo_y_data_ch2,
+# 
+#         'chapter_4_data': chapter_4_data,
+#         'chapter_5_data': chapter_5_data,
+#         'chapter_6_data': chapter_6_data,
+# 
+#         # ★★★ 關鍵：必須將 topo_images 列表傳入 context ★★★
+#         'topo_images': topo_images,
+# 
+#         'building_image_path': building_image_path,
+#         'show_chapter_6': full_params['use_asce7_c_and_c'],
+#         'chapter_6_roof_image_path': chapter_6_roof_image_path,
+#         'appendix_data': appendix_data,
+#     }
+#     return render(request, 'Wind_TW/wind_report_table_version.html', context)
 
 
 def calculate_open_api_view(request):
     """
-    專門處理開放式建築物計算請求的 API View。
-    【核心修正】: 擴充邏輯以處理地形和多個計算工況 (cases)。
+    重構後的 API View：僅負責接收 Request 和回傳 Response，
+    計算邏輯全權委託給 services.py 處理。
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': '僅接受 POST 請求'}, status=405)
 
     try:
+        # 1. 解析 JSON
         data = json.loads(request.body)
 
-        landform_map = {'hill': '山丘', 'ridge': '山脊', 'escarpment': '懸崖'}
+        # 2. 呼叫 Service 層進行處理
+        # 這裡會自動處理所有工況 (X+, X-, Y+, Y-)
+        result = services.process_calculation_request(data)
 
-        # 1. 組合基礎參數
-        base_params = {
-            'V10_C': float(data.get('v10c')),
-            'terrain': data.get('terrain'),
-            'I': float(data.get('importanceFactor')),
-            'dampingRatio': float(data.get('dampingRatio')),
-            'fnX': float(data.get('fnX')),
-            'fnY': float(data.get('fnY')),
-            'ft': float(data.get('ft')),
-            'enclosure_status': data.get('enclosureStatus'),
-            'geometry_data': data.get('geometryData', {}),
-            # 新增地形相關的基礎參數
-            'is_topo_site_X': data['topoX'].get('type') != 'not_considered',
-            'landform_X': landform_map.get(data['topoX'].get('type')),
-            'H_X': float(data['topoX'].get('H', 0)),
-            'Lh_X': float(data['topoX'].get('Lh', 0)),
-            'x_X': float(data['topoX'].get('x', 0)),
-            'is_topo_site_Y': data['topoY'].get('type') != 'not_considered',
-            'landform_Y': landform_map.get(data['topoY'].get('type')),
-            'H_Y': float(data['topoY'].get('H', 0)),
-            'Lh_Y': float(data['topoY'].get('Lh', 0)),
-            'x_Y': float(data['topoY'].get('x', 0)),
-        }
+        # 3. 檢查是否有尚未支援的類型 (Optional)
+        # 如果 result['data_by_case'] 是空的，可能是因為該建築類型的 Handler 還沒寫好
+        # 在過渡期，您可以保留舊的 wind_calculations.py 邏輯作為 fallback，
+        # 但既然目標是重構，建議直接讓前端知道該功能尚未遷移。
 
-        # 2. 統一計算 h (平均屋頂高度)
-        base_params['h'] = wind_calculations.calculate_unified_h(base_params)
-        print(f"--- 統一計算的平均屋頂高度 h = {base_params.get('h', 0):.3f} m ---")
-
-        # 3. 決定要運行的工況
-        wind_directions_to_run = {
-            'X': ['positive'],
-            'Y': ['positive']
-        }
-        if base_params['is_topo_site_X']:
-            wind_directions_to_run['X'] = ['positive', 'negative']
-        if base_params['is_topo_site_Y']:
-            wind_directions_to_run['Y'] = ['positive', 'negative']
-
-        print("\n>>> 將要執行的計算工況:", wind_directions_to_run)
-
-        # 4. 遍歷所有工況並執行計算
-        all_results_by_case = {}
-        for wind_axis in ['X', 'Y']:
-            for wind_sign in wind_directions_to_run[wind_axis]:
-                case_params = base_params.copy()
-
-                # 準備該工況特定的地形參數
-                original_x = case_params.get(f'x_{wind_axis}', 0)
-                final_x = original_x if wind_sign == 'positive' else -original_x
-
-                case_params['is_topo_site'] = case_params.get(f'is_topo_site_{wind_axis}', False)
-                if case_params['is_topo_site']:
-                    case_params['topo_params'] = {
-                        'H': case_params.get(f'H_{wind_axis}', 0),
-                        'Lh': case_params.get(f'Lh_{wind_axis}', 0),
-                        'x': final_x,
-                        'landform': case_params.get(f'landform_{wind_axis}'),
-                        'terrain': case_params['terrain']
-                    }
-                else:
-                    case_params['topo_params'] = {}
-
-                case_id = f"{wind_axis}_{wind_sign}"
-                print(f"\n--- 正在執行工況!!!!: {case_id} ---")
-
-                # 傳遞特定風向給計算函式
-                case_params['wind_direction'] = wind_axis
-
-                # 呼叫主計算函式
-                results_for_case = wind_calculations.run_open_building_analysis(case_params)
-                print("========>===========>")
-                print(results_for_case)
-
-                if results_for_case.get('status') == 'success':
-                    all_results_by_case[case_id] = results_for_case.get('data', {})
-                else:
-                    # 如果任何一個工況失敗，就直接返回錯誤
-                    return JsonResponse(results_for_case, status=400)
-
-        # 5. 組合最終成功的回應
-        final_response = {
-            "status": "success",
-            "message": "所有工況計算完成。",
-            "calculated_h": base_params.get('h'),
-            "data_by_case": all_results_by_case
-        }
-        return JsonResponse(final_response)
+        return JsonResponse(result)
 
     except Exception as e:
         import traceback
@@ -886,20 +756,22 @@ def wind_report_open_view(request):
             H = float(get_params.get(f'topo_{axis}_h', 0))
             Lh = float(get_params.get(f'topo_{axis}_lh', 0))
             x_physical = float(get_params.get(f'topo_{axis}_x', 0))
-            landform = landform_map_en_to_zh.get(topo_type)
-            if Lh == 0: return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical,
+
+            landform_zh = landform_map_en_to_zh.get(topo_type)
+
+            if Lh == 0: return {'type_display': landform_zh, 'H': H, 'Lh': Lh, 'x': x_physical,
                                 'H_Lh': '∞' if H > 0 else '0.00', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A', 'K1': 0,
                                 'K2_pair': "N/A", 'K3_max': 0, 'Kzt_pair': "1.000 / 1.000", 'kzt_pos_raw': 1.0}
 
             x_calc_pos = x_physical
             x_calc_neg = -x_physical
-            params_pos = {'H': H, 'Lh': Lh, 'x': x_calc_pos, 'terrain': terrain_category, 'landform': landform}
+            params_pos = {'H': H, 'Lh': Lh, 'x': x_calc_pos, 'terrain': terrain_category, 'landform': landform_zh}
             kzt_pos, k1, k2_pos, k3_max = wind_calculations.calculate_topography_factor(params_pos,
                                                                                         calculated_h_for_topo, db)
-            params_neg = {'H': H, 'Lh': Lh, 'x': x_calc_neg, 'terrain': terrain_category, 'landform': landform}
+            params_neg = {'H': H, 'Lh': Lh, 'x': x_calc_neg, 'terrain': terrain_category, 'landform': landform_zh}
             kzt_neg, _, k2_neg, _ = wind_calculations.calculate_topography_factor(params_neg, calculated_h_for_topo, db)
             z_lh_max_str = f"{calculated_h_for_topo / Lh:.3f}" if Lh > 0 else 'N/A'
-            return {'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical, 'H_Lh': f"{H / Lh:.3f}",
+            return {'type_display': landform_zh, 'H': H, 'Lh': Lh, 'x': x_physical, 'H_Lh': f"{H / Lh:.3f}",
                     'x_Lh_pair': f"{x_calc_pos / Lh:.3f} / {x_calc_neg / Lh:.3f}", 'z_Lh_max': z_lh_max_str, 'K1': k1,
                     'K2_pair': f"{k2_pos:.3f} / {k2_neg:.3f}", 'K3_max': k3_max,
                     'Kzt_pair': f"{kzt_pos:.3f} / {kzt_neg:.3f}",
@@ -1013,3 +885,518 @@ def wind_report_open_view(request):
         import traceback
         traceback.print_exc()
         return render(request, 'Wind_TW/error.html', {'error_message': f'生成報告時發生錯誤: {e}'})
+
+
+def wind_report_v2_view(request):
+    """
+    接收 GET 請求中的參數，執行計算並渲染 v2 版報告書。
+    """
+    try:
+        get_params = request.GET
+        db = wind_calculations.setup_databases()
+
+        # 1. 基礎參數準備 (從 GET 參數提取)
+        # -------------------------------------------------------
+        site_location = f"{get_params.get('county', '未知')} {get_params.get('town', '')}".strip()
+        v10c = float(get_params.get('v10c', 0))
+        terrain_category = get_params.get('terrain', 'C')
+        terrain_params = wind_calculations.get_terrain_parameters(terrain_category, db)
+
+        roof_shape_en = get_params.get('roof_shape')
+        roof_shape_map = {
+            'flat': '平屋頂', 'gable': '雙邊單斜式(山形)屋頂', 'shed': '單邊單斜式屋頂',
+            'hip': '雙斜(四坡水)屋頂', 'arched': '拱形屋頂',
+            'sawtooth_uniform': '鋸齒型屋頂 (一致)', 'sawtooth_irregular': '不規則鋸齒型屋頂'
+        }
+
+        ridge_dir_en = get_params.get('ridge_direction', 'null')
+        ridge_len_str = get_params.get('ridge_length', 'N/A')
+
+        # 提取尺寸與高度
+        b_x = float(get_params.get('dim_x', 0))
+        b_y = float(get_params.get('dim_y', 0))
+        h_eave = float(get_params.get('eave_height', 0))
+        h_ridge = float(get_params.get('ridge_height', 0))
+        roof_shape = get_params.get('roof_shape')
+        ridge_dir = get_params.get('ridge_direction', 'X')  # 預設 X
+
+        # ==== ▼▼▼ START: ★★★ 2. 強制在後端重新計算角度 θ ★★★ ▼▼▼ ====
+        calculated_theta = 0.0
+        calculated_theta_x = 0.0
+        calculated_theta_y = 0.0
+
+        delta_h = h_ridge - h_eave
+
+        # 只有當屋脊高 > 屋簷高時才計算角度，否則為 0 (平屋頂)
+        if delta_h > 0.01:
+            # Case A: 四坡水 (Hip) - 需分別計算 X 與 Y 向角度
+            if roof_shape == 'hip':
+                if b_y > 0:
+                    calculated_theta_x = math.degrees(math.atan(delta_h / (b_y / 2)))
+                if b_x > 0:
+                    calculated_theta_y = math.degrees(math.atan(delta_h / (b_x / 2)))
+
+                # 為了通用參數顯示，取兩者較大值作為代表 θ
+                calculated_theta = max(calculated_theta_x, calculated_theta_y)
+
+            # Case B: 單斜 (Shed) - 底邊為全長
+            elif roof_shape == 'shed':
+                # 判斷跨度方向
+                span = b_y if ridge_dir == 'X' else b_x
+                if span > 0:
+                    calculated_theta = math.degrees(math.atan(delta_h / span))
+
+            # Case C: 山形 (Gable) / 拱形 (Arched) / 鋸齒 (Sawtooth) - 底邊為半長
+            # 注意: Sawtooth 若為多跨，應除以跨數，這裡暫以單跨或總寬計算
+            else:
+                span = b_y if ridge_dir == 'X' else b_x
+
+                # 若為鋸齒且有多跨，需修正 span
+                if roof_shape == 'sawtooth_uniform':
+                    num_spans = int(get_params.get('num_spans', 1))
+                    if num_spans > 0:
+                        span = span / num_spans
+
+                if span > 0:
+                    calculated_theta = math.degrees(math.atan(delta_h / (span / 2)))
+
+        # ==== ▲▲▲ END: 角度重算結束 ▲▲▲ ====
+
+        # 依據規範重新計算平均高度 h
+        # 規範：屋頂斜角小於 10 度，h = 簷高；否則 h = (簷高 + 脊高) / 2
+        if calculated_theta < 10:
+            calculated_h = h_eave
+        else:
+            calculated_h = (h_eave + h_ridge) / 2
+
+        # 若前端傳入 calculated_h 且與後端計算差異不大，可考慮是否覆蓋 (這裡選擇以後端計算為主)
+        # calculated_h = float(get_params.get('calculated_h', calculated_h))
+
+        # 2. 建立 full_params (用於計算)
+        # -------------------------------------------------------
+        full_params = {
+            'B_X': b_x,
+            'B_Y': b_y,
+            'eave_height': h_eave,
+            'ridge_height': h_ridge,
+            'h': calculated_h,
+            'roof_type': roof_shape_en,
+            'terrain': terrain_category,
+
+            'I': float(get_params.get('importance_factor', 1.0)),
+            'V10_C': v10c,
+            'beta': float(get_params.get('damping_ratio', 0.01)),  # 這裡修正了可能的 key error，統一使用 damping_ratio
+            'dampingRatio': float(get_params.get('damping_ratio', 0.01)),
+            'enclosure_status': get_params.get('enclosure_status', '部分封閉式建築'),
+
+            'theta': calculated_theta,
+            'theta_X': calculated_theta_x,
+            'theta_Y': calculated_theta_y,
+
+            'ridge_orientation': ridge_dir_en if ridge_dir_en in ['X', 'Y'] else None,
+
+            'fn_X': float(get_params.get('fn_x', 0)),
+            'fn_Y': float(get_params.get('fn_y', 0)),
+            'ft': float(get_params.get('ft', 0)),
+            'has_overhang': get_params.get('has_overhang', 'false').lower() == 'true',
+            'num_spans': int(get_params.get('num_spans', 1)),
+            'use_asce7_c_and_c': get_params.get('use_asce7_c_and_c', 'false').lower() == 'true',
+            'segmentHeight': float(get_params.get('segment_height', 2.0)),
+            'simplify_gable': get_params.get('simplify_gable', 'false').lower() == 'true',
+
+            'topo_x_type': get_params.get('topo_x_type', 'not_considered'),
+            'topo_x_h': float(get_params.get('topo_x_h') or 0),
+            'topo_x_lh': float(get_params.get('topo_x_lh') or 0),
+            'topo_x_x': float(get_params.get('topo_x_x') or 0),
+            'topo_y_type': get_params.get('topo_y_type', 'not_considered'),
+            'topo_y_h': float(get_params.get('topo_y_h') or 0),
+            'topo_y_lh': float(get_params.get('topo_y_lh') or 0),
+            'topo_y_x': float(get_params.get('topo_y_x') or 0),
+        }
+
+        full_params['gcpi'] = wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db)
+
+        # 3. 準備顯示用的參數物件
+        # -------------------------------------------------------
+        geometry_params = {
+            'dim_x': full_params['B_X'], 'dim_y': full_params['B_Y'],
+            'roof_shape_en': roof_shape_en,
+            'roof_shape_zh': roof_shape_map.get(roof_shape_en, '未知'),
+            'eave_height': full_params['eave_height'],
+            'ridge_height': full_params['ridge_height'],
+            'calculated_h': full_params['h'],
+            'ridge_direction': f"{ridge_dir_en}向" if ridge_dir_en in ['X', 'Y'] else '不適用',
+            'ridge_length': f"{ridge_len_str} m" if ridge_len_str != 'N/A' else '不適用',
+            'theta': full_params['theta'],
+            'theta_x': full_params['theta_X'],
+            'theta_y': full_params['theta_Y'],
+        }
+
+        basic_params = {
+            'enclosure_status': full_params['enclosure_status'],
+            'importance_factor': full_params['I'],
+            'damping_ratio': full_params['dampingRatio'],
+            'fn_x': full_params['fn_X'], 'fn_y': full_params['fn_Y'], 'ft': full_params['ft'],
+        }
+
+        # 4. 地形參數與圖片處理
+        # -------------------------------------------------------
+        landform_zh_map = {'hill': '山丘', 'ridge': '山脊', 'escarpment': '懸崖'}
+
+        def process_topo_data(axis: str):
+            # 復用原本的邏輯處理顯示用的地形數據
+            topo_type = get_params.get(f'topo_{axis}_type')
+            # 若未考量特殊地形
+            if topo_type == 'not_considered':
+                return {
+                    'type_display': '未考量特殊地形', 'H': 0, 'Lh': 0, 'x': 0,
+                    'H_Lh': 'N/A', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A',
+                    'K1': 0, 'K2_pair': "0.000 / 0.000",
+                    'K3_max': 1.000,  # K3 預設顯示 1.000
+                    'Kzt_pair': "1.000 / 1.000",
+                    'kzt_pos_raw': 1.0
+                }
+
+            H = float(get_params.get(f'topo_{axis}_h', 0))
+            Lh = float(get_params.get(f'topo_{axis}_lh', 0))
+            x_physical = float(get_params.get(f'topo_{axis}_x', 0))
+            landform = landform_zh_map.get(topo_type)
+
+            # 防呆 Lh=0
+            if Lh == 0:
+                return {
+                    'type_display': landform, 'H': H, 'Lh': Lh, 'x': x_physical,
+                    'H_Lh': '∞', 'x_Lh_pair': 'N/A', 'z_Lh_max': 'N/A',
+                    'K1': 0, 'K2_pair': "N/A",
+                    'K3_max': 1.000,
+                    'Kzt_pair': "1.000 / 1.000",
+                    'kzt_pos_raw': 1.0
+                }
+
+            x_calc_pos, x_calc_neg = x_physical, -x_physical
+
+            # 建立參數
+            params_pos = {'H': H, 'Lh': Lh, 'x': x_calc_pos, 'terrain': terrain_category, 'landform': landform}
+            params_neg = {'H': H, 'Lh': Lh, 'x': x_calc_neg, 'terrain': terrain_category, 'landform': landform}
+
+            # ==== ▼▼▼ START: 核心修改 ▼▼▼ ====
+            # 為了讓表 2.3 顯示最大地形效應，強制將高度 z 設為 0 (地面)，此時 K3 = 1.0
+            # 這樣 Kzt 會是該位置 (x) 的最大值
+
+            # 計算 +風向 (使用 z=0)
+            kzt_pos, k1, k2_pos, k3_pos = wind_calculations.calculate_topography_factor(params_pos, 0.0, db)
+
+            # 計算 -風向 (使用 z=0)
+            kzt_neg, _, k2_neg, _ = wind_calculations.calculate_topography_factor(params_neg, 0.0, db)
+
+            # 雖然 K3 我們強制算 1.0，但 z/Lh 的顯示欄位建議還是顯示「建築物頂部」的比例，供工程師參考幾何關係
+            z_lh_display = f"{calculated_h / Lh:.3f}" if Lh > 0 else 'N/A'
+
+            # ==== ▲▲▲ END: 核心修改 ▲▲▲ ====
+
+            return {
+                'type_display': landform,
+                'H': H,
+                'Lh': Lh,
+                'x': x_physical,
+                'H_Lh': f"{H / Lh:.3f}",
+                'x_Lh_pair': f"{x_calc_pos / Lh:.3f} / {x_calc_neg / Lh:.3f}",
+                'z_Lh_max': z_lh_display,  # 顯示建築幾何比例
+                'K1': k1,
+                'K2_pair': f"{k2_pos:.3f} / {k2_neg:.3f}",
+                'K3_max': 1.000,  # 強制顯示 1.000 (因為我們是用 z=0 計算的)
+                'Kzt_pair': f"{kzt_pos:.3f} / {kzt_neg:.3f}",  # 這是 z=0 時的最大 Kzt
+                'kzt_pos_raw': kzt_pos  # 傳遞給後續邏輯使用 (如實體標示物保守計算)
+            }
+
+        topo_x_data_ch2 = process_topo_data('x')
+        topo_y_data_ch2 = process_topo_data('y')
+
+        # 地形圖片
+        topo_images = []
+        topo_image_map = {'hill': 'img/hill.png', 'ridge': 'img/ridge.png', 'escarpment': 'img/escarpment.png'}
+
+        if get_params.get('topo_x_type') in topo_image_map:
+            topo_images.append({'path': topo_image_map[get_params.get('topo_x_type')],
+                                'caption': f'X向地形示意 ({landform_zh_map.get(get_params.get("topo_x_type"))})'})
+        if get_params.get('topo_y_type') in topo_image_map:
+            topo_images.append({'path': topo_image_map[get_params.get('topo_y_type')],
+                                'caption': f'Y向地形示意 ({landform_zh_map.get(get_params.get("topo_y_type"))})'})
+
+        # 5. 第四章：主風力計算 (Chapter 4 Data Calculation)
+        # -------------------------------------------------------
+        chapter_4_data = {
+            'gcpi': wind_calculations.calculate_gcpi_coeff(full_params['enclosure_status'], db),
+            'x_wind': {}, 'y_wind': {}
+        }
+
+        # 準備地形配置 (用於計算)
+        topo_config_calc = {
+            'X': {'is_topo': get_params.get('topo_x_type') != 'not_considered',
+                  'params': {'landform': landform_zh_map.get(get_params.get('topo_x_type')),
+                             'H': float(get_params.get('topo_x_h', 0)), 'Lh': float(get_params.get('topo_x_lh', 0)),
+                             'x_base': float(get_params.get('topo_x_x', 0))}},
+            'Y': {'is_topo': get_params.get('topo_y_type') != 'not_considered',
+                  'params': {'landform': landform_zh_map.get(get_params.get('topo_y_type')),
+                             'H': float(get_params.get('topo_y_h', 0)), 'Lh': float(get_params.get('topo_y_lh', 0)),
+                             'x_base': float(get_params.get('topo_y_x', 0))}}
+        }
+
+        # 執行計算迴圈，填充 chapter_4_data
+        for axis in ['X', 'Y']:
+            # 決定需要跑哪些工況 (正向/負向)
+            cases = ['positive']
+            has_neg_case = topo_config_calc[axis]['is_topo']
+            if has_neg_case:
+                cases.append('negative')
+
+            chapter_4_data[f'{axis.lower()}_wind']['has_neg_case'] = has_neg_case
+            chapter_4_data[f'{axis.lower()}_wind']['pos_header'] = f"順風向 (+{axis})"
+            chapter_4_data[f'{axis.lower()}_wind']['neg_header'] = f"順風向 (-{axis})"
+
+            for sign in cases:
+                # 準備該工況的參數
+                case_params = full_params.copy()
+                case_params['wind_direction'] = axis
+
+                # 設定對應風向的頻率與尺寸 (Handler 需要)
+                if axis == 'X':
+                    case_params['fn'] = full_params['fn_X']
+                    # EnclosedHandler 會讀取 B_X, B_Y，所以不需要這裡手動 swap B/L，Handler 內部會處理
+                else:
+                    case_params['fn'] = full_params['fn_Y']
+
+                # 設定地形參數
+                current_topo = topo_config_calc[axis]
+                case_params['is_topo_site'] = current_topo['is_topo']
+                if current_topo['is_topo']:
+                    p = current_topo['params'].copy()
+                    p['x'] = p['x_base'] if sign == 'positive' else -p['x_base']
+                    # **修正**: core.py 的 calculate_topography_factor 依賴 'terrain' 鍵
+                    p['terrain'] = terrain_category
+                    case_params['topo_params_' + axis] = p  # 傳給 Handler，注意 key 是 topo_params_X 或 Y
+                    # 為了相容 BaseWindCalculator 的通用方法，也傳一份到 topo_params
+                    case_params['topo_params'] = p
+                else:
+                    case_params['topo_params'] = {}
+
+                # 呼叫 Handler 計算
+                # 這裡使用 services.get_handler_class 確保邏輯一致
+                calc_method = 'general'  # 或 get_params.get('calculation_method')
+                HandlerClass = services.get_handler_class(full_params['enclosure_status'], calc_method)
+
+                if HandlerClass:
+                    handler = HandlerClass(case_params)
+
+                    try:
+                        # 使用 _calculate_direction 來獲取單一方向的詳細數據
+                        dir_result = handler._calculate_direction(axis)
+
+                        # ★★★ 關鍵：資料映射 (Mapping) ★★★
+                        # 將 Handler 的輸出轉換為模板期望的格式
+                        mapped_result = {
+                            'rigidity': dir_result['rigidity'],
+                            'B': dir_result['B'],
+                            'L': dir_result['L'],
+                            'G_factor': dir_result['g_details'],  # 這裡放詳細資料
+                            'L_B': dir_result['L_over_B'],
+                            'h_L': calculated_h / dir_result['L'] if dir_result['L'] > 0 else 0,
+                            # h/B 需自行計算
+                            'h_B': calculated_h / dir_result['B'] if dir_result['B'] > 0 else 0,
+
+                            'Cp_windward': dir_result['wall_cp']['windward'],
+                            'Cp_leeward': dir_result['wall_cp']['leeward'],
+                            'Cp_side': dir_result['wall_cp']['side'],
+                            'roof_cp': dir_result['roof_cp']
+                        }
+
+                        # 存入 chapter_4_data
+                        key_map = {'positive': 'pos', 'negative': 'neg'}
+                        chapter_4_data[f'{axis.lower()}_wind'][key_map[sign]] = mapped_result
+
+                    except Exception as e:
+                        print(f"Error calculating {axis} {sign}: {e}")
+                        import traceback
+                        traceback.print_exc()
+
+        # 6. 其他資料 (Chapter 5, 6, Appendix)
+        # -------------------------------------------------------
+        # 建築物圖片路徑 (保持不變)
+        building_image_path = None
+        has_overhang = full_params['has_overhang']
+        if roof_shape_en == 'flat':
+            building_image_path = 'img/color/Flat_roof_building.png'
+        elif roof_shape_en in ['gable', 'hip']:
+            overhang_suffix = '_overhang' if has_overhang else ''
+            if ridge_dir_en in ['X', 'Y']:
+                building_image_path = f'img/color/{roof_shape_en.capitalize()}_roof_{ridge_dir_en}_ridge{overhang_suffix}_building.png'
+        elif roof_shape_en == 'arched':
+            if ridge_dir_en in ['X', 'Y']:
+                building_image_path = f'img/color/Arched_roof_{ridge_dir_en}_ridge_building.png'
+        elif roof_shape_en == 'shed':
+            if ridge_dir_en in ['X', 'Y']:
+                building_image_path = f'img/color/Shed_roof_{ridge_dir_en}_ridge_building.png'
+        elif roof_shape_en == 'sawtooth_uniform':
+            if ridge_dir_en in ['X', 'Y']:
+                building_image_path = f'img/color/Sawtooth_uniform_roof_{ridge_dir_en}_ridge_building.png'
+
+        # ==========================================
+        # ==== START: 簡化後的第五章資料生成邏輯 ====
+        # ==========================================
+        chapter_5_data = {}
+        # 針對封閉式/部分封閉式建築，gcpi_values 固定有兩個值 (例如 +0.375, -0.375 或 +1.146, -1.146)
+        gcpi_values = full_params['gcpi']
+
+        # 輔助函式：生成特定風向(X/Y)與方向(正/負)的詳細資料
+        def get_chapter_5_case_data_simplified(wind_dir, sign):
+            tables = []
+
+            # 針對每一個 GCpi 值生成一份表格數據
+            for gcpi in gcpi_values:
+                # 呼叫核心計算函式
+                table_data = wind_calculations.generate_report_table_data(
+                    full_params, db, wind_dir, sign,
+                    specific_gcpi=gcpi,
+                    filter_roof_cp=True
+                )
+                # 加入 gcpi 方便模板使用
+                table_data['gcpi'] = gcpi
+                tables.append(table_data)
+
+            # 從第一組數據中提取 q(h) 供標題顯示 (同一高度 q(h) 相同)
+            q_h_display = tables[0]['summary_data'].get('q_h', 0) if tables else 0
+
+            # 簡單的圖片邏輯 (可選)
+            image_for_case = None
+            # if roof_shape_en == 'flat': image_for_case = 'img/Flat_roof_building.png'
+
+            return {
+                'tables': tables,  # 包含兩個 GCpi 工況的詳細計算結果
+                'q_h': q_h_display,
+                'image_for_case': image_for_case
+            }
+
+        # 生成四種工況資料 (X+, X-, Y+, Y-)
+        # 只有當有地形效應時，has_neg_case 才會是 True
+        has_topo_x = chapter_4_data['x_wind']['has_neg_case']
+        has_topo_y = chapter_4_data['y_wind']['has_neg_case']
+
+        # 5.1 +X
+        chapter_5_data['plus_x'] = get_chapter_5_case_data_simplified('X', 'positive')
+
+        # 5.2 -X (若有地形)
+        if has_topo_x:
+            chapter_5_data['minus_x'] = get_chapter_5_case_data_simplified('X', 'negative')
+
+        # 5.3 +Y
+        chapter_5_data['plus_y'] = get_chapter_5_case_data_simplified('Y', 'positive')
+
+        # 5.4 -Y (若有地形)
+        if has_topo_y:
+            chapter_5_data['minus_y'] = get_chapter_5_case_data_simplified('Y', 'negative')
+
+
+
+        # 附錄資料
+        appendix_data = {}
+        if chapter_4_data.get('x_wind') and chapter_4_data['x_wind'].get('pos'):
+            x_params = chapter_4_data['x_wind']['pos']
+            # 準備計算用的參數
+            params_for_g_x = {
+                'h': full_params['h'],
+                'B': x_params['B'],
+                'L': x_params['L'],
+                'terrain': full_params['terrain'],
+                'fn': full_params['fn_X'],
+                'beta': full_params['beta'],
+                'V10_C': full_params['V10_C'],
+                'I': full_params['I']
+            }
+            common_gust_x = wind_calculations.calculate_gust_common_params(params_for_g_x, db)
+
+            if x_params['rigidity'] == '柔性':
+                g_details_x = wind_calculations.calculate_Gf_factor(params_for_g_x, common_gust_x, db)
+                g_details_x['rigidity'] = '柔性'
+            else:
+                g_details_x = wind_calculations.calculate_G_factor(params_for_g_x, common_gust_x)
+                g_details_x['rigidity'] = '普通'
+
+            # 【關鍵修正】：將輸入參數合併到結果字典中，這樣 Template 才能讀到 h, B, fn 等原始值
+            g_details_x.update(params_for_g_x)
+            appendix_data['x_wind_g_details'] = g_details_x
+        if chapter_4_data.get('y_wind') and chapter_4_data['y_wind'].get('pos'):
+            y_params = chapter_4_data['y_wind']['pos']
+            params_for_g_y = {
+                'h': full_params['h'],
+                'B': y_params['B'],
+                'L': y_params['L'],
+                'terrain': full_params['terrain'],
+                'fn': full_params['fn_Y'],
+                'beta': full_params['beta'],
+                'V10_C': full_params['V10_C'],
+                'I': full_params['I']
+            }
+            common_gust_y = wind_calculations.calculate_gust_common_params(params_for_g_y, db)
+
+            if y_params['rigidity'] == '柔性':
+                g_details_y = wind_calculations.calculate_Gf_factor(params_for_g_y, common_gust_y, db)
+                g_details_y['rigidity'] = '柔性'
+            else:
+                g_details_y = wind_calculations.calculate_G_factor(params_for_g_y, common_gust_y)
+                g_details_y['rigidity'] = '普通'
+
+            # 【關鍵修正】：合併參數
+            g_details_y.update(params_for_g_y)
+            appendix_data['y_wind_g_details'] = g_details_y
+
+        # ==========================================
+        # ==== START: 第六章 局部風壓資料 (新增) ====
+        # ==========================================
+        # 確保傳入所需的參數，如 theta
+        full_params['theta'] = calculated_theta  # 確保 theta 已在 full_params
+        chapter_6_data = wind_calculations.run_local_pressure_analysis(full_params)
+
+        # ==========================================
+        # ==== START: 第八章 橫風向風力資料 ====
+        # ==========================================
+        chapter_8_data = {}
+        chapter_8_data['x_wind_transverse'] = wind_calculations.generate_transverse_report_data(full_params, db, 'X')
+        chapter_8_data['y_wind_transverse'] = wind_calculations.generate_transverse_report_data(full_params, db, 'Y')
+
+        # ==========================================
+        # ==== START: 第九章 扭轉向風力資料 (新增) ====
+        # ==========================================
+        chapter_9_data = wind_calculations.generate_torsional_report_data(full_params, db)
+
+
+
+        context = {
+            'site_location': site_location,
+            'v10c': v10c,
+            'terrain_category': terrain_category,
+            'terrain_params': terrain_params,
+            'topo_x_data': topo_x_data_ch2,
+            'topo_y_data': topo_y_data_ch2,
+            'geometry_params': geometry_params,
+            'basic_params': basic_params,
+            'chapter_4_data': chapter_4_data,  # 傳遞計算好的第四章資料
+            'chapter_5_data': chapter_5_data,
+            'appendix_data': appendix_data,
+            'topo_images': topo_images,
+            'building_image_path': building_image_path,
+            'show_chapter_6': full_params['use_asce7_c_and_c'],
+            'chapter_6_data': chapter_6_data,
+            # 'chapter_6_roof_image_path': chapter_6_roof_image_path,
+            'chapter_8_data': chapter_8_data,
+            'chapter_9_data': chapter_9_data,
+        }
+
+        return render(request, 'Wind_TW/wind_report_v2.html', context)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render(request, 'Wind_TW/error.html', {'error_message': f'生成報告時發生錯誤: {e}'})
+
+
+

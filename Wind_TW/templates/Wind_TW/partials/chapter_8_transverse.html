@@ -1,0 +1,148 @@
+{% load static %}
+
+<div class="report-page">
+    <div class="page-content">
+        <h2 class="chapter-title">5.3 橫風向設計風力計算</h2>
+
+        <!-- 5.3.1 X 風向作用 (產生 Y 向橫風力) -->
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">5.3.1 X 風向作用 (產生 Y 向橫風力)</h3>
+
+            {% with data=chapter_8_data.x_wind_transverse %}
+
+            <!-- 適用性檢核 (保持不變) -->
+            <div class="summary-box" style="background-color: {% if data.check.is_applicable %}#e8f5e9{% else %}#ffebee{% endif %}; border-left: 5px solid {% if data.check.is_applicable %}#4caf50{% else %}#f44336{% endif %};">
+                <p style="font-weight: bold; margin-bottom: 5px;">適用性檢核：</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem;">
+                    <li>參數：$h/\sqrt{BL} = {{ data.check.h_sqrt_BL|floatformat:2 }}$， $L/B = {{ data.check.L_over_B|floatformat:2 }}$</li>
+                    {% for msg in data.check.messages %}
+                        <li>{{ msg }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% if data.check.is_applicable %}
+
+                <!-- 簡化法公式 -->
+                {% if data.check.method == 'simplified' %}
+                    <div class="math-container" style="margin: 15px 0;">
+                        <p><strong>1. 橫風向風力計算公式 (規範 2.21)：</strong></p>
+                        <p>$$ W_{Lz} = 0.87 \left( \frac{L}{B} \right) W_{Dz} = 0.87 \times {{ data.check.L_over_B|floatformat:3 }} = {{ data.calc_details.factor|floatformat:3 }} $$</p>
+
+                        <p style="margin-top: 15px;"><strong>2. 順風向風力 $W_{Dz}$ 依據 2.2 節解說計算：</strong></p>
+                        <p>$$ W_{Dz} = \left| 0.8 q(z) - C_p q(h) \right| G A_z $$</p>
+                        <p>其中：</p>
+                        <ul style="list-style-type: disc; padding-left: 20px; color: #555;">
+                            <li>背風面外風壓係數 $C_p = {{ data.calc_details.Cp_leeward|floatformat:2 }}$</li>
+                            <li>屋頂高度風速壓 $q(h) = {{ data.calc_details.q_h|floatformat:2 }} \text{ kgf/m}^2$</li>
+                            <li>陣風反應因子 $G = {{ data.calc_details.G|floatformat:3 }}$</li>
+                        </ul>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>高度範圍<br>(m)</th>
+                                <th>高度 z<br>(m)</th>
+                                <th>順風向風壓<br>(kgf/m²)</th>
+                                <th>橫風向風壓<br>(kgf/m²)</th>
+                                <th style="background-color: #fff3cd;">作用面積 A<sub>z</sub><br>(m²)</th>
+                                <th style="background-color: #fff3cd;">橫風向風力 W<sub>Lz</sub><br>(kgf)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data.table_rows %}
+                            <tr>
+                                <td>{{ row.elevation }}</td>
+                                <td>{{ row.z|floatformat:2 }}</td>
+                                <td>{{ row.w_dz_pressure|floatformat:2 }}</td>
+                                <td>{{ row.w_lz_pressure|floatformat:2 }}</td>
+                                <td style="background-color: #fff9e6;">{{ row.area|floatformat:1 }}</td>
+                                <td style="background-color: #fff9e6; font-weight: bold; color: #d32f2f;">{{ row.W_Lz|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background-color: #eee; font-weight: bold;">
+                                <td colspan="5" style="text-align: right;">總橫風向剪力：</td>
+                                <td style="color: #d32f2f;">{{ data.total_WL|floatformat:0 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <div class="page-number">第 8 頁</div>
+</div>
+
+<!-- 第 9 頁：5.3.2 Y 風向 -->
+<div class="report-page">
+    <div class="page-content">
+        <h2 class="chapter-title" style="visibility: hidden;">placeholder</h2>
+
+        <div class="report-content-block">
+            <h3 class="sub-chapter-title">5.3.2 Y 風向作用 (產生 X 向橫風力)</h3>
+
+            {% with data=chapter_8_data.y_wind_transverse %}
+                <!-- 適用性檢核結果 (Y向) -->
+                <div class="summary-box" style="background-color: {% if data.check.is_applicable %}#e8f5e9{% else %}#ffebee{% endif %}; border-left: 5px solid {% if data.check.is_applicable %}#4caf50{% else %}#f44336{% endif %};">
+                    <p style="font-weight: bold; margin-bottom: 5px;">適用性檢核：</p>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem;">
+                        <li>參數：$h/\sqrt{BL} = {{ data.check.h_sqrt_BL|floatformat:2 }}$， $L/B = {{ data.check.L_over_B|floatformat:2 }}$</li>
+                        {% for msg in data.check.messages %}
+                            <li>{{ msg }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                {% if data.check.is_applicable and data.check.method == 'simplified' %}
+                    <!-- Y向 簡化法內容 -->
+                    <div class="math-container" style="margin: 15px 0;">
+                        <p><strong>1. 橫風向風力計算公式 (規範 2.21)：</strong></p>
+                        <p>$$ W_{Lz} = 0.87 \left( \frac{L}{B} \right) W_{Dz} = 0.87 \times {{ data.check.L_over_B|floatformat:3 }} = {{ data.calc_details.factor|floatformat:3 }} $$</p>
+
+                        <p style="margin-top: 15px;"><strong>2. 順風向風力 $W_{Dz}$ 依據 2.2 節解說計算：</strong></p>
+                        <p>$$ W_{Dz} = \left| 0.8 q(z) - C_p q(h) \right| G A_z $$</p>
+                        <p>其中：</p>
+                        <ul style="list-style-type: disc; padding-left: 20px; color: #555;">
+                            <li>背風面外風壓係數 $C_p = {{ data.calc_details.Cp_leeward|floatformat:2 }}$</li>
+                            <li>屋頂高度風速壓 $q(h) = {{ data.calc_details.q_h|floatformat:2 }} \text{ kgf/m}^2$</li>
+                            <li>陣風反應因子 $G = {{ data.calc_details.G|floatformat:3 }}$</li>
+                        </ul>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>高度範圍<br>(m)</th>
+                                <th>高度 z<br>(m)</th>
+                                <th>順風向風壓<br>(kgf/m²)</th>
+                                <th>橫風向風壓<br>(kgf/m²)</th>
+                                <th style="background-color: #fff3cd;">作用面積 A<sub>z</sub><br>(m²)</th>
+                                <th style="background-color: #fff3cd;">橫風向風力 W<sub>Lz</sub><br>(kgf)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data.table_rows %}
+                            <tr>
+                                <td>{{ row.elevation }}</td>
+                                <td>{{ row.z|floatformat:2 }}</td>
+                                <td>{{ row.w_dz_pressure|floatformat:2 }}</td>
+                                <td>{{ row.w_lz_pressure|floatformat:2 }}</td>
+                                <td style="background-color: #fff9e6;">{{ row.area|floatformat:1 }}</td>
+                                <td style="background-color: #fff9e6; font-weight: bold; color: #d32f2f;">{{ row.W_Lz|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background-color: #eee; font-weight: bold;">
+                                <td colspan="5" style="text-align: right;">總橫風向剪力：</td>
+                                <td style="color: #d32f2f;">{{ data.total_WL|floatformat:0 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <div class="page-number">第 9 頁</div>
+</div>

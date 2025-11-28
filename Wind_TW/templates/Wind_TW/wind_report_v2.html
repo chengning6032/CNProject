@@ -1,0 +1,608 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>風力計算報告書</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap">
+    <link rel="stylesheet" href="{% static 'css/Wind_TW/style_report_v2.css' %}">
+
+    <!-- 【修改 1】: 加入 CSS 調整摘要區塊文字大小與行距 -->
+    <style>
+        /* 針對附錄開頭的摘要說明區塊 */
+        .summary-box {
+            font-size: 0.9rem; /* 文字放大 (原為預設大小，約放大 15%) */
+            line-height: 0.5; /* 行距稍稍縮小 (標準通常為 1.5 或 1.6) */
+            padding: 10px; /* 增加一點內距讓它看起來更舒適 */
+        }
+
+        .summary-box p {
+            padding: 0px; /* 增加一點內距讓它看起來更舒適 */
+            margin: 10px;
+        }
+
+        /* 為了讓摘要裡的剛性/柔性文字更明顯，可選 */
+        .summary-box strong {
+            font-weight: 900;
+            color: #2c3e50;
+        }
+    </style>
+
+    <!-- 【修改 2】: MathJax 設定中加入縮放比例 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            // 針對 SVG 輸出設定全域縮放
+            svg: {
+                fontCache: 'global',
+                scale: 0.95  // 【關鍵修改】: 將公式文字縮小到 85%
+            },
+            // 如果未來改用 CommonHTML (chtml)，設定方式如下：
+            chtml: {
+                scale: 0.90
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+<body>
+
+<!-- 懸浮操作按鈕 -->
+<div class="floating-actions" style="position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 999;">
+    <button onclick="window.print()"
+            style="width: 40px; height: 40px; border-radius: 50%; border:none; background:#1d3557; color:white; cursor:pointer;">
+        🖨️
+    </button>
+    <button onclick="window.close()"
+            style="width: 40px; height: 40px; border-radius: 50%; border:none; background:#666; color:white; cursor:pointer;">
+        ✕
+    </button>
+</div>
+
+<!-- ================= Page 1 ================= -->
+<div class="report-page">
+    <div class="page-content">
+        <!-- 引入封面標題 -->
+        {% include "Wind_TW/partials/report_header.html" %}
+
+        <!-- 引入第一章 -->
+        {% include "Wind_TW/partials/chapter_1.html" %}
+
+        <!-- 引入第二章 -->
+        {% include "Wind_TW/partials/chapter_2.html" %}
+
+    </div>
+    <div class="page-number">第 1 頁</div>
+</div>
+
+<!-- ================= Page 2 ================= -->
+<div class="report-page">
+    <div class="page-content">
+        <!-- 引入第三章 -->
+        {% include "Wind_TW/partials/chapter_3.html" %}
+    </div>
+    <div class="page-number">第 2 頁</div>
+</div>
+<!-- ================= Page 3 ================= -->
+<div class="report-page">
+    <div class="page-content">
+        <!-- 引入第四章 -->
+        {% include "Wind_TW/partials/chapter_4.html" %}
+    </div>
+    <div class="page-number">第 3 頁</div>
+</div>
+
+<!-- ====================================================== -->
+<!-- ====       第 4 頁：5.1 (+X) GCpi 第一組             ==== -->
+<!-- ====================================================== -->
+<div class="report-page">
+    <div class="page-content">
+        {% include "Wind_TW/partials/chapter_5_content.html" with is_first_page=True case_data=chapter_5_data.plus_x section_id="5.1" direction_name="X 風向" direction_key="X" sub_index="1" table_group=chapter_5_data.plus_x.tables.0 %}
+
+    </div>
+    <div class="page-number">第 4 頁</div>
+</div>
+
+<!-- ====================================================== -->
+<!-- ====       第 5 頁：5.1 (+X) GCpi 第二組             ==== -->
+<!-- ====================================================== -->
+<div class="report-page">
+    <div class="page-content">
+        <!-- 這裡不傳 is_first_page，所以不會顯示大標題和圖片 -->
+        {% include "Wind_TW/partials/chapter_5_content.html" with is_first_page=False case_data=chapter_5_data.plus_x section_id="5.1" direction_name="X 風向" direction_key="X" sub_index="2" table_group=chapter_5_data.plus_x.tables.1 %}
+
+    </div>
+    <div class="page-number">第 5 頁</div>
+</div>
+
+<!-- ====================================================== -->
+<!-- ====       第 6 頁：5.2 Y 風向 (Header + GCpi 1)     ==== -->
+<!-- ====================================================== -->
+<div class="report-page">
+    <div class="page-content">
+        <!-- Y 風向的第一頁，顯示標題與圖片 -->
+        {% include "Wind_TW/partials/chapter_5_content.html" with is_first_page=True case_data=chapter_5_data.plus_y section_id="5.2" direction_name="Y 風向" direction_key="Y" sub_index="1" table_group=chapter_5_data.plus_y.tables.0 %}
+
+    </div>
+    <div class="page-number">第 6 頁</div>
+</div>
+
+<!-- ====================================================== -->
+<!-- ====       第 7 頁：5.2 Y 風向 (GCpi 2)              ==== -->
+<!-- ====================================================== -->
+<div class="report-page">
+    <div class="page-content">
+        {% include "Wind_TW/partials/chapter_5_content.html" with is_first_page=False case_data=chapter_5_data.plus_y section_id="5.2" direction_name="Y 風向" direction_key="Y" sub_index="2" table_group=chapter_5_data.plus_y.tables.1 %}
+
+    </div>
+    <div class="page-number">第 7 頁</div>
+</div>
+
+{% include "Wind_TW/partials/chapter_8_transverse.html" %}
+
+<!-- ====================================================== -->
+<!-- ====       第 10 頁：5.4 扭轉向風力                 ==== -->
+<!-- ====================================================== -->
+{% include "Wind_TW/partials/chapter_9_torsional.html" %}
+
+<!-- ====================================================== -->
+<!-- ====       第 11 頁：第六章 局部風壓 (外牆)          ==== -->
+<!-- ====================================================== -->
+{% include "Wind_TW/partials/chapter_6_local_pressure.html" %}
+
+<!-- ====================================================== -->
+<!-- ====       第 12 頁：第六章 局部風壓 (屋頂)          ==== -->
+<!-- ====================================================== -->
+{% include "Wind_TW/partials/chapter_6_roof.html" %}
+
+<!-- ====================================================== -->
+<!-- ====       預留頁面 (第 10 頁)                     ==== -->
+<!-- ====================================================== -->
+{#{% for i in ""|make_list %}#}
+{#    <div class="report-page">#}
+{#        <div class="page-content">#}
+{#            <div style="color: #ccc; text-align: center; margin-top: 50%;">#}
+{#                本頁預留給後續計算內容 (第 {{ i }} 頁)#}
+{#            </div>#}
+{##}
+{#        </div>#}
+{#        <div class="page-number">第 {{ i }} 頁</div>#}
+{#    </div>#}
+{#{% endfor %}#}
+
+
+
+<!-- ====================================================== -->
+<!-- ====       附錄 A-1：X 風向陣風因子詳細計算          ==== -->
+<!-- ====================================================== -->
+{% if appendix_data.x_wind_g_details %}
+    <div class="report-page">
+        <div class="page-content">
+            <!-- 修改處：使用 add 過濾器串接字串 " -- " + 剛性/柔性 + "建築" -->
+            {% include "Wind_TW/partials/appendix_g_factor.html" with title="附錄 A.1 X 風向陣風反應因子計算 -- "|add:appendix_data.x_wind_g_details.rigidity|add:"建築" details=appendix_data.x_wind_g_details %}
+
+        </div>
+        <div class="page-number">附錄 - 1</div>
+    </div>
+{% endif %}
+
+<!-- ====================================================== -->
+<!-- ====       附錄 A-2：Y 風向陣風因子詳細計算          ==== -->
+<!-- ====================================================== -->
+{% if appendix_data.y_wind_g_details %}
+    <div class="report-page">
+        <div class="page-content">
+            <!-- 修改處：同上，針對 Y 風向修改標題 -->
+            {% include "Wind_TW/partials/appendix_g_factor.html" with title="附錄 A.2 Y 風向陣風反應因子計算 -- "|add:appendix_data.y_wind_g_details.rigidity|add:"建築" details=appendix_data.y_wind_g_details %}
+
+        </div>
+        <div class="page-number">附錄 - 2</div>
+    </div>
+{% endif %}
+
+<!-- ====================================================== -->
+<!-- ====       附錄 B：預留空白頁                       ==== -->
+<!-- ====================================================== -->
+<div class="report-page">
+    <div class="page-content">
+        <h2 class="chapter-title">附錄 B (備註與手稿頁)</h2>
+        <div style="width: 100%; height: 800px; border: 2px dashed #eee; display: flex; align-items: center; justify-content: center; color: #ccc;">
+            此頁留白供筆記或黏貼其他計算資料
+        </div>
+    </div>
+    <div class="page-number">附錄 - 3</div>
+</div>
+
+</body>
+<script>
+    // 準備建築物參數
+    const bData = {
+        dimX: {{ geometry_params.dim_x|default:0 }},
+        dimY: {{ geometry_params.dim_y|default:0 }},
+        hEave: {{ geometry_params.eave_height|default:0 }},
+        hRidge: {{ geometry_params.ridge_height|default:0 }},
+        h: {{ geometry_params.calculated_h|default:0 }},
+        type: "{{ geometry_params.roof_shape_en }}",
+        // 確保移除 "向" 字並轉大寫
+        ridgeDir: "{{ geometry_params.ridge_direction|default:'X' }}".replace('向', '').toUpperCase(),
+        theta: {{ geometry_params.theta|default:0 }}
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        drawBuildingSVG(bData, "building-schematic-svg");
+    });
+
+    function drawBuildingSVG(data, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+
+        const w = container.clientWidth || 400;
+        const h = container.clientHeight || 300;
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+        svg.style.display = "block";
+
+        // 建立群組
+        const mainG = document.createElementNS(svgNS, "g");
+        const uiG = document.createElementNS(svgNS, "g");
+        svg.appendChild(mainG);
+        svg.appendChild(uiG);
+
+        // --- 1. 投影系統 ---
+        // 定義：
+        // X軸 (Bx): 指向左下 (210度)
+        // Y軸 (By): 指向右下 (330度)
+        // Z軸 (h):  指向垂直上
+        const angX = 210 * Math.PI / 180;
+        const angY = 330 * Math.PI / 180;
+
+        function iso(x, y, z) {
+            const u = x * Math.cos(angX) + y * Math.cos(angY);
+            const v = x * Math.sin(angX) + y * Math.sin(angY) - z;
+            return {x: u, y: v};
+        }
+
+        // 邊界收集器
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+        function addBounds(p) {
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
+        }
+
+        // --- 2. 繪圖函式 (參數明確化，避免錯誤) ---
+        function createLine(p1, p2, color, width, dash, targetGroup) {
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", p1.x);
+            line.setAttribute("y1", p1.y);
+            line.setAttribute("x2", p2.x);
+            line.setAttribute("y2", p2.y);
+            line.setAttribute("stroke", color);
+            line.setAttribute("stroke-width", width);
+            line.setAttribute("stroke-linecap", "round");
+            if (dash) line.setAttribute("stroke-dasharray", dash);
+            targetGroup.appendChild(line);
+        }
+
+        function createText(p, text, anchor, baseline, color, fontSize, weight, targetGroup) {
+            const t = document.createElementNS(svgNS, "text");
+            t.setAttribute("x", p.x);
+            t.setAttribute("y", p.y);
+            t.setAttribute("text-anchor", anchor);
+            t.setAttribute("dominant-baseline", baseline);
+            t.setAttribute("fill", color);
+            // 暫存字體大小
+            t.dataset.baseFontSize = fontSize;
+            t.setAttribute("font-weight", weight);
+            t.setAttribute("font-family", "Arial, sans-serif");
+            t.textContent = text;
+            targetGroup.appendChild(t);
+
+            // 估算邊界
+            if (targetGroup === mainG) {
+                const txtW = text.length * fontSize * 0.6;
+                const txtH = fontSize;
+                let bx = p.x;
+                if (anchor === 'middle') bx -= txtW / 2;
+                else if (anchor === 'end') bx -= txtW;
+                addBounds({x: bx, y: p.y - txtH / 2});
+                addBounds({x: bx + txtW, y: p.y + txtH / 2});
+            }
+        }
+
+        // --- 3. 定義幾何頂點 ---
+        const X = data.dimX;
+        const Y = data.dimY;
+        const He = data.hEave;
+        const Hr = data.hRidge;
+
+        // 為了配合您的視覺要求 (X左下, Y右下)：
+        // 原點 p0 (0,0) 設在「後角」(Back Corner)
+        // p1 (X,0): 左角 (Left Corner)
+        // p3 (0,Y): 右角 (Right Corner)
+        // p2 (X,Y): 前角 (Front Corner) - 最靠近觀察者
+
+        const p0 = iso(0, 0, 0);
+        const p1 = iso(X, 0, 0);
+        const p2 = iso(X, Y, 0);
+        const p3 = iso(0, Y, 0);
+
+        const p4 = iso(0, 0, He);
+        const p5 = iso(X, 0, He);
+        const p6 = iso(X, Y, He);
+        const p7 = iso(0, Y, He);
+
+        [p0, p1, p2, p3, p4, p5, p6, p7].forEach(addBounds);
+
+        // --- 4. 繪製建築線條 ---
+        const colMain = "#333";
+        const colHid = "#bbb";
+        const wMain = 1.0;
+        const wHid = 0.8;
+
+        // 隱藏線 (後方)
+        createLine(p0, p1, colHid, wHid, "4,2", mainG);
+        createLine(p0, p3, colHid, wHid, "4,2", mainG);
+        createLine(p0, p4, colHid, wHid, "4,2", mainG);
+
+        // 可見底邊
+        createLine(p1, p2, colMain, wMain, "", mainG);
+        createLine(p3, p2, colMain, wMain, "", mainG);
+
+        // 可見柱
+        createLine(p1, p5, colMain, wMain, "", mainG); // 左柱
+        createLine(p2, p6, colMain, wMain, "", mainG); // 前柱
+        createLine(p3, p7, colMain, wMain, "", mainG); // 右柱
+
+        // 屋頂
+        let ridgeRef = null; // 標註 Hr 用
+
+        if (data.type === 'flat') {
+            createLine(p4, p5, colMain, wMain, "", mainG);
+            createLine(p5, p6, colMain, wMain, "", mainG);
+            createLine(p6, p7, colMain, wMain, "", mainG);
+            createLine(p7, p4, colMain, wMain, "", mainG);
+            ridgeRef = p5;
+        } else if (data.type === 'gable') {
+            let rBack, rFront;
+
+            if (data.ridgeDir === 'X') {
+                // 屋脊平行 X 軸 (左下 - 右上)
+                // Y 固定在中間 (Y/2)
+                rBack = iso(0, Y / 2, Hr);  // 後 (X=0)
+                rFront = iso(X, Y / 2, Hr); // 前 (X=X)
+
+                // 後山牆 (X=0面): p4(0,0,He), p7(0,Y,He), rBack
+                createLine(p4, rBack, colMain, wMain, "", mainG);
+                createLine(p7, rBack, colMain, wMain, "", mainG);
+
+                // 前山牆 (X=X面): p5(X,0,He), p6(X,Y,He), rFront
+                createLine(p5, rFront, colMain, wMain, "", mainG);
+                createLine(p6, rFront, colMain, wMain, "", mainG);
+
+                // 屋脊
+                createLine(rBack, rFront, colMain, wMain, "", mainG);
+
+                // 簷線 (平行 X)
+                createLine(p4, p5, colMain, wMain, "", mainG); // 左後簷
+                createLine(p7, p6, colMain, wMain, "", mainG); // 右前簷
+
+                // 標註角度參考線 (前山牆)
+                const baseMid = iso(X, Y / 2, He);
+                createLine(p5, p6, "#999", 0.5, "2,2", mainG);
+
+                ridgeRef = rFront; // 使用前方高點標註
+
+            } else {
+                // 屋脊平行 Y 軸 (右下 - 左上)
+                // X 固定在中間 (X/2)
+                rBack = iso(X / 2, 0, Hr); // 左後 (Y=0)
+                rFront = iso(X / 2, Y, Hr); // 右前 (Y=Y)
+
+                // 左後山牆 (Y=0面): p4, p5, rBack
+                createLine(p4, rBack, colMain, wMain, "", mainG);
+                createLine(p5, rBack, colMain, wMain, "", mainG);
+
+                // 右前山牆 (Y=Y面): p7, p6, rFront
+                createLine(p7, rFront, colMain, wMain, "", mainG);
+                createLine(p6, rFront, colMain, wMain, "", mainG);
+
+                // 屋脊
+                createLine(rBack, rFront, colMain, wMain, "", mainG);
+
+                // 簷線 (平行 Y)
+                createLine(p4, p7, colMain, wMain, "", mainG); // 右後簷
+                createLine(p5, p6, colMain, wMain, "", mainG); // 左前簷
+
+                ridgeRef = rBack; // 使用後方高點標註 (較靠左)
+            }
+            addBounds(rBack);
+            addBounds(rFront);
+        } else if (data.type === 'shed') {
+            // 單斜 (後高前低)
+            const p4_h = iso(0, 0, Hr);
+            const p7_h = iso(0, Y, Hr);
+
+            createLine(p4_h, p7_h, colMain, wMain, "", mainG); // 後高邊
+            createLine(p5, p6, colMain, wMain, "", mainG);     // 前低邊
+            createLine(p4_h, p5, colMain, wMain, "", mainG);   // 左斜
+            createLine(p7_h, p6, colMain, wMain, "", mainG);   // 右斜
+
+            // 高柱
+            createLine(p0, p4_h, colHid, wHid, "4,2", mainG);
+            createLine(p3, p7_h, colMain, wMain, "", mainG);
+
+            ridgeRef = p4_h;
+            addBounds(p4_h);
+            addBounds(p7_h);
+        }
+        // Fallback to flat
+        else {
+            createLine(p4, p5, colMain, wMain, "", mainG);
+            createLine(p5, p6, colMain, wMain, "", mainG);
+            createLine(p6, p7, colMain, wMain, "", mainG);
+            createLine(p7, p4, colMain, wMain, "", mainG);
+            ridgeRef = p5;
+        }
+
+        // --- 5. 尺寸標註 ---
+        const colDim = "#666";
+        const colTxt = "#005f73";
+        const dimOff = Math.max(X, Y, Hr) * 0.15;
+
+        // 5.1 Bx (X方向): 標註在右下側 p2-p3 (X邊)
+        // p2(X,Y) -> p3(0,Y). 向量 (-X, 0). 長度 X.
+        // 往 Y 軸方向偏移 (右下)
+        const bx_off = {x: dimOff * Math.cos(angY), y: dimOff * Math.sin(angY)};
+        const p2_bx = {x: p2.x + bx_off.x, y: p2.y + bx_off.y};
+        const p3_bx = {x: p3.x + bx_off.x, y: p3.y + bx_off.y};
+
+        createLine(p2, p2_bx, "#999", 0.5, "", mainG);
+        createLine(p3, p3_bx, "#999", 0.5, "", mainG);
+        createLine(p2_bx, p3_bx, colDim, 0.8, "", mainG);
+
+        const midBx = {x: (p2_bx.x + p3_bx.x) / 2 + 5, y: (p2_bx.y + p3_bx.y) / 2 + 5};
+        createText(midBx, `Bx=${X}`, "start", "hanging", colTxt, 12, "bold", mainG);
+
+        // 5.2 By (Y方向): 標註在左下側 p1-p2 (Y邊)
+        // p1(X,0) -> p2(X,Y). 向量 (0, Y). 長度 Y.
+        // 往 X 軸方向偏移 (左下)
+        const by_off = {x: dimOff * Math.cos(angX), y: dimOff * Math.sin(angX)};
+        const p1_by = {x: p1.x + by_off.x, y: p1.y + by_off.y};
+        const p2_by = {x: p2.x + by_off.x, y: p2.y + by_off.y};
+
+        createLine(p1, p1_by, "#999", 0.5, "", mainG);
+        createLine(p2, p2_by, "#999", 0.5, "", mainG);
+        createLine(p1_by, p2_by, colDim, 0.8, "", mainG);
+
+        const midBy = {x: (p1_by.x + p2_by.x) / 2 - 5, y: (p1_by.y + p2_by.y) / 2 + 5};
+        createText(midBy, `By=${Y}`, "end", "hanging", colTxt, 12, "bold", mainG);
+
+        // 5.3 Heave (簷高): 標註在最右側 (p3 處)
+        const he_dist = dimOff;
+        const he_bot = {x: p3.x + he_dist, y: p3.y};
+        const he_top = {x: p7.x + he_dist, y: p7.y};
+
+        createLine(p3, he_bot, "#999", 0.5, "", mainG);
+        createLine(p7, he_top, "#999", 0.5, "", mainG);
+        createLine(he_bot, he_top, colDim, 0.8, "", mainG);
+        // 箭頭
+        createLine(he_bot, {x: he_bot.x - 2, y: he_bot.y - 3}, colDim, 0.8, "", mainG);
+        createLine(he_top, {x: he_top.x - 2, y: he_top.y + 3}, colDim, 0.8, "", mainG);
+
+        const midHe = {x: he_top.x + 5, y: (he_bot.y + he_top.y) / 2};
+        createText(midHe, `heave=${He}`, "start", "middle", colTxt, 12, "normal", mainG);
+
+        // 5.4 Hridge (脊高): 標註在最左側 (ridgeRef 處)
+        // 從 ridgeRef 往左拉
+        if (Hr > He && ridgeRef) {
+            const hr_dist = dimOff * 1.2;
+            const hr_top = {x: ridgeRef.x - hr_dist, y: ridgeRef.y};
+            const hr_bot = {x: hr_top.x, y: hr_top.y + Hr}; // 垂直向下 Hr
+
+            createLine(ridgeRef, hr_top, "#999", 0.5, "2,2", mainG); // 頂延伸
+            createLine(hr_top, hr_bot, colDim, 0.8, "", mainG); // 尺寸線
+            // 底端點線
+            createLine({x: hr_bot.x - 3, y: hr_bot.y}, {x: hr_bot.x + 3, y: hr_bot.y}, colDim, 0.8, "", mainG);
+            // 頂端點線
+            createLine({x: hr_top.x - 3, y: hr_top.y}, {x: hr_top.x + 3, y: hr_top.y}, colDim, 0.8, "", mainG);
+
+            const midHr = {x: hr_top.x - 5, y: (hr_top.y + hr_bot.y) / 2};
+            createText(midHr, `hridge=${Hr}`, "end", "middle", colTxt, 12, "normal", mainG);
+        }
+
+        // --- 6. 自動縮放 (Smart Fit) ---
+        const paddingRatio = 0.05;
+        const bbW = maxX - minX;
+        const bbH = maxY - minY;
+
+        if (bbW > 0.1) {
+            const vbX = minX - bbW * paddingRatio;
+            const vbY = minY - bbH * paddingRatio;
+            const vbW = bbW * (1 + 2 * paddingRatio);
+            const vbH = bbH * (1 + 2 * paddingRatio);
+
+            svg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+
+            // --- 7. 繪製固定 UI (Scale-Invariant) ---
+            const scaleFactor = vbW / w;
+
+            // 反向調整文字大小
+            const fontSize = 14 * scaleFactor;
+            mainG.querySelectorAll("text").forEach(t => t.setAttribute("font-size", fontSize));
+            mainG.querySelectorAll("line").forEach(l => {
+                const baseW = parseFloat(l.getAttribute("stroke-width"));
+                l.setAttribute("stroke-width", baseW * scaleFactor);
+            });
+
+            // 7.1 單位 (右上)
+            const uX = vbX + vbW - 10 * scaleFactor;
+            const uY = vbY + 20 * scaleFactor;
+            const tUnit = document.createElementNS(svgNS, "text");
+            tUnit.setAttribute("x", uX);
+            tUnit.setAttribute("y", uY);
+            tUnit.setAttribute("text-anchor", "end");
+            tUnit.setAttribute("font-size", 16 * scaleFactor);
+            tUnit.setAttribute("fill", "#888");
+            tUnit.textContent = "單位: m";
+            uiG.appendChild(tUnit);
+
+            // 7.2 Gizmo (左下)
+            const gSize = 40 * scaleFactor;
+            const gX = vbX + 40 * scaleFactor;
+            const gY = vbY + vbH - 40 * scaleFactor;
+
+            function drawArrow(ang, color, label) {
+                const end = {
+                    x: gX + gSize * Math.cos(ang),
+                    y: gY + gSize * Math.sin(ang)
+                };
+                const l = document.createElementNS(svgNS, "line");
+                l.setAttribute("x1", gX);
+                l.setAttribute("y1", gY);
+                l.setAttribute("x2", end.x);
+                l.setAttribute("y2", end.y);
+                l.setAttribute("stroke", color);
+                l.setAttribute("stroke-width", 2 * scaleFactor);
+                uiG.appendChild(l);
+
+                const t = document.createElementNS(svgNS, "text");
+                t.setAttribute("x", end.x + 15 * scaleFactor * Math.cos(ang));
+                t.setAttribute("y", end.y + 15 * scaleFactor * Math.sin(ang));
+                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("dominant-baseline", "middle");
+                t.setAttribute("font-size", 14 * scaleFactor);
+                t.setAttribute("fill", color);
+                t.setAttribute("font-weight", "bold");
+                t.textContent = label;
+                uiG.appendChild(t);
+            }
+
+            // 繪製軸 (角度與 iso 一致)
+            // SVG座標 Y 向下:
+            // X軸(左下): 210度 (sin為負, 向上? 不, sin(210)=-0.5. y = oy + sin. y變小=向上)
+            // 修正: SVG Y軸向下.
+            // 數學 210度: x負, y負.
+            // 我們要 左下: x負, y正.
+            // 所以是 150度? cos(150) < 0, sin(150) > 0.
+            // 同步 iso 函式: X用 angX=210 (rad). cos<0, sin<0.
+            // iso(1,0,0) -> x=cos(210), y=sin(210). 左上?
+            // 這裡有點混亂，讓我們直接對應 visually:
+            // X軸要指向左下 -> x減少, y增加 -> 數學第3象限(若Y向下).
+
+            drawArrow(angX, "#e63946", "X");
+            drawArrow(angY, "#2a9d8f", "Y");
+            drawArrow(-Math.PI / 2, "#457b9d", "Z"); // -90度 (上)
+        }
+    }
+</script>
+</html>

@@ -1,292 +1,356 @@
-/* static/css/Wind_TW/style_wind_table.css (完整最終版) */
+/* static/css/Wind_TW/style_wind_table.css */
 
 /* ====================================================== */
-/* ==== 1. 全域設定與 CSS 變數 ============================ */
+/* ==== 1. 設計系統 (Design System) ======================= */
 /* ====================================================== */
 :root {
-    --font-primary: 'Noto Sans JP', 'Microsoft JhengHei', sans-serif;
-    --color-primary-dark: #1d3557;  /* 主標題、深色背景 */
-    --color-primary-medium: #457b9d; /* 章節標題、重點文字 */
-    --color-primary-light: #a8dadc;  /* 點綴、邊框 */
-    --color-text-body: #343a40;      /* 主要內文 */
-    --color-text-muted: #6c757d;     /* 次要文字 */
-    --color-background-page: #f0f2f5; /* 頁面背景 */
-    --color-background-sheet: #ffffff; /* 報告書紙張背景 */
-    --color-border-soft: #e9ecef;     /* 柔和邊框 */
-    --color-border-medium: #dee2e6;  /* 中度邊框 */
-    --color-accent-red: #e63946;      /* 警示、重點數字 */
-    --font-size-base: 12px;
+    /* 字體設定 */
+    --font-primary: 'Noto Sans JP', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* 專業工程配色 (Professional Palette) */
+    --color-brand-dark: #2c3e50;    /* 深岩藍：用於主標題、頁尾 */
+    --color-brand-main: #34495e;    /* 岩灰：用於章節標題、表頭背景 */
+    --color-accent: #2980b9;        /* 亮藍：用於強調、連結 */
+    --color-alert: #c0392b;         /* 深紅：用於重要結果數值 */
+
+    /* 文字顏色 */
+    --color-text-primary: #2c3e50;
+    --color-text-secondary: #5f6c7b;
+
+    /* 介面顏色 */
+    --color-bg-screen: #525659;     /* 螢幕背景 (深灰) */
+    --color-bg-paper: #ffffff;      /* 紙張背景 */
+    --color-table-stripe: #f8f9fa;  /* 表格斑馬紋 */
+    --color-border: #e9ecef;        /* 輕淡邊框 */
+
+    /* 版面尺寸 (A4) */
+    --page-width: 210mm;
+    --page-height: 297mm;
+    --page-margin: 15mm; /* 保持較窄邊距以容納更多內容 */
 }
 
-/* @page 規則：專門用於定義列印時的頁面屬性 */
-@page {
-    size: A4 portrait; /* 紙張大小為 A4 直式 */
-    margin: 1.5cm;     /* 頁面邊界為 1.5 公分 */
+/* 讓瀏覽器列印時保留背景色與圖片 */
+* {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
 
-    /* 在頁面底部中央加上頁碼 */
-    @bottom-center {
-        content: counter(page);
-        font-family: var(--font-primary);
-        font-size: 10px;
-        color: var(--color-text-muted);
-    }
+/* ====================================================== */
+/* ==== 2. 版面設定 (Layout & Print) ===================== */
+/* ====================================================== */
+@page {
+    size: A4 portrait;
+    margin: 0; /* 關鍵：歸零，由 CSS 控制 */
 }
 
 body.report-body-page {
     font-family: var(--font-primary);
-    color: var(--color-text-body);
-    background-color: var(--color-background-page); /* 灰色背景，突顯報告紙張 */
+    background-color: var(--color-bg-screen);
     margin: 0;
-    padding: 20px 0;
-    font-size: var(--font-size-base);
-    line-height: 1.7;
-    counter-reset: page 0; /* 初始化頁碼計數器 */
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    color: var(--color-text-primary);
+    line-height: 1.5;
 }
 
-/* ====================================================== */
-/* ==== 2. 報告書頁面佈局 ================================ */
-/* ====================================================== */
-/* 這是模擬 A4 紙張的 div */
+/* 模擬 A4 紙張 (螢幕預覽模式) */
 .report-page {
-    margin: 20px auto;
-    width: 21cm;         /* A4 寬度 */
-    min-height: 29.7cm;  /* A4 高度 */
-    background-color: var(--color-background-sheet);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    padding: 1.5cm;      /* 在螢幕上模擬 1.5cm 邊距 */
-    box-sizing: border-box;
-    counter-increment: page; /* 每出現一個 .report-page，頁碼計數器+1 */
+    width: var(--page-width);
+    height: var(--page-height); /* 強制固定高度，確保所見即所得 */
+    background-color: var(--color-bg-paper);
+    margin: 0 auto 30px auto;
+    padding: var(--page-margin);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* 更有質感的陰影 */
+    position: relative;
+    overflow: hidden; /* 內容溢出時隱藏，模擬紙張邊界 */
+    counter-increment: page;
 }
 
-.report-body {
-    padding: 0;
+/* ====================================================== */
+/* ==== 修正：針對第二章地形圖片的空間調整 ================ */
+/* ====================================================== */
+
+/* 1. 縮小圖片容器的邊距 */
+.topo-image-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;          /* 縮小圖片間距 */
+    margin-top: 10px;   /* 大幅縮小上方間距 (原本可能是 20px) */
+    width: 100%;
 }
 
-/* 懸浮的操作按鈕 (列印、關閉) */
+/* 2. 強制限制圖片高度 (關鍵！) */
+/* 設定一個安全的高度上限，例如 40mm 或 45mm，確保它不會撐爆 A4 */
+.topo-image-item img {
+    max-width: 100%;
+    height: auto;
+    max-height: 45mm;  /* ★ 關鍵：限制最大高度，避免被擠出頁面 */
+    object-fit: contain;
+    border: 1px solid #dee2e6;
+}
+
+/* 3. 縮小圖片說明的間距 */
+.topo-image-caption {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 4px;   /* 縮小說明文字與圖片的距離 */
+    font-weight: 700;
+}
+
+/* 4. 針對第一頁 (ID: first-page-container) 進行特殊壓縮 */
+/* 稍微縮小表格的垂直間距，把空間讓給下面的圖片 */
+#first-page-container .chapter-title {
+    margin-top: 15px;  /* 縮小章節標題上方間距 */
+    margin-bottom: 8px;
+}
+
+#first-page-container .param-table {
+    margin-bottom: 8px; /* 縮小表格下方間距 */
+}
+
+#first-page-container .sub-table th,
+#first-page-container .sub-table td {
+    padding: 4px 6px;   /* 稍微縮小地形參數表格的內距 */
+}
+
+/* 列印模式 */
+@media print {
+    body.report-body-page {
+        background-color: white;
+        padding: 0;
+    }
+
+    .report-page {
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        page-break-after: always;
+        break-after: page;
+    }
+
+    .report-page:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    .report-actions-floating {
+        display: none !important;
+    }
+}
+
+/* ====================================================== */
+/* ==== 3. 標題設計 (Typography) ========================= */
+/* ====================================================== */
+
+/* 報告總標題 */
+.report-title {
+    color: var(--color-brand-dark);
+    font-size: 24px;
+    font-weight: 900; /* 特粗 */
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--color-brand-dark); /* 加粗底線 */
+    letter-spacing: 1px;
+}
+
+/* 章節標題 (H2) - 左側飾條風格 */
+.chapter-title {
+    font-size: 16px;
+    color: var(--color-brand-dark);
+    font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-left: 12px;
+    border-left: 5px solid var(--color-accent); /* 左側藍色飾條 */
+    background: linear-gradient(to right, #f8f9fa, transparent); /* 淡淡的漸層背景 */
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.report-page > .chapter-title:first-child {
+    margin-top: 0;
+}
+
+/* 子標題 (H3) */
+.sub-chapter-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-brand-main);
+    margin-top: 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+.sub-chapter-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* 表格專用小標題 */
+.table-specific-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    margin: 15px 0 5px 0;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 2px;
+}
+
+/* ====================================================== */
+/* ==== 4. 現代化表格 (Modern Tables) ===================== */
+/* ====================================================== */
+
+.param-table, .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 11px; /* 保持精簡字體 */
+    border-top: 2px solid var(--color-brand-main); /* 頂部強調線 */
+}
+
+/* 表頭設計 */
+.param-table th, .data-table thead th {
+    background-color: var(--color-table-stripe);
+    color: var(--color-brand-dark);
+    font-weight: 700;
+    padding: 6px 8px;
+    text-align: center;
+    border-bottom: 2px solid #dcdcdc; /* 表頭底部分隔線 */
+    border-right: 1px solid white; /* 欄位間的白色分隔 */
+}
+
+.param-table th:last-child, .data-table thead th:last-child {
+    border-right: none;
+}
+
+/* 參數表的左側標題欄 */
+.param-table th {
+    width: 30%;
+    text-align: left;
+    padding-left: 12px;
+    background-color: #f1f3f5; /* 稍深的灰 */
+}
+
+/* 內容儲存格 */
+.param-table td, .data-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--color-border); /* 僅保留水平線 */
+    vertical-align: middle;
+    color: #444;
+}
+
+.data-table td {
+    text-align: center;
+}
+
+.param-table td {
+    text-align: left;
+    padding-left: 12px;
+}
+
+/* 移除內部垂直線，讓畫面更乾淨 (Modern Look) */
+.data-table td, .param-table td {
+    border-right: none;
+    border-left: none;
+}
+
+/* 斑馬紋效果 (提升閱讀性) */
+.data-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.015);
+}
+
+/* 重點數值 */
+.final-result, .data-table td strong {
+    color: var(--color-alert);
+    font-weight: 700;
+}
+
+/* 摘要框 (Summary Box) - 卡片式設計 */
+.summary-box {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid var(--color-brand-main); /* 左側強調 */
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 11px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ====================================================== */
+/* ==== 5. 圖片與公式 ==================================== */
+/* ====================================================== */
+
+.building-image-container, .report-schematic-image {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #eee; /* 圖片外框 */
+    border-radius: 4px;
+}
+
+.building-image-container img, .report-schematic-image img {
+    max-width: 100%;
+    height: auto;
+    max-height: 70mm; /* 嚴格控制高度 */
+    object-fit: contain;
+}
+
+/* 數學公式 */
+.math-formula {
+    font-family: 'Times New Roman', serif;
+    font-size: 13px;
+    background-color: #fdfdfd;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+/* ====================================================== */
+/* ==== 6. 介面按鈕 (不列印) ============================= */
+/* ====================================================== */
 .report-actions-floating {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1001;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(5px);
+    gap: 12px;
 }
 
 .report-action-btn {
-    background: #e9ecef; border: 1px solid #dee2e6; cursor: pointer;
-    padding: 8px; width: 40px; height: 40px; color: #495057;
-    transition: all 0.2s ease; border-radius: 8px;
-}
-.report-action-btn:hover { color: #fff; background-color: var(--color-primary-medium); border-color: var(--color-primary-medium); }
-.report-action-btn svg { width: 100%; height: 100%; }
-
-/* ====================================================== */
-/* ==== 3. 標題與文字排版 ================================ */
-/* ====================================================== */
-.report-title {
-    color: var(--color-primary-dark);
-    font-size: 24px;
-    font-weight: 700;
-    text-align: center;
-    margin: 0 0 20px 0;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--color-primary-dark);
-}
-
-.chapter-title {
-    font-size: 16px;
-    color: var(--color-primary-medium);
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--color-border-soft);
-    padding-bottom: 8px;
-    font-weight: 700;
-}
-/* 第一頁的第一個章節標題不需要上方邊距 */
-.report-body > .chapter-title:first-of-type {
-    margin-top: 0;
-}
-
-.sub-chapter-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--color-text-body);
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-.table-specific-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    margin-top: 20px;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px dotted var(--color-border-medium);
-}
-.table-specific-title::before {
-    content: '▶'; margin-right: 8px; color: var(--color-primary-medium); font-size: 0.9em;
-}
-
-ol { padding-left: 20px; font-size: var(--font-size-base); }
-.math-formula { text-align: center; }
-
-/* ====================================================== */
-/* ==== 4. 表格系統 (核心) =============================== */
-/* ====================================================== */
-
-/* 基礎表格樣式 */
-.param-table, .data-table, .sub-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    font-size: 11px; /* 稍微縮小字體以容納更多內容 */
-}
-.param-table th, .param-table td,
-.data-table th, .data-table td,
-.sub-table th, .sub-table td {
-    padding: 8px 10px;
-    border: 1px solid var(--color-border-medium);
-    text-align: left;
-    vertical-align: middle;
-}
-
-/* 參數輸入型表格 (第一、三章) */
-.param-table > tbody > tr > th {
-    background-color: #f8f9fa;
-    font-weight: 700;
-    width: 28%;
-}
-.param-table > tbody > tr > td {
-    text-align: left;
-}
-.param-table .sub-table-wrapper {
-    padding: 0;
-}
-
-/* 數據結果型表格 (第四、五、六章) */
-.data-table {
-    text-align: center; /* 數據通常置中較好看 */
-}
-.data-table thead th {
-    background-color: #f1f3f5;
-    color: var(--color-text-body);
-    font-weight: 700;
-    vertical-align: middle;
-}
-.data-table .header-row {
-    background-color: var(--color-primary-medium);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-brand-dark);
     color: white;
-    font-size: 14px;
-}
-.data-table .sub-header, .data-table .sub-header-row th {
-    background-color: #f8f9fa;
-    font-weight: normal;
-}
-.data-table tbody tr:hover {
-    background-color: #f1f3f5;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
 }
 
-/* 內嵌子表格 (地形參數) */
-.sub-table th, .sub-table td {
-    text-align: center;
-}
-.sub-table thead th {
-    font-weight: normal;
-    background-color: #f8f9fa;
-}
-.sub-table-topo tbody tr td:first-child {
-    width: 35%;
-    text-align: left;
+.report-action-btn:hover {
+    background: var(--color-accent);
+    transform: scale(1.1);
 }
 
-/* ====================================================== */
-/* ==== 5. 獨立元件樣式 ================================== */
-/* ====================================================== */
-.summary-box {
-    background-color: #f8f9fa;
-    border: 1px solid var(--color-border-soft);
-    padding: 12px 15px;
-    margin-bottom: 15px;
-    font-size: var(--font-size-base);
-    line-height: 1.8;
-}
-
-.building-image-container, .topo-image-container, .cc-schematic-image, .report-schematic-image {
-    margin-top: 25px;
-    width: 100%;
-    text-align: center;
-}
-.building-image-container img, .topo-image-container img, .cc-schematic-image img, .report-schematic-image img {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid var(--color-border-medium);
-}
-.cc-schematic-image img { max-width: 60%; }
-.topo-image-container { display: flex; gap: 30px; }
-.topo-image-item { flex: 1; max-width: 50%; }
-.report-schematic-image { text-align: left; }
-.report-schematic-image img { max-width: 70%; }
-
-/* ====================================================== */
-/* ==== 6. 附錄與數學公式 ================================ */
-/* ====================================================== */
-.calculation-detail-table th {
-    font-weight: normal; width: 35%;
-}
-.calculation-detail-table td {
-    text-align: right; font-family: monospace; font-size: 1.1em;
-}
-.calculation-detail-table .final-result {
-    font-weight: bold; color: var(--color-accent-red); background-color: #fff5f5;
-}
-
-/* ====================================================== */
-/* ==== 7. 列印專用樣式 ================================== */
-/* ====================================================== */
-@media print {
-    body.report-body-page {
-        background-color: white; /* 列印時移除灰色背景 */
-        padding: 0;
-        margin: 0;
-        font-size: 10pt; /* 稍微調整列印字體大小 */
-    }
-    .report-page {
-        width: auto;
-        height: auto;
-        min-height: 0;
-        margin: 0;
-        box-shadow: none; /* 移除陰影 */
-        padding: 0;
-        page-break-after: always; /* 每個 .report-page 結束後強制分頁 */
-    }
-    .report-page:last-child {
-        page-break-after: auto; /* 最後一頁後面不需要分頁 */
-    }
-    .report-actions-floating {
-        display: none !important; /* 列印時隱藏操作按鈕 */
-    }
-
-    /* 避免元素被跨頁切斷 */
-    .chapter-title, .sub-chapter-title, .summary-box, .table-specific-title, .report-content-block, .report-schematic-image {
-        page-break-inside: avoid;
-    }
-    /* 確保表格標頭在換頁時會重複出現 */
-    .data-table thead {
-        display: table-header-group;
-    }
-
-    /* 這是我們用來手動控制分頁的 class */
-    .print-page-break {
-        page-break-before: always !important;
-    }
-    img {
-        max-width: 100% !important; /* 確保圖片不會超出頁面 */
-    }
+.report-action-btn svg {
+    width: 24px;
+    height: 24px;
 }

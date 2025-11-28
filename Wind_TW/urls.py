@@ -8,6 +8,7 @@ urlpatterns = [
     path('open/', views.wind_calculation_open_view, name='wind_calculation_open'),
     path('calculate/', views.calculate_api_view, name='calculate_api'),
     path('calculate_open/', views.calculate_open_api_view, name='calculate_open_api'),
-    path('report/', views.wind_report_view, name='wind_report'),
+    # path('report/', views.wind_report_view, name='wind_report'),
     path('report_open/', views.wind_report_open_view, name='wind_report_open'),
+    path('report_v2/', views.wind_report_v2_view, name='wind_report_v2'),
 ]

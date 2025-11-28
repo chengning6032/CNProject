@@ -1,0 +1,67 @@
+{% load static %}
+
+<div class="report-page">
+    <div class="page-content">
+        <h2 class="chapter-title" style="visibility: hidden;">placeholder</h2> <!-- 佔位符保持版面位置 -->
+
+        <!-- 6.3 屋頂局部風壓 -->
+        <div class="report-content-block" style="margin-top: 0px;">
+            <h3 class="sub-chapter-title">6.3 屋頂局部風壓計算結果 (Roof)</h3>
+            <div style="font-size: 0.85rem; color: #555; margin-bottom: 8px;">
+                <p style="margin: 2px 0;">適用圖表：<strong>{{ chapter_6_data.roof_chart_name }}</strong></p>
+                <p style="margin: 2px 0;">分區定義：Zone 1 (內部), Zone 2 (邊緣, 寬度 $a$), Zone 3 (角落, $a \times a$)</p>
+                <p style="margin: 2px 0;">數值說明：表格顯示考慮內外風壓組合後之<strong>最不利設計淨風壓</strong>。</p>
+            </div>
+
+            <!-- 調整表格字體以容納 9 個欄位 -->
+            <table class="data-table" style="font-size: 0.75rem;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="vertical-align: middle; width: 12%;">有效<br>受風面積<br> $A$<br> (m²)</th>
+                        <th colspan="2">Zone 1 (內部)</th>
+                        <th colspan="2">Zone 2 (邊緣)</th>
+                        <th colspan="2">Zone 3 (角落)</th>
+                        <th colspan="2" style="background-color: #f0f4c3;">Zone 1 & 2 & 3</th>
+                    </tr>
+                    <tr>
+                        <!-- 縮小 GCp 欄位寬度 -->
+                        <th style="width: 9%;">$GC_p$<br>(負)</th>
+                        <th>設計<br>負風壓<br>(kgf/m²)</th>
+                        <th style="width: 9%;">$GC_p$<br>(負)</th>
+                        <th>設計<br>負風壓<br>(kgf/m²)</th>
+                        <th style="width: 9%;">$GC_p$<br>(負)</th>
+                        <th>設計<br>負風壓<br>(kgf/m²)</th>
+                        <th style="background-color: #f0f4c3; width: 9%;">$GC_p$<br>(正)</th>
+                        <th style="background-color: #dce775;">設計<br>正風壓<br>(kgf/m²)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in chapter_6_data.roof_rows %}
+                    <tr>
+                        <td>{{ row.area }}</td>
+
+                        <!-- Zone 1 Negative -->
+                        <td>{{ row.gcp_1_neg|floatformat:2 }}</td>
+                        <td style="color: #1565c0;">{{ row.p_r1_neg|floatformat:1 }}</td>
+
+                        <!-- Zone 2 Negative -->
+                        <td>{{ row.gcp_2_neg|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #1565c0;">{{ row.p_r2_neg|floatformat:1 }}</td>
+
+                        <!-- Zone 3 Negative -->
+                        <td>{{ row.gcp_3_neg|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #c2185b;">{{ row.p_r3_neg|floatformat:1 }}</td>
+
+                        <!-- Positive (Shared) -->
+                        <!-- 使用 Zone 1 的正係數代表 (通常全區相同) -->
+                        <td style="background-color: #f9fbe7;">{{ row.gcp_1_pos|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #33691e; background-color: #f9fbe7;">{{ row.p_r_pos_max|floatformat:1 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <div class="page-number">第 12 頁</div>
+</div>

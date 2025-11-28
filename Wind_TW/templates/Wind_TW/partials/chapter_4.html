@@ -1,0 +1,256 @@
+{% load static %}
+<div class="chapter-block">
+    <h2 class="chapter-title">第四章 主風力抵抗系統設計參數</h2>
+
+    <!-- 4.1 內風壓係數 -->
+    <h3 class="sub-chapter-title">4.1 內風壓係數 (Internal Pressure Coefficients)</h3>
+    <table class="info-table">
+        <tbody>
+            <tr>
+                <th style="width: 30%;">建築物封閉狀態</th>
+                <td>{{ basic_params.enclosure_status|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>內風壓係數 GC<sub>pi</sub></th>
+                <td>
+                    {% if chapter_4_data.gcpi %}
+                        {% for val in chapter_4_data.gcpi %}
+                            <span style="
+                                display: inline-block;
+                                padding: 4px 12px;
+                                border-radius: 4px;
+                                margin-right: 8px;
+                                font-weight: bold;
+                                font-family: monospace;
+                                font-size: 1.1em;
+                                {% if val > 0 %}
+                                    background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9;
+                                {% elif val < 0 %}
+                                    background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a;
+                                {% else %}
+                                    background-color: #f5f5f5; color: #616161; border: 1px solid #e0e0e0;
+                                {% endif %}
+                            ">
+                                {% if val > 0 %}+{% endif %}{{ val|floatformat:3 }}
+                            </span>
+                        {% endfor %}
+                    {% else %}
+                        <span style="color: #999;">未定義</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 4.2 X 風向分析 -->
+    <div class="report-content-block">
+        <h3 class="sub-chapter-title">4.2 X 方向風力分析參數</h3>
+        <table class="data-table" style="margin-bottom: 20px;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">參數項目</th>
+                    <th>{{ chapter_4_data.x_wind.pos_header|default:"順風向 (+X)" }}</th>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <th>{{ chapter_4_data.x_wind.neg_header|default:"順風向 (-X)" }}</th>
+                    {% endif %}
+                    <th style="color: #555; background-color: #f0f0f0;">橫風向 (±Y)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>建築物剛性判定</td>
+                    <td>{{ chapter_4_data.x_wind.pos.rigidity }}</td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td>{{ chapter_4_data.x_wind.neg.rigidity }}</td>
+                    {% endif %}
+                    <td style="color: #666;">{{ chapter_4_data.y_wind.pos.rigidity }}</td>
+                </tr>
+                <tr>
+                    <td>特徵尺寸 (B x L)</td>
+                    <td>B={{ chapter_4_data.x_wind.pos.B|floatformat:2 }}m, L={{ chapter_4_data.x_wind.pos.L|floatformat:2 }}m</td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td>同左</td>
+                    {% endif %}
+                    <td style="color: #666;">B={{ chapter_4_data.y_wind.pos.B|floatformat:2 }}m, L={{ chapter_4_data.y_wind.pos.L|floatformat:2 }}m</td>
+                </tr>
+                <tr>
+                    <td>陣風反應因子 G (or G<sub>f</sub>)</td>
+                    <td style="font-weight: bold; color: var(--color-primary); font-size: 1.1em;">
+                        {{ chapter_4_data.x_wind.pos.G_factor.final_value|floatformat:3 }}
+                    </td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td style="font-weight: bold; color: var(--color-primary); font-size: 1.1em;">
+                            {{ chapter_4_data.x_wind.neg.G_factor.final_value|floatformat:3 }}
+                        </td>
+                    {% endif %}
+                    <td style="color: #666;">{{ chapter_4_data.y_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+                </tr>
+                <tr>
+                    <td>幾何比值</td>
+                    <td style="font-size: 0.95em;">
+                        L/B = {{ chapter_4_data.x_wind.pos.L_B|floatformat:2 }} <br>
+                        h/L = {{ chapter_4_data.x_wind.pos.h_L|floatformat:2 }}
+                    </td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td style="font-size: 0.95em;">同左</td>
+                    {% endif %}
+                    <td style="font-size: 0.95em; color: #666;">
+                        L/B = {{ chapter_4_data.y_wind.pos.L_B|floatformat:2 }} <br>
+                        h/L = {{ chapter_4_data.y_wind.pos.h_L|floatformat:2 }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>外牆風壓係數 C<sub>p</sub></td>
+                    <td style="text-align: left; padding-left: 15px; line-height: 1.6;">
+                        <span style="color:#2c3e50;">迎風面:</span> <strong>{{ chapter_4_data.x_wind.pos.Cp_windward|floatformat:2 }}</strong> <br>
+                        <span style="color:#2c3e50;">背風面:</span> {{ chapter_4_data.x_wind.pos.Cp_leeward|floatformat:2 }} <br>
+                        <span style="color:#2c3e50;">側風面:</span> {{ chapter_4_data.x_wind.pos.Cp_side|floatformat:2 }}
+                    </td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td style="text-align: left; padding-left: 15px;">同左</td>
+                    {% endif %}
+                    <td style="text-align: left; padding-left: 15px; color: #666; line-height: 1.6;">
+                        迎風面: {{ chapter_4_data.y_wind.pos.Cp_windward|floatformat:2 }} <br>
+                        背風面: {{ chapter_4_data.y_wind.pos.Cp_leeward|floatformat:2 }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>屋頂風壓係數 C<sub>p</sub></td>
+                    <td style="text-align: left; padding-left: 15px; font-size: 0.95em; vertical-align: top;">
+                        {% for key, value in chapter_4_data.x_wind.pos.roof_cp.items %}
+                            <div style="margin-bottom: 4px;">
+                                {{ key }}: <strong style="color: #e63946;">{{ value|floatformat:2 }}</strong>
+                            </div>
+                        {% empty %}
+                            <span style="color: #999;">-</span>
+                        {% endfor %}
+                    </td>
+                    {% if chapter_4_data.x_wind.has_neg_case %}
+                        <td style="text-align: left; padding-left: 15px; font-size: 0.95em; vertical-align: top;">
+                            {% for key, value in chapter_4_data.x_wind.neg.roof_cp.items %}
+                                <div style="margin-bottom: 4px;">
+                                    {{ key }}: <strong style="color: #e63946;">{{ value|floatformat:2 }}</strong>
+                                </div>
+                            {% empty %}
+                                <span style="color: #999;">-</span>
+                            {% endfor %}
+                        </td>
+                    {% endif %}
+                    <td style="text-align: left; padding-left: 15px; font-size: 0.95em; color: #666; vertical-align: top;">
+                        {% for key, value in chapter_4_data.y_wind.pos.roof_cp.items %}
+                            <div>{{ key }}: {{ value|floatformat:2 }}</div>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 4.3 Y 風向分析 -->
+    <div class="report-content-block">
+        <h3 class="sub-chapter-title">4.3 Y 方向風力分析參數</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">參數項目</th>
+                    <th>{{ chapter_4_data.y_wind.pos_header|default:"順風向 (+Y)" }}</th>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <th>{{ chapter_4_data.y_wind.neg_header|default:"順風向 (-Y)" }}</th>
+                    {% endif %}
+                    <th style="color: #555; background-color: #f0f0f0;">橫風向 (±X)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>建築物剛性判定</td>
+                    <td>{{ chapter_4_data.y_wind.pos.rigidity }}</td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td>{{ chapter_4_data.y_wind.neg.rigidity }}</td>
+                    {% endif %}
+                    <td style="color: #666;">{{ chapter_4_data.x_wind.pos.rigidity }}</td>
+                </tr>
+                <tr>
+                    <td>特徵尺寸 (B x L)</td>
+                    <td>B={{ chapter_4_data.y_wind.pos.B|floatformat:2 }}m, L={{ chapter_4_data.y_wind.pos.L|floatformat:2 }}m</td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td>同左</td>
+                    {% endif %}
+                    <td style="color: #666;">B={{ chapter_4_data.x_wind.pos.B|floatformat:2 }}m, L={{ chapter_4_data.x_wind.pos.L|floatformat:2 }}m</td>
+                </tr>
+                <tr>
+                    <td>陣風反應因子 G (or G<sub>f</sub>)</td>
+                    <td style="font-weight: bold; color: var(--color-primary); font-size: 1.1em;">
+                        {{ chapter_4_data.y_wind.pos.G_factor.final_value|floatformat:3 }}
+                    </td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td style="font-weight: bold; color: var(--color-primary); font-size: 1.1em;">
+                            {{ chapter_4_data.y_wind.neg.G_factor.final_value|floatformat:3 }}
+                        </td>
+                    {% endif %}
+                    <td style="color: #666;">{{ chapter_4_data.x_wind.pos.G_factor.final_value|floatformat:3 }}</td>
+                </tr>
+                <tr>
+                    <td>幾何比值</td>
+                    <td style="font-size: 0.95em;">
+                        L/B = {{ chapter_4_data.y_wind.pos.L_B|floatformat:2 }} <br>
+                        h/L = {{ chapter_4_data.y_wind.pos.h_L|floatformat:2 }}
+                    </td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td style="font-size: 0.95em;">同左</td>
+                    {% endif %}
+                    <td style="font-size: 0.95em; color: #666;">
+                        L/B = {{ chapter_4_data.x_wind.pos.L_B|floatformat:2 }} <br>
+                        h/L = {{ chapter_4_data.x_wind.pos.h_L|floatformat:2 }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>外牆風壓係數 C<sub>p</sub></td>
+                    <td style="text-align: left; padding-left: 15px; line-height: 1.6;">
+                        <span style="color:#2c3e50;">迎風面:</span> <strong>{{ chapter_4_data.y_wind.pos.Cp_windward|floatformat:2 }}</strong> <br>
+                        <span style="color:#2c3e50;">背風面:</span> {{ chapter_4_data.y_wind.pos.Cp_leeward|floatformat:2 }} <br>
+                        <span style="color:#2c3e50;">側風面:</span> {{ chapter_4_data.y_wind.pos.Cp_side|floatformat:2 }}
+                    </td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td style="text-align: left; padding-left: 15px;">同左</td>
+                    {% endif %}
+                    <td style="text-align: left; padding-left: 15px; color: #666; line-height: 1.6;">
+                        迎風面: {{ chapter_4_data.x_wind.pos.Cp_windward|floatformat:2 }} <br>
+                        背風面: {{ chapter_4_data.x_wind.pos.Cp_leeward|floatformat:2 }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>屋頂風壓係數 C<sub>p</sub></td>
+                    <td style="text-align: left; padding-left: 15px; font-size: 0.95em; vertical-align: top;">
+                        {% for key, value in chapter_4_data.y_wind.pos.roof_cp.items %}
+                            <div style="margin-bottom: 4px;">
+                                {{ key }}: <strong style="color: #e63946;">{{ value|floatformat:2 }}</strong>
+                            </div>
+                        {% empty %}
+                            <span style="color: #999;">-</span>
+                        {% endfor %}
+                    </td>
+                    {% if chapter_4_data.y_wind.has_neg_case %}
+                        <td style="text-align: left; padding-left: 15px; font-size: 0.95em; vertical-align: top;">
+                            {% for key, value in chapter_4_data.y_wind.neg.roof_cp.items %}
+                                <div style="margin-bottom: 4px;">
+                                    {{ key }}: <strong style="color: #e63946;">{{ value|floatformat:2 }}</strong>
+                                </div>
+                            {% empty %}
+                                <span style="color: #999;">-</span>
+                            {% endfor %}
+                        </td>
+                    {% endif %}
+                    <td style="text-align: left; padding-left: 15px; font-size: 0.95em; color: #666; vertical-align: top;">
+                        {% for key, value in chapter_4_data.x_wind.pos.roof_cp.items %}
+                            <div>{{ key }}: {{ value|floatformat:2 }}</div>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

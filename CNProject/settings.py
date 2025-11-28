@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'EqStaticAnalysis_TW',
     'Wind_TW',
     'accounts',
-    'products'
+    'products',
+    'section_properties'
 ]
 
 MIDDLEWARE = [

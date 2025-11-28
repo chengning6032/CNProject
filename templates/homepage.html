@@ -891,16 +891,49 @@
             </div>
             <div class="tool-group">
                 <div class="tool-group-title">耐風設計規範</div>
-                <a class="tool-link disabled-link" data-title="耐風設計 | 封閉式建築"
+                <a href="{% url 'wind_calculation_close' %}" class="tool-link"
+                   data-title="耐風設計 | 封閉式建築"
                    data-description="針對封閉式或部分封閉式建築，依據「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，涵蓋各種地形、陣風反應因子等複雜參數，提供設計風力評估。"
-                   data-version="v0.0.0" data-updated="20XX-XX-XX">封閉或部分封閉式建築</a>
-                <a class="tool-link disabled-link" data-title="耐風設計 | 開放式建築"
+                   data-version="v1.0.251128"
+                   data-updated="2025-11-28" data-history='[
+                        {
+                            "version": "v1.0.251128",
+                            "date": "2025-11-28",
+                            "changes": [
+                                "推出第一版封閉式或部分封閉式建築風力計算器。",
+                                "目前只提供山型(gable)屋頂建築物之風力計算。",
+                                "提供主結構及局部構材及披覆物之風力(壓)計算。",
+                                "依據規範支援山脊、山與懸崖之地形效應。",
+                                "山牆可以單一面積或是精細分割計算。"
+                            ]
+                        }
+                   ]'>封閉或部分封閉式建築</a>
+                <a class="tool-link disabled-link"
+                   data-title="耐風設計 | 開放式建築"
                    data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具依據我國「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，以應對台灣多變的氣候挑戰。"
                    data-version="v0.0.0"
                    data-updated="20XX-XX-XX">開放式建築</a>
             </div>
             <div class="tool-group">
                 <div class="tool-group-title">結構設計</div>
+                <a href="{% url 'section_index' %}" class="tool-link"
+                   data-title="結構設計 | 斷面性質計算"
+                   data-description="提供各類常見結構斷面（H型鋼、槽鋼、C型鋼、角鋼、T型鋼、Z型鋼、圓管、方管）之幾何性質計算工具。即時繪製斷面圖形，並自動計算斷面積、慣性矩、迴轉半徑、塑性斷面模數及翹曲常數等關鍵參數，支援 mm/cm 單位切換。"
+                   data-version="v1.0.251128"
+                   data-updated="2025-11-28"
+                   data-history='[
+                        {
+                            "version": "v1.0.251128",
+                            "date": "2025-11-28",
+                            "changes": [
+                                "推出第一版斷面性質計算器。",
+                                "支援 8 種常見結構斷面 (H, Channel, C, Angle, T, Z, Pipe, Box)。",
+                                "提供即時斷面繪圖與動態參數輸入介面。",
+                                "支援 mm 與 cm 單位即時切換顯示。",
+                                "包含塑性斷面模數 (Zx, Zy) 與翹曲常數 (Cw) 計算。"
+                            ]
+                        }
+                   ]'>斷面性質計算器</a>
                 <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
                    data-title="結構設計 | 基礎版與錨栓"
                    data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告，大幅提升設計效率與準確性。"

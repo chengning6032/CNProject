@@ -1,0 +1,62 @@
+{% load static %}
+
+<!-- 只有在 part=1 (第一部分) 時顯示主標題與示意圖 -->
+{% if is_first_page %}
+    <h2 class="chapter-title">第五章 主結構體設計風壓計算</h2>
+    <h3 class="sub-chapter-title">{{ section_id }} {{ direction_name }} (順風向±{{ direction_key }}方向)</h3>
+
+    {% if case_data.image_for_case %}
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{% static case_data.image_for_case %}" alt="風向示意圖"
+                 style="max-width: 60%; border: 1px solid #eee; padding: 5px;">
+        </div>
+    {% endif %}
+{% endif %}
+
+<!-- 表格內容 -->
+{% if table_group %}
+    <div class="report-sub-block" style="margin-top: 0;">
+        <h3 class="sub-chapter-title" style="font-size: 1.05em;">
+            {{ section_id }}.{{ sub_index }} 內風壓係數 GC<sub>pi</sub> = {{ table_group.gcpi|floatformat:3 }} 之設計風壓
+        </h3>
+
+        <!-- 移除內聯樣式，由 CSS .data-table 統一控制 -->
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th width="12%">表面</th>
+                <th width="15%">高度 z (m)</th>
+                <th>K(z)</th>
+                <th>K<sub>zt</sub></th>
+                <th>q(z)</th>
+                <th>G</th>
+                <th>C<sub>p</sub></th>
+                <th>q(h)</th>
+                <th>GC<sub>pi</sub></th>
+                <th>設計風壓 p<br>(kgf/m²)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in table_group.pressure_table %}
+                <tr>
+                    <td>{{ row.surface }}</td>
+                    <td>{{ row.elevation }}</td>
+                    <td>{{ row.k_z|default:"-"|floatformat:3 }}</td>
+                    <td>{{ row.kzt|default:"-"|floatformat:3 }}</td>
+                    <td>{{ row.q_z|default:"-"|floatformat:1 }}</td>
+                    <td>{{ row.g_factor|floatformat:3 }}</td>
+                    <td>{{ row.cp|floatformat:2 }}</td>
+                    <td>{{ case_data.q_h|floatformat:1 }}</td>
+                    <td>{{ table_group.gcpi|floatformat:3 }}</td>
+                    <!-- 使用 strong 標籤配合 CSS 變色，不再寫死 style -->
+                    <td><strong>{{ row.p|floatformat:1 }}</strong></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div style="text-align:center; padding: 50px; color: #999; border: 1px dashed #ccc; background-color: #f9f9f9;">
+        <p>(此工況無數據)</p>
+    </div>
+{% endif %}

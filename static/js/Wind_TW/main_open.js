@@ -833,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // --- 發送請求 ---
-            fetch('/windTW/calculate_open/', {
+            fetch('/OLi/windTW/calculate_open/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
                 body: JSON.stringify(formData)
@@ -948,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 params.append('geo_manual_inputs_y', JSON.stringify(geo.manual_inputs_y));
             }
 
-            const reportUrl = `/windTW/report_open/?${params.toString()}`;
+            const reportUrl = `/OLi/windTW/report_open/?${params.toString()}`;
             window.open(reportUrl, '_blank', 'width=900,height=800,scrollbars=yes,resizable=yes');
         });
     }

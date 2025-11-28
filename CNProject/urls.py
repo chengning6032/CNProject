@@ -16,6 +16,7 @@ urlpatterns = [
 
     path('OLi/eqTW/', include(('EqStaticAnalysis_TW.urls', 'EqStaticAnalysis_TW'), namespace='EqStaticAnalysis_TW')),
     path('OLi/windTW/', include('Wind_TW.urls')),
+    path('OLi/section/', include('section_properties.urls')),
     path('OLi/accounts/', include('accounts.urls')),
     path('OLi/products/', include(('products.urls', 'products'), namespace='products')),
 

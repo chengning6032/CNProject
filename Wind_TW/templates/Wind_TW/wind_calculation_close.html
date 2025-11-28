@@ -12,10 +12,21 @@
 {% csrf_token %}
 
 <main class="main-content">
+    <nav class="breadcrumb-nav">
+        <!-- 連結到 OLI 首頁 -->
+        <a href="{% url 'homepage' %}">OLI 首頁</a>
+
+        <span class="breadcrumb-separator">/</span>
+
+        <!-- 若有中間層級可加在這邊，例如： -->
+        <!-- <a href="#">結構計算工具</a> <span class="breadcrumb-separator">/</span> -->
+
+        <span class="breadcrumb-current">耐風設計 - 封閉或部分封閉式建築物</span>
+    </nav>
     <div class="main-title-container">
         <h1 class="main-title">耐風設計 - 封閉或部分封閉式建築物</h1>
         <!-- 2. 在 h1 下方新增一個 p.sub-title 作為副標題 -->
-        <p class="sub-title">結構風力分析與設計</p>
+        <p class="sub-title">Wind Load Design - Enclosed and Partially Enclosed Buildings</p>
     </div>
     <div class="main-layout-grid">
         <!-- 地點與基本設計風速 Section -->
@@ -179,13 +190,17 @@
                 <div class="input-group">
                     <label for="roof-shape-select">屋頂形狀:</label>
                     <select id="roof-shape-select">
-                        <option value="flat">平屋頂</option>
+                        <!-- 將其他選項加上 disabled 屬性，並標註暫不開放 -->
+                        <option value="flat" disabled>平屋頂 (暫不開放)</option>
+
+                        <!-- 僅保留 gable 為可選，並設為預設選取 -->
                         <option value="gable" selected>雙邊單斜式(山形)屋頂</option>
-                        <option value="shed">單邊單斜式屋頂</option>
-                        <option value="hip">雙斜(四坡水)屋頂</option>
-                        <option value="arched">拱形屋頂</option>
-                        <option value="sawtooth_uniform">鋸齒型屋頂 (一致)</option>
-                        <option value="sawtooth_irregular">不規則鋸齒型屋頂</option>
+
+                        <option value="shed" disabled>單邊單斜式屋頂 (暫不開放)</option>
+                        <option value="hip" disabled>雙斜(四坡水)屋頂 (暫不開放)</option>
+                        <option value="arched" disabled>拱形屋頂 (暫不開放)</option>
+                        <option value="sawtooth_uniform" disabled>鋸齒型屋頂 (一致) (暫不開放)</option>
+                        <option value="sawtooth_irregular" disabled>不規則鋸齒型屋頂 (暫不開放)</option>
                     </select>
                 </div>
 
@@ -336,8 +351,8 @@
                 <div class="input-group">
                     <label for="gable-detail-radio">山牆分段精細計算:</label>
                     <div id="gable-detail-radio-group" class="radio-group">
-                        <label><input type="radio" name="simplify_gable" value="false" checked> 是</label>
-                        <label><input type="radio" name="simplify_gable" value="true"> 否 (視為單一面積)</label>
+                        <label><input type="radio" name="simplify_gable" value="false"> 是</label>
+                        <label><input type="radio" name="simplify_gable" value="true" checked> 否 (視為單一面積)</label>
                     </div>
                 </div>
                 <hr style="width:100%; border:0; border-top: 1px solid #eee; margin: 10px 0;">

@@ -1,458 +1,309 @@
-/* static/css/Wind_TW/style_wind_table.css (最終修正版) */
+/* static/css/Wind_TW/style_wind_table.css */
 
+/* ====================================================== */
+/* ==== 1. 設計系統 (Design System) ======================= */
+/* ====================================================== */
+:root {
+    /* 字體設定 */
+    --font-primary: 'Noto Sans JP', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* 專業工程配色 (Professional Palette) */
+    --color-brand-dark: #2c3e50;    /* 深岩藍：用於主標題、頁尾 */
+    --color-brand-main: #34495e;    /* 岩灰：用於章節標題、表頭背景 */
+    --color-accent: #2980b9;        /* 亮藍：用於強調、連結 */
+    --color-alert: #c0392b;         /* 深紅：用於重要結果數值 */
+
+    /* 文字顏色 */
+    --color-text-primary: #2c3e50;
+    --color-text-secondary: #5f6c7b;
+
+    /* 介面顏色 */
+    --color-bg-screen: #525659;     /* 螢幕背景 (深灰) */
+    --color-bg-paper: #ffffff;      /* 紙張背景 */
+    --color-table-stripe: #f8f9fa;  /* 表格斑馬紋 */
+    --color-border: #e9ecef;        /* 輕淡邊框 */
+
+    /* 版面尺寸 (A4) */
+    --page-width: 210mm;
+    --page-height: 297mm;
+    --page-margin: 15mm; /* 保持較窄邊距以容納更多內容 */
+}
+
+/* 讓瀏覽器列印時保留背景色與圖片 */
+* {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+/* ====================================================== */
+/* ==== 2. 版面設定 (Layout & Print) ===================== */
+/* ====================================================== */
 @page {
     size: A4 portrait;
-    margin: 2cm;
-    @bottom-center {
-        content: counter(page);
-        font-family: 'Noto Sans JP', sans-serif, 'Microsoft JhengHei', sans-serif;
-        font-size: 10px;
-        color: #888;
-        margin-bottom: 1cm;
-    }
+    margin: 0; /* 關鍵：歸零，由 CSS 控制 */
 }
 
 body.report-body-page {
-    font-family: 'Noto Sans JP', sans-serif, 'Microsoft JhengHei', sans-serif;
-    color: #333;
-    background-color: #f0f2f5;
+    font-family: var(--font-primary);
+    background-color: var(--color-bg-screen);
     margin: 0;
-    padding: 0;
-    font-size: 12px;
-    counter-reset: page 0;
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    color: var(--color-text-primary);
+    line-height: 1.5;
 }
 
+/* 模擬 A4 紙張 (螢幕預覽模式) */
 .report-page {
-    margin: 20px auto;
-    width: 21cm;
-    min-height: 29.7cm;
-    height: auto;
-    background-color: white;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-    padding: 2cm;
-    box-sizing: border-box;
+    width: var(--page-width);
+    height: var(--page-height); /* 強制固定高度，確保所見即所得 */
+    background-color: var(--color-bg-paper);
+    margin: 0 auto 30px auto;
+    padding: var(--page-margin);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* 更有質感的陰影 */
+    position: relative;
+    overflow: hidden; /* 內容溢出時隱藏，模擬紙張邊界 */
     counter-increment: page;
 }
 
-.report-body {
-    padding: 0;
-}
-
-.report-title {
-    color: #1d3557;
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 15px 0;
-    text-align: center;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 15px;
-    padding-top: 10px;
-}
-
-.chapter-title {
-    font-size: 16px;
-    color: #457b9d;
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 8px;
-}
-
-.sub-chapter-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #343a40;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-.report-body > .chapter-title:first-child {
-    margin-top: 0;
-}
-
-ol {
-    padding-left: 20px;
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-
-
-.sub-table-wrapper {
-    padding: 0;
-}
-
-.sub-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 1em;
-    table-layout: fixed;
-}
-
-.sub-table th, .sub-table td {
-    border: 1px solid #e9ecef;
-    padding: 6px 10px;
-    text-align: center;
-}
-
-.sub-table thead th {
-    background-color: #f1f3f5;
-    font-weight: normal;
-    border-bottom: 2px solid #dee2e6;
-    vertical-align: middle;
-}
-
-.sub-table-topo thead tr:first-child th:first-child,
-.sub-table-topo tbody tr td:first-child {
-    width: 35%;
-    text-align: left;
-}
-
-.data-table {
-    font-size: 11px;
-    text-align: center;
-    border: 1px solid #ced4da;
-    border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-.data-table thead {
-    background-color: #e9ecef;
-    color: #495057;
-    font-weight: 700;
-}
-
-.data-table th, .data-table td {
-    padding: 6px 8px;
-    border: 1px solid #dee2e6;
-    vertical-align: middle;
-}
-
-.data-table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.data-table .zone-header {
-    font-size: 12px;
-}
-
-.data-table .zone-header span {
-    font-weight: normal;
-    color: #6c757d;
-    margin-left: 4px;
-}
-
-.data-table .sub-header {
-    background-color: #f8f9fa;
-    font-weight: normal;
-    font-size: 11px;
-}
-
-.summary-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    font-size: 12px;
-    line-height: 1.8;
-}
-
-.summary-box > div {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.summary-box span:nth-child(odd) {
-    min-width: 200px;
-    display: inline-block;
-}
-
-.summary-box b {
-    margin-top: 5px;
-}
-
-.table-specific-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: #495057;
-    margin-top: 20px;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px dotted #adb5bd;
-}
-
-.table-specific-title::before {
-    content: '▶';
-    margin-right: 8px;
-    color: #457b9d;
-    font-size: 0.9em;
-}
-
-.topo-image-container {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
-    width: 100%;
-}
-
-.topo-image-item {
-    flex: 1;
-    max-width: 50%;
-    text-align: center;
-}
-
-.topo-image-item img {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-}
-
-.topo-image-caption {
-    font-size: 11px;
-    color: #6c757d;
-    margin-top: 8px;
-    font-weight: 700;
-}
-
-.report-actions-floating {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1001;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(5px);
-}
-
-.report-action-btn {
-    background: #e9ecef;
-    border: 1px solid #dee2e6;
-    cursor: pointer;
-    padding: 8px;
-    width: 40px;
-    height: 40px;
-    color: #495057;
-    transition: all 0.2s ease;
-    border-radius: 8px;
-}
-
-.report-action-btn:hover {
-    color: #fff;
-    background-color: #457b9d;
-    border-color: #457b9d;
-}
-
-.report-action-btn svg {
-    width: 100%;
-    height: 100%;
-}
-
-.building-image-container {
-    margin-top: 25px;
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.building-image-container img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-.report-schematic-image {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-    page-break-inside: avoid;
-}
-
-.image-caption-small {
-    font-size: 10px;
-    color: #6c757d;
-    margin-top: 5px;
-    font-weight: normal;
-}
-
-.report-schematic-image img {
-    max-width: 100%;
-    height: auto;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-}
-
-/* 專為第六章 C&C 示意圖設計的容器 */
-.cc-schematic-image {
-    margin-top: 15px;
-    margin-bottom: 15px;
-    text-align: center;
-    page-break-inside: avoid;
-}
-
-/* 讓 C&C 示意圖縮小 */
-.cc-schematic-image img {
-    max-width: 50%; /* 核心修改：將最大寬度設為 25% */
-    height: auto;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-}
-
-
-
-
-.calculation-detail-table th {
-    font-weight: normal;
-    width: 35%; /* 讓參數名稱欄位寬一點 */
-}
-
-.calculation-detail-table td {
-    text-align: right; /* 讓數值靠右對齊 */
-    font-family: monospace; /* 使用等寬字體讓數字更好對齊 */
-    font-size: 1.1em;
-}
-
-.calculation-detail-table .final-result {
-    font-weight: bold;
-    color: #e63946; /* 使用醒目的紅色 */
-    background-color: #f8f9fa;
-}
-
-.summary-box p {
-    margin-bottom: 10px;
-}
-
-.calculation-detail-table th {
-    font-weight: normal;
-    width: 35%; /* 讓參數名稱欄位寬一點 */
-}
-
-.calculation-detail-table td {
-    text-align: right; /* 讓數值靠右對齊 */
-    font-family: monospace; /* 使用等寬字體讓數字更好對齊 */
-    font-size: 1.1em;
-}
-
-.calculation-detail-table .final-result {
-    font-weight: bold;
-    color: #e63946; /* 使用醒目的紅色 */
-    background-color: #f8f9fa;
-}
-
-.summary-box p {
-    margin-bottom: 10px;
-}
-
-.math-formula {
-    text-align: center;
-    padding: 10px 0;
-    margin: 5px 0;
-}
-
-
+/* 列印模式 */
 @media print {
     body.report-body-page {
         background-color: white;
         padding: 0;
-        margin: 0;
     }
 
     .report-page {
-        width: auto;
-        height: auto;
-        min-height: 0;
         margin: 0;
         box-shadow: none;
-        padding: 0;
+        border: none;
         page-break-after: always;
+        break-after: page;
     }
 
     .report-page:last-child {
         page-break-after: auto;
-    }
-
-    #first-page-container .report-title {
-        text-align: left;
-        font-size: 18pt;
-        color: #1d3557;
-        margin: 0 0 15px 0;
-        padding: 0;
-        border-bottom: none;
-    }
-
-    #first-page-container .chapter-title {
-        margin-top: 12px;
-        margin-bottom: 8px;
-        padding-bottom: 4px;
-    }
-
-    #first-page-container .chapter-title:not(:first-of-type) {
-        margin-top: 12px;
-    }
-
-    #first-page-container ol {
-        line-height: 2;
-        margin-bottom: 0;
-    }
-
-
-
-    #first-page-container .sub-table th,
-    #first-page-container .sub-table td {
-        padding: 2px 4px;
-    }
-
-    #first-page-container .topo-image-container {
-        margin-top: 10px;
-        page-break-inside: avoid;
-    }
-
-    .print-page-break {
-        page-break-before: always !important;
-    }
-
-    .data-table {
-        page-break-inside: auto;
-    }
-
-    .sub-chapter-title, .summary-box {
-        page-break-inside: avoid !important;
-    }
-
-    .data-table thead {
-        display: table-header-group;
-    }
-
-    /* ** 核心修改: 新增一個 class 來包裹標題和摘要，並使其不可分割 ** */
-    .report-block-header {
-        /*page-break-inside: avoid;*/
-    }
-
-    .report-content-block {
-        page-break-inside: avoid !important;
+        break-after: auto;
     }
 
     .report-actions-floating {
         display: none !important;
     }
-
-    .math-formula {
-        font-size: 85%;
-    }
-
-    .math-formula mjx-container[jax="SVG"] * {
-        font-synthesis: none !important;
-        font-weight: normal !important;
-    }
 }
-/* 確保 param-table 在合併後依然有固定佈局 */
+
+/* ====================================================== */
+/* ==== 3. 標題設計 (Typography) ========================= */
+/* ====================================================== */
+
+/* 報告總標題 */
+.report-title {
+    color: var(--color-brand-dark);
+    font-size: 24px;
+    font-weight: 900; /* 特粗 */
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--color-brand-dark); /* 加粗底線 */
+    letter-spacing: 1px;
+}
+
+/* 章節標題 (H2) - 左側飾條風格 */
+.chapter-title {
+    font-size: 16px;
+    color: var(--color-brand-dark);
+    font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-left: 12px;
+    border-left: 5px solid var(--color-accent); /* 左側藍色飾條 */
+    background: linear-gradient(to right, #f8f9fa, transparent); /* 淡淡的漸層背景 */
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.report-page > .chapter-title:first-child {
+    margin-top: 0;
+}
+
+/* 子標題 (H3) */
+.sub-chapter-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-brand-main);
+    margin-top: 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+.sub-chapter-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* 表格專用小標題 */
+.table-specific-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    margin: 15px 0 5px 0;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 2px;
+}
+
+/* ====================================================== */
+/* ==== 4. 現代化表格 (Modern Tables) ===================== */
+/* ====================================================== */
+
+.param-table, .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 11px; /* 保持精簡字體 */
+    border-top: 2px solid var(--color-brand-main); /* 頂部強調線 */
+}
+
+/* 表頭設計 */
+.param-table th, .data-table thead th {
+    background-color: var(--color-table-stripe);
+    color: var(--color-brand-dark);
+    font-weight: 700;
+    padding: 6px 8px;
+    text-align: center;
+    border-bottom: 2px solid #dcdcdc; /* 表頭底部分隔線 */
+    border-right: 1px solid white; /* 欄位間的白色分隔 */
+}
+
+.param-table th:last-child, .data-table thead th:last-child {
+    border-right: none;
+}
+
+/* 參數表的左側標題欄 */
+.param-table th {
+    width: 30%;
+    text-align: left;
+    padding-left: 12px;
+    background-color: #f1f3f5; /* 稍深的灰 */
+}
+
+/* 內容儲存格 */
+.param-table td, .data-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--color-border); /* 僅保留水平線 */
+    vertical-align: middle;
+    color: #444;
+}
+
+.data-table td {
+    text-align: center;
+}
+
+.param-table td {
+    text-align: left;
+    padding-left: 12px;
+}
+
+/* 移除內部垂直線，讓畫面更乾淨 (Modern Look) */
+.data-table td, .param-table td {
+    border-right: none;
+    border-left: none;
+}
+
+/* 斑馬紋效果 (提升閱讀性) */
+.data-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.015);
+}
+
+/* 重點數值 */
+.final-result, .data-table td strong {
+    color: var(--color-alert);
+    font-weight: 700;
+}
+
+/* 摘要框 (Summary Box) - 卡片式設計 */
+.summary-box {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid var(--color-brand-main); /* 左側強調 */
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 11px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ====================================================== */
+/* ==== 5. 圖片與公式 ==================================== */
+/* ====================================================== */
+
+.building-image-container, .report-schematic-image {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #eee; /* 圖片外框 */
+    border-radius: 4px;
+}
+
+.building-image-container img, .report-schematic-image img {
+    max-width: 100%;
+    height: auto;
+    max-height: 70mm; /* 嚴格控制高度 */
+    object-fit: contain;
+}
+
+/* 數學公式 */
+.math-formula {
+    font-family: 'Times New Roman', serif;
+    font-size: 13px;
+    background-color: #fdfdfd;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+/* ====================================================== */
+/* ==== 6. 介面按鈕 (不列印) ============================= */
+/* ====================================================== */
+.report-actions-floating {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.report-action-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-brand-dark);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.report-action-btn:hover {
+    background: var(--color-accent);
+    transform: scale(1.1);
+}
+
+.report-action-btn svg {
+    width: 24px;
+    height: 24px;
+}

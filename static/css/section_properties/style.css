@@ -1,0 +1,306 @@
+/* static/section_properties/css/style.css */
+
+/* ... (保留原本的 :root 設定) ... */
+:root {
+    /* 沿用原本設定，這裡微調深色以符合截圖 */
+    --font-primary: 'Noto Sans JP', 'Microsoft JhengHei', sans-serif;
+    --color-brand-dark: #103154; /* 截圖中的深藏青色 */
+    --color-brand-main: #34495e;
+    --color-accent: #2980b9; /* 連結藍色 */
+    --color-bg-screen: #fbfbfb; /* 背景稍微白一點 */
+    --color-bg-breadcrumb: #eff2f5; /* 麵包屑的淺灰背景 */
+    --color-text-secondary: #7f8c8d;
+    --color-white: #ffffff;
+    --color-border: #e9ecef;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--color-bg-screen);
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+}
+
+/* --- 1. 麵包屑導航 (Breadcrumb) - 新增 --- */
+.breadcrumb-nav {
+    background-color: var(--color-bg-breadcrumb);
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-nav a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.breadcrumb-nav a:hover {
+    color: var(--color-brand-dark);
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    margin: 0 10px;
+    color: #bdc3c7;
+    font-size: 0.8rem;
+}
+
+.breadcrumb-current {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+/* --- 2. 標題區域 (Header) - 修改 --- */
+.main-title-container {
+    text-align: left; /* 改為靠左對齊，符合截圖 */
+    margin-bottom: 30px;
+    border-bottom: 1px solid #dee2e6; /* 底部灰色分隔線 */
+    padding-bottom: 15px;
+}
+
+.main-title {
+    color: var(--color-brand-dark);
+    font-size: 2rem; /* 32px */
+    font-weight: 800; /* 特粗體 */
+    margin: 0;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.sub-title {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    margin-top: 8px;
+    font-weight: 400;
+    font-family: var(--font-primary);
+}
+
+/* ... (以下的 Grid, Input, Table 等樣式保持原本的不變) ... */
+/* 為了確保完整性，請確保以下樣式存在 */
+.main-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .main-layout-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .section-result {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-result {
+        grid-column: span 1;
+    }
+}
+
+.section-container {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    height: 100%; /* 撐滿 Grid 的高度 */
+    display: flex; /* 啟用 Flexbox */
+    flex-direction: column; /* 垂直排列內容 */
+}
+
+.section-title {
+    font-size: 1.1rem;
+    color: var(--color-brand-dark);
+    font-weight: 700;
+    border-left: 5px solid var(--color-accent);
+    padding-left: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Input styles... */
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.input-group label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-brand-main);
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.unit {
+    font-size: 0.8rem;
+    color: #888;
+    margin-left: 5px;
+}
+
+/* Canvas wrapper */
+.canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fafafa;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    min-height: 300px;
+    flex: 1; /* 自動伸展填滿剩餘垂直空間 */
+}
+
+.section-result {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Result Table */
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.result-table th, .result-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.result-table th {
+    text-align: left;
+    background-color: #f8f9fa;
+    color: var(--color-brand-main);
+
+    /* 修改這裡：將原本的 50% 改為 35% (甚至 30%) */
+    width: 35%;
+
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.result-table td {
+    text-align: right;
+    font-family: monospace;
+    font-size: 1rem;
+    color: var(--color-brand-dark);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border);
+
+    /* 新增這裡：強制內容不換行，讓單位永遠跟在數字後面 */
+    white-space: nowrap;
+}
+
+/* Buttons */
+.action-buttons-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.calculate-button {
+    background-color: var(--color-brand-dark);
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+    transition: all 0.3s ease;
+}
+
+.calculate-button:hover {
+    background-color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+/* Radio Button 樣式 */
+.unit-toggle-container {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    background-color: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.radio-label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-brand-main);
+    font-weight: 500;
+}
+
+.radio-label input {
+    accent-color: var(--color-accent); /* 設定選取顏色為藍色 */
+}
+
+/* 單位文字樣式 */
+.unit-text {
+    font-size: 0.85rem;
+    color: #95a5a6;
+    margin-left: 5px;
+    font-weight: normal;
+    display: inline-block;
+    width: 35px; /* 固定寬度讓數字對齊更整齊 */
+    text-align: left;
+}
+
+.section-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
+}
+

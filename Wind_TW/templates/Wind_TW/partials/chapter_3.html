@@ -1,0 +1,89 @@
+{% load static %}
+<div class="chapter-block">
+    <h2 class="chapter-title">第三章 建築物基本參數</h2>
+
+    <!-- 3.1 建築幾何與形式 -->
+    <h3 class="sub-chapter-title">3.1 建築幾何與形式</h3>
+    <table class="info-table">
+        <tbody>
+            <tr>
+                <th>建築物狀態</th>
+                <td>{{ basic_params.enclosure_status|default:"-" }}</td>
+                <th>屋頂型態</th>
+                <td>{{ geometry_params.roof_shape_zh|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>X方向尺寸 B<sub>x</sub></th>
+                <td>{{ geometry_params.dim_x }} m</td>
+                <th>Y方向尺寸 B<sub>y</sub></th>
+                <td>{{ geometry_params.dim_y }} m</td>
+            </tr>
+            <tr>
+                <th>屋簷高度 h<sub>eave</sub></th>
+                <td>{{ geometry_params.eave_height }} m</td>
+                <th>屋脊高度 h<sub>ridge</sub></th>
+                <td>{{ geometry_params.ridge_height }} m</td>
+            </tr>
+            <tr>
+                <th>平均高度 h</th>
+                <td><strong>{{ geometry_params.calculated_h|floatformat:2 }} m</strong></td>
+                <th>屋脊方向</th>
+                <td>{{ geometry_params.ridge_direction|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>屋頂夾角 θ</th>
+                <td colspan="3">
+                    {% if geometry_params.roof_shape_en == 'hip' %}
+                        X向 θ<sub>x</sub>={{ geometry_params.theta_x|floatformat:2 }}° /
+                        Y向 θ<sub>y</sub>={{ geometry_params.theta_y|floatformat:2 }}°
+                    {% else %}
+                        {{ geometry_params.theta|floatformat:2 }}°
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 3.2 設計參數與動力特性 -->
+    <h3 class="sub-chapter-title">3.2 設計參數與動力特性</h3>
+    <table class="info-table">
+        <tbody>
+            <tr>
+                <th>用途係數 I</th>
+                <td>{{ basic_params.importance_factor }}</td>
+                <th>阻尼比 β</th>
+                <td>{{ basic_params.damping_ratio }}</td>
+            </tr>
+            <tr>
+                <th>自然頻率 (Hz)</th>
+                <td colspan="3">
+                    f<sub>nx</sub>={{ basic_params.fn_x }} |
+                    f<sub>ny</sub>={{ basic_params.fn_y }} |
+                    f<sub>t</sub>={{ basic_params.ft }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 3.3 示意圖集 (SVG 容器) -->
+    <h3 class="sub-chapter-title">3.3 參數示意圖</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 10px;">
+
+        <!-- SVG 繪圖容器 -->
+        <div style="flex: 1; min-width: 300px; text-align: center; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; background: #fff;">
+            <!-- 我們使用 canvas 或 svg 標籤，這裡給它一個 ID 讓 JS 控制 -->
+            <div id="building-schematic-svg" style="width: 100%; height: 250px;"></div>
+            <div style="font-size: 9pt; color: #666; margin-top: 5px; font-weight: bold;">建築物幾何參數示意圖 (動態生成)</div>
+        </div>
+
+        <!-- 地形示意圖 (保持圖片) -->
+        {% if topo_images %}
+            {% for image in topo_images %}
+                <div style="flex: 1; min-width: 250px; text-align: center; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; background: #fff;">
+                    <img src="{% static image.path %}" alt="{{ image.caption }}" style="max-height: 250px; max-width: 100%; object-fit: contain;">
+                    <div style="font-size: 9pt; color: #666; margin-top: 5px; font-weight: bold;">{{ image.caption }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>

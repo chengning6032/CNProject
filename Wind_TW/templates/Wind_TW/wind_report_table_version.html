@@ -399,11 +399,22 @@
     {% endif %}
 
     <!-- ====================================================== -->
-    <!-- ====            附錄 (新頁面)                       ==== -->
+    <!-- ====       附錄A：陣風反應因子詳細計算 (新頁面)       ==== -->
     <!-- ====================================================== -->
     {% if appendix_data.x_wind_g_details or appendix_data.y_wind_g_details %}
         <div class="report-page">
-            {% include "Wind_TW/appendix_g_factor.html" with geo=geometry_params %}
+            <!-- 傳入 geo 參數是為了取得 h, B, L 等顯示用 -->
+            {% include "Wind_TW/partials/appendix_g_factor.html" with geo=geometry_params %}
         </div>
     {% endif %}
+
+    <!-- ====================================================== -->
+    <!-- ====       附錄B：補充資料 (空白頁)                  ==== -->
+    <!-- ====================================================== -->
+    <div class="report-page">
+        <h2 class="chapter-title">附錄B 補充資料</h2>
+        <div style="width: 100%; height: 80%; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ccc; margin-top: 20px;">
+            (此頁留白，可供黏貼其他結構計算數據或圖說)
+        </div>
+    </div>
 {% endblock %}
