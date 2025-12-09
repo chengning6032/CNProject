@@ -29,16 +29,21 @@ ALLOWED_HOSTS = [
     'cnproject-s1v9.onrender.com',
     'chinzhu.com.tw',
     'www.chinzhu.com.tw',
-    'impliably-unascertainable-shaunta.ngrok-free.dev',  # <--- 修正：拿掉 https://
+    # 'impliably-unascertainable-shaunta.ngrok-free.dev',
 ]
 # 如果是在本地開發模式 (DEBUG=True)，就把本地網址加進去
 if DEBUG:
     # 這裡也要修正：拿掉 https://
     ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost', 'impliably-unascertainable-shaunta.ngrok-free.dev'])
 
-# 2. CSRF_TRUSTED_ORIGINS: 這裡 "必須" 保留 https:// (您原本寫對了)
+# 2. CSRF_TRUSTED_ORIGINS
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://impliably-unascertainable-shaunta.ngrok-free.dev',
+# ]
 CSRF_TRUSTED_ORIGINS = [
-    'https://impliably-unascertainable-shaunta.ngrok-free.dev',
+    'https://cnproject-s1v9.onrender.com',
+    'https://www.chinzhu.com.tw',
+    'https://chinzhu.com.tw',
 ]
 
 INSTALLED_APPS = [
@@ -196,5 +201,5 @@ ECPAY_API_URL = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
 # # 【核心修正】串接金鑰 HashIV
 # ECPAY_HASH_IV = 'v77hoKGq4kWxNNIS'
 # # 您的網站公開網址。在本地開發時，【必須】使用 ngrok 提供的網址。
-# SITE_URL = os.environ.get('SITE_URL')
-SITE_URL = os.environ.get('SITE_URL', "https://impliably-unascertainable-shaunta.ngrok-free.dev")
+SITE_URL = os.environ.get('SITE_URL')
+# SITE_URL = os.environ.get('SITE_URL', "https://impliably-unascertainable-shaunta.ngrok-free.dev")

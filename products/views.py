@@ -105,35 +105,46 @@ def ecpay_checkout_view(request):
         )
 
         # 準備要傳送給綠界的基礎參數字典
-        current_ngrok_url = "https://impliably-unascertainable-shaunta.ngrok-free.dev"
-        safe_redirect_url = f"{current_ngrok_url}/OLi/accounts/profile/"
+        # current_ngrok_url = "https://impliably-unascertainable-shaunta.ngrok-free.dev"
+        # safe_redirect_url = f"{current_ngrok_url}/OLi/accounts/profile/"
+        # 確保 SITE_URL 後面沒有斜線 (防呆)
+        site_url = settings.SITE_URL.rstrip('/')
+
+        # 組合網址 (建議使用 reverse 反查 URL，這樣最穩)
+        return_url = f"{site_url}{reverse('products:ecpay_return')}"
+        # notify_url = f"{site_url}{reverse('products:ecpay_notify')}" # 這裡我們沒用到，註解
+
+        # 會員中心網址 (假設 accounts:profile 是您的 url name)
+        # 如果您的 urls.py 有設定 app_name='accounts'，請用 reverse('accounts:profile')
+        # 如果沒有，請手動確認路徑
+        client_back_url = f"{site_url}/OLi/accounts/profile/"
 
         order_params = {
-            'MerchantTradeNo': merchant_trade_no,  # 現在這裡一定找得到變數了
+            'MerchantTradeNo': merchant_trade_no,
             'MerchantTradeDate': datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
             'PaymentType': 'aio',
             'TotalAmount': total_amount,
             'TradeDesc': "OLI 工程設計模組訂閱",
             'ItemName': '#'.join(item_names),
 
-            # 1. 這是唯一的返回路徑
-            'ReturnURL': f"{current_ngrok_url}/OLi/products/ecpay-return/",
+            # 1. 前景返回
+            'ReturnURL': return_url,
 
-            # 2. 【關鍵修改】把這行註解掉！不要傳給綠界！
-            # 'OrderResultURL': f"{current_ngrok_url}/OLi/products/ecpay-notify/",
+            # 2. 背景通知 (維持註解)
+            # 'OrderResultURL': notify_url,
 
-            # 3. 輔助返回
-            'ClientBackURL': safe_redirect_url,  # 建議直接回會員中心
+            # 3. 返回商店按鈕
+            'ClientBackURL': client_back_url,
 
             'ChoosePayment': 'Credit',
             'EncryptType': 1,
         }
 
         # debug print
-        print("\n" + "=" * 30)
-        print("正在建立綠界訂單...")
-        print(f"前景要去 (ReturnURL):   {order_params['ReturnURL']}")
-        print("=" * 30 + "\n")
+        # print("\n" + "=" * 30)
+        # print("正在建立綠界訂單...")
+        # print(f"前景要去 (ReturnURL):   {order_params['ReturnURL']}")
+        # print("=" * 30 + "\n")
 
         # 初始化 SDK
         sdk = ECPayPaymentSdk(
