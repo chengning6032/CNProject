@@ -1,0 +1,114 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CNProject 工程結構網{% endblock %}</title>
+
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- 自定義 CSS 區塊 -->
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        footer {
+            margin-top: auto;
+            background-color: #f8f9fa;
+            padding: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 導覽列 Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'CZ_homepage' %}">CNProject</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- 根據你的 urls.py 連結 -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CZ_about' %}">關於我們</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CZ_services' %}">服務項目</a>
+                </li>
+
+                <!-- 工程計算工具下拉選單 -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        結構計算工具
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <!-- 這裡假設其他 APP 的 url name，若尚未設定可先註解掉 -->
+                        <li><a class="dropdown-item" href="/OLi/steel/">鋼結構設計</a></li>
+                        <li><a class="dropdown-item" href="/OLi/eqTW/">地震力分析</a></li>
+                        <li><a class="dropdown-item" href="/OLi/windTW/">風力分析</a></li>
+                        <li><a class="dropdown-item" href="/OLi/section/">斷面性質</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <!-- 這是我們正在做的擋土牆 -->
+                        <li><a class="dropdown-item"
+                               href="{% url 'retaining_wall_cantilever:input_view' %}">懸臂式擋土牆</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CZ_contact' %}">聯絡我們</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要內容區塊 -->
+<main>
+    <!-- 這裡會顯示 Django 訊息 (Messages) 如錯誤或成功提示 -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}
+        <!-- 各個頁面的內容會填入這裡 -->
+    {% endblock %}
+</main>
+
+<!-- 頁尾 Footer -->
+<footer class="text-center text-muted">
+    <div class="container">
+        <small>&copy; 2025 Chinzhu Engineering. All Rights Reserved.</small>
+    </div>
+</footer>
+
+<!-- 引入 Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- 自定義 JS 區塊 -->
+{% block extra_js %}{% endblock %}
+</body>
+</html>

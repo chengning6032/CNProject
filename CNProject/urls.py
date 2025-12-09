@@ -17,6 +17,8 @@ urlpatterns = [
     path('OLi/eqTW/', include(('EqStaticAnalysis_TW.urls', 'EqStaticAnalysis_TW'), namespace='EqStaticAnalysis_TW')),
     path('OLi/windTW/', include('Wind_TW.urls')),
     path('OLi/section/', include('section_properties.urls')),
+    path('OLi/retaining-wall/', include(('retaining_wall_cantilever.urls', 'retaining_wall_cantilever'),
+                                        namespace='retaining_wall_cantilever')),
     path('OLi/accounts/', include('accounts.urls')),
     path('OLi/products/', include(('products.urls', 'products'), namespace='products')),
 
