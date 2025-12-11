@@ -92,9 +92,12 @@
     .features-intro h2 { font-size: 2.8rem; line-height: 1.3; color: var(--primary-dark); margin-bottom: 25px; }
     .features-intro p { font-size: 1.15rem; color: var(--text-light); line-height: 1.8; margin-bottom: 40px; }
 
-    .features-list { display: flex; flex-direction: column; gap: 20px; }
+    .features-list { display: flex; flex-direction: column; gap: 25px; } /* 增加項目間距 */
+
     .feature-list-item {
-    display: flex; align-items: flex-start; gap: 25px; padding: 30px;
+    display: flex; align-items: center; /* 改為垂直置中對齊，讓大圖標更好看 */
+    gap: 30px;
+    padding: 30px;
     background: #fff; border-radius: var(--radius-lg);
     border: 1px solid #f1f5f9;
     transition: all 0.3s ease;
@@ -111,16 +114,32 @@
     }
     .feature-list-item:hover::before { opacity: 1; }
 
+    /* 【核心修正】圖標容器放大 */
     .icon-box {
-    flex-shrink: 0; width: 60px; height: 60px;
+    flex-shrink: 0;
+    width: 80px;  /* 加大寬度 */
+    height: 80px; /* 加大高度 */
     background: linear-gradient(135deg, #eaf2f6 0%, #ffffff 100%);
-    border-radius: 12px; display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 16px; /* 圓角稍微調整 */
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* 增加陰影 */
     }
-    .icon-box img { width: 32px; height: 32px; }
 
-    .feature-content h3 { font-size: 1.3rem; font-weight: 700; color: var(--primary-main); margin-bottom: 8px; }
-    .feature-content p { font-size: 1rem; color: var(--text-light); margin: 0; }
+    /* 【核心修正】圖標本身放大 */
+    .feature-list-item .icon-box i {
+    font-size: 3rem; /* 加大圖標字體大小 */
+    color: var(--primary-main);
+    transition: all 0.3s ease;
+    line-height: 1;
+    }
+
+    .feature-list-item:hover .icon-box i {
+    color: var(--accent-color);
+    transform: scale(1.15);
+    }
+
+    .feature-content h3 { font-size: 1.4rem; font-weight: 700; color: var(--primary-main); margin-bottom: 8px; }
+    .feature-content p { font-size: 1.05rem; color: var(--text-light); margin: 0; line-height: 1.6; }
 
     /* =========================================
     4. 服務項目 (Services) - 雜誌風格卡片
@@ -225,20 +244,32 @@
     7. 響應式調整
     ========================================= */
     @media (max-width: 992px) {
-    .section { padding: 80px 0; }
+    .section { padding: 60px 0; } /* 稍微縮小垂直間距 */
     .hero-content h1 { font-size: 3rem; }
 
-    .features-container, .oli-container { grid-template-columns: 1fr; gap: 50px; text-align: center; }
+    .features-container, .oli-container {
+    grid-template-columns: 1fr;
+    /* 【建議調整】將間距縮小，避免在小手機上內容太寬 */
+    gap: 30px;
+    text-align: center;
+    }
     .features-list { align-items: stretch; }
-    .feature-list-item { flex-direction: column; align-items: center; text-align: center; }
-    .feature-list-item:hover { transform: translateY(-5px); }
+
+    /* 手機版移除 hover 位移 */
+    .feature-list-item:hover { transform: none; }
+
+    .feature-list-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    }
     .feature-list-item::before { width: 100%; height: 4px; top: auto; bottom: 0; }
 
     .services-grid { grid-template-columns: repeat(2, 1fr); }
 
     .oli-content h2 { font-size: 2.5rem; }
     .oli-features { text-align: left; max-width: 400px; margin: 0 auto 40px auto; }
-    .oli-container { display: flex; flex-direction: column-reverse; } /* 手機版影片在上方 */
+    .oli-container { display: flex; flex-direction: column-reverse; }
     }
 
     @media (max-width: 768px) {
@@ -248,7 +279,15 @@
 
     .services-grid { grid-template-columns: 1fr; }
     .cta-content h2 { font-size: 2.2rem; }
+
+    /* 【核心新增】Hero 文字斷行控制 */
+    .desktop-comma { display: none; } /* 手機版隱藏逗號 */
+    .mobile-br { display: block; }    /* 手機版顯示換行 */
     }
+
+    /* 【核心新增】桌機版預設樣式 (寫在 media query 外面或上方) */
+    .mobile-br { display: none; }      /* 桌機版隱藏換行 */
+    .desktop-comma { display: inline; } /* 桌機版顯示逗號 */
 {% endblock %}
 
 {% block content %}
@@ -256,10 +295,13 @@
     <header class="hero">
         <div class="hero-content fade-in-up">
             <span class="hero-label">Engineering Excellence</span>
-            <h1>勤於專業，築就未來</h1>
+            <!-- 【核心修正】斷行控制 -->
+            <h1>
+                勤於專業<span class="desktop-comma">，</span>
+                <br class="mobile-br">
+                築就未來
+            </h1>
             <p>您的信賴，是我們最堅實的基石。<br>致力於提供最高品質的結構工程服務，將您的願景化為現實。</p>
-            <!-- 若有需要可以加一個按鈕 -->
-            <!-- <a href="#services" class="btn-glow" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);">了解更多</a> -->
         </div>
         <div class="scroll-down"><i class="ri-arrow-down-s-line"></i></div>
     </header>
@@ -278,25 +320,37 @@
                 </div>
 
                 <div class="features-list">
+                    <!-- 1. 效率展現 -->
                     <div class="feature-list-item fade-in-up" style="transition-delay: 0.1s;">
-                        <div class="icon-box"><img src="{% static 'images/icon-efficiency.png' %}" alt="效率"></div>
+                        <!-- 【核心修正】使用 icon-box 包裹 i 標籤 -->
+                        <div class="icon-box">
+                            <i class="ri-timer-flash-line"></i>
+                        </div>
                         <div class="feature-content">
                             <h3>效率展現</h3>
-                            <p>透過嚴謹的流程控管與精準排程，確保專案如期交付。</p>
+                            <p>透過嚴謹的流程控管與精準排程，我們確保專案如期交付，將您的寶貴時間轉化為實際資產。</p>
                         </div>
                     </div>
+
+                    <!-- 2. 精細品質 -->
                     <div class="feature-list-item fade-in-up" style="transition-delay: 0.2s;">
-                        <div class="icon-box"><img src="{% static 'images/icon-quality.png' %}" alt="品質"></div>
+                        <div class="icon-box">
+                            <i class="ri-shield-check-line"></i>
+                        </div>
                         <div class="feature-content">
                             <h3>精細品質</h3>
-                            <p>從材料到工法，以近乎苛求的態度把關每一個細節。</p>
+                            <p>從材料到工法，我們以近乎苛求的態度把關，確保交付的成果擁有無可挑剔的完美細節。</p>
                         </div>
                     </div>
+
+                    <!-- 3. 友善溝通 -->
                     <div class="feature-list-item fade-in-up" style="transition-delay: 0.3s;">
-                        <div class="icon-box"><img src="{% static 'images/icon-communication.png' %}" alt="溝通"></div>
+                        <div class="icon-box">
+                            <i class="ri-chat-smile-3-line"></i>
+                        </div>
                         <div class="feature-content">
                             <h3>友善溝通</h3>
-                            <p>堅持透明、雙向的溝通模式，確保每個階段都符合期望。</p>
+                            <p>我們視您為忠實夥伴，堅持透明、雙向的溝通模式，確保專案的每個階段都與您的期望同步。</p>
                         </div>
                     </div>
                 </div>
@@ -321,9 +375,8 @@
                     </div>
                     <div class="service-content">
                         <h3>鋼結構設計</h3>
-                        <p>依據國內最新規範進行結構分析、設計及繪圖，專精於廠房、物流中心等大型鋼構建築。</p>
-                        <a href="{% url 'CZ_services' %}" class="service-link">了解更多 <i
-                                class="ri-arrow-right-line"></i></a>
+                        <p>依據國內最新規範進行結構分析、設計及繪圖，專精於一般建築、廠房、工業設施等鋼構建築。</p>
+                        <a href="{% url 'CZ_steel' %}" class="service-link">了解更多 <i class="ri-arrow-right-line"></i></a>
                     </div>
                 </div>
 
@@ -336,7 +389,7 @@
                     <div class="service-content">
                         <h3>建築結構安全鑑定</h3>
                         <p>為各類型建築提供專業的安全評估鑑定，並可透過土木或結構技師公會出具正式鑑定報告書。</p>
-                        <a href="{% url 'CZ_services' %}" class="service-link">了解更多 <i
+                        <a href="{% url 'CZ_assessment' %}" class="service-link">了解更多 <i
                                 class="ri-arrow-right-line"></i></a>
                     </div>
                 </div>
@@ -350,6 +403,19 @@
                     <div class="service-content">
                         <h3>農田水利設施兼作搭排</h3>
                         <p>專業代辦向各地區農田水利管理處的兼作(加蓋)或搭排(排水)申請，並配合地政士辦理土地事宜。</p>
+                        <a href="{% url 'CZ_water' %}" class="service-link">了解更多 <i class="ri-arrow-right-line"></i></a>
+                    </div>
+                </div>
+                <!-- 卡片 4 -->
+                <div class="service-card fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="service-img-wrap">
+                        <img src="{% static 'images/eq_ESTIMATE.png' %}" alt="耐震評估">
+                        <span class="service-tag">建物評估</span>
+                    </div>
+                    <div class="service-content">
+                        <h3>建築物耐震評估</h3>
+                        <p>
+                            您的建築物安全嗎？我們提供專業的耐震能力評估，包括初步、詳細評估，以及必要的補強建議與設計。透過國家規範，協助您了解並提升建築物抗震能力，確保結構安全，為您的資產和人員提供保障。</p>
                         <a href="{% url 'CZ_services' %}" class="service-link">了解更多 <i
                                 class="ri-arrow-right-line"></i></a>
                     </div>

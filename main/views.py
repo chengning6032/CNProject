@@ -65,6 +65,18 @@ def CZ_contact_success(request):
     """
     return render(request, 'CZ_contact_success.html')
 
+def CZ_assessment(request):
+    """建築結構安全鑑定說明頁面"""
+    return render(request, 'CZ_Assessment.html')
+
+def CZ_water_conservancy(request):
+    """農田水利設施兼作與搭排說明頁面"""
+    return render(request, 'CZ_Water.html')
+
+def CZ_steel_design(request):
+    """鋼結構設計說明頁面"""
+    return render(request, 'CZ_Steel.html')
+
 
 
 

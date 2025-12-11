@@ -8,6 +8,9 @@ urlpatterns = [
     path('', views.CZ_homepage, name='CZ_homepage'),
     path('about/', views.CZ_about, name='CZ_about'),
     path('services/', views.CZ_services, name='CZ_services'),
+    path('services/assessment/', views.CZ_assessment, name='CZ_assessment'),
+    path('services/water-conservancy/', views.CZ_water_conservancy, name='CZ_water'),
+    path('services/steel-design/', views.CZ_steel_design, name='CZ_steel'),
     path('contact/', views.CZ_contact, name='CZ_contact'),  # 新增這一行
     path('contact/success/', views.CZ_contact_success, name='CZ_contact_success'),  # 【核心】新增這一行
 
