@@ -1,0 +1,121 @@
+<div class="a4-page">
+    <div class="report-header">
+        <div class="report-title">3. 設計參數詳細計算</div>
+        <div class="report-subtitle">Calculation of Design Parameters</div>
+    </div>
+
+    <div class="content math-content">
+        <!-- 3.1 幾何角度 -->
+        <h5 class="mt-4 border-bottom pb-2">3.1 幾何角度參數 (Geometric Angles)</h5>
+        <div class="row">
+            <div class="col-6">
+                <p><strong>(1) 牆背傾角 ($\theta$)</strong></p>
+                <div style="overflow-x: auto;">
+                    $$
+                    \begin{aligned}
+                    \theta &= \tan^{-1} \left( \dfrac{w_{back}}{H_{stem}} \right) \\
+                    &= \tan^{-1} \left( \dfrac{ {{ input_data.w_stem_back }} }{ {{ input_data.H_stem }} } \right) \\
+                    &= \mathbf{ {{ theta_deg }} ^\circ }
+                    \end{aligned}
+                    $$
+                </div>
+            </div>
+            <div class="col-6">
+                <p><strong>(2) 地震合成角 ($\psi$)</strong></p>
+                <div style="overflow-x: auto;">
+                    $$
+                    \begin{aligned}
+                    \psi &= \tan^{-1} \left( \dfrac{k_h}{1-k_v} \right) \\
+                    &= \tan^{-1} \left( \dfrac{ {{ input_data.kh }} }{1 - {{ input_data.kv }} } \right) \\
+                    &= \mathbf{ {{ psi_deg }} ^\circ }
+                    \end{aligned}
+                    $$
+                </div>
+            </div>
+        </div>
+
+        <!-- 3.2 主動係數 -->
+        <h5 class="mt-4 border-bottom pb-2">3.2 主動土壓力係數 (Active Coefficients)</h5>
+
+        <div class="mb-4">
+            <h6><strong>(1) 靜態主動土壓力係數 ($K_a$) - Coulomb</strong></h6>
+            <div class="small text-muted mb-1">
+                參數: $\phi={{ input_data.phi_soil }}^\circ, \delta={{ input_data.delta_wall }}^\circ,
+                \alpha={{ input_data.alpha_soil }}^\circ, \theta={{ theta_deg }}^\circ$
+            </div>
+            <div style="overflow-x: auto;">
+                $$
+                \begin{aligned}
+                K_a &= \dfrac{ \cos^2(\phi - \theta) }{ \cos^2\theta \cos(\theta+\delta) \left[ 1 + \sqrt{
+                \dfrac{\sin(\phi+\delta)\sin(\phi-\alpha)}{\cos(\theta+\delta)\cos(\theta-\alpha)} } \right]^2 } \\[1em]
+                &= \dfrac{ \cos^2( {{ input_data.phi_soil }} - {{ theta_deg }} ) }{ \cos^2 {{ theta_deg }}
+                \cos({{ theta_deg }}+{{ input_data.delta_wall }}) \left[ 1 + \sqrt{
+                \dfrac{\sin({{ input_data.phi_soil }}+{{ input_data.delta_wall }})\sin({{ input_data.phi_soil }}-{{ input_data.alpha_soil }})}{\cos({{ theta_deg }}+{{ input_data.delta_wall }})\cos({{ theta_deg }}-{{ input_data.alpha_soil }})}
+                } \right]^2 } \\[1em]
+                &= \mathbf{ {{ Ka }} }
+                \end{aligned}
+                $$
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h6><strong>(2) 動態主動土壓力係數 ($K_{AE}$) - Mononobe-Okabe</strong></h6>
+            <div class="small text-muted mb-1">
+                參數: $\psi={{ psi_deg }}^\circ$ (其餘同上)
+            </div>
+            <div style="overflow-x: auto;">
+                $$
+                \begin{aligned}
+                K_{AE} &= \dfrac{ \cos^2(\phi - \theta - \psi) }{ \cos\psi \cos^2\theta \cos(\delta+\theta+\psi) \left[
+                1 + \sqrt{ \dfrac{\sin(\phi+\delta)\sin(\phi-\psi-\alpha)}{\cos(\delta+\theta+\psi)\cos(\theta-\alpha)}
+                } \right]^2 } \\[1em]
+                &= \mathbf{ {{ Kae }} }
+                \end{aligned}
+                $$
+            </div>
+        </div>
+
+        <!-- 3.3 被動係數 -->
+        <h5 class="mt-4 border-bottom pb-2">3.3 被動土壓力係數 (Passive Coefficients)</h5>
+
+        <div class="mb-4">
+            <h6><strong>(1) 靜態被動土壓力係數 ($K_p$) - Caquot-Kerisel</strong></h6>
+            <p class="small text-muted mb-1">
+                參數 (牆前): $\phi={{ input_data.phi_soil_front }}^\circ, \delta=\phi/2, \theta=0, \beta=0$
+            </p>
+            <p>
+                查表/擬合計算: $K_p = \mathbf{ {{ Kp }} }$
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <h6><strong>(2) 動態被動土壓力係數 ($K_{PE}$) - Mononobe-Okabe</strong></h6>
+            <div style="overflow-x: auto;">
+                $$
+                \begin{aligned}
+                K_{PE} &= \dfrac{ \cos^2(\phi + \theta - \psi) }{ \cos\psi \cos^2\theta \cos(\delta-\theta+\psi) \left[
+                1 - \sqrt{ \dfrac{\sin(\phi+\delta)\sin(\phi-\psi+\alpha)}{\cos(\delta-\theta+\psi)\cos(\alpha-\theta)}
+                } \right]^2 } \\[1em]
+                &= \mathbf{ {{ Kpe }} }
+                \end{aligned}
+                $$
+            </div>
+        </div>
+
+        <div class="alert alert-warning py-2 small border-warning">
+            <strong>止滑榫修正 (Base Shear Key):</strong><br>
+            由於 $M-O$ 理論在 $\delta$ 較大時會高估阻力，本程式針對止滑榫 ($\phi={{ input_data.phi_soil_base }}^\circ$)
+            採用折減係數法修正：
+            $$ K_{pe,base} = K_{p,base} \times \left( \dfrac{K_{pe,MO}}{K_{p,Coulomb}} \right) = \mathbf{ {{ Kpe_base }}
+            } $$
+        </div>
+
+    </div>
+
+    <div class="report-footer">
+        <div class="d-flex justify-content-between">
+            <span>Generated by CNProject StructTool</span>
+            <span>Page 4 / 8</span>
+        </div>
+    </div>
+</div>

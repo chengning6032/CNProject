@@ -1,0 +1,439 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}建築結構安全鑑定 - 勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    /* =========================================
+    1. 頁面專屬變數 & 基礎設定
+    ========================================= */
+    :root {
+    --safe-color: #10b981;   /* 質感綠 */
+    --danger-color: #ef4444; /* 質感紅 */
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    .section { padding: 120px 0; position: relative; }
+    .section-title-wrapper { text-align: center; margin-bottom: 70px; }
+    .section-title { font-size: 2.5rem; font-weight: 800; color: var(--primary-main); margin-bottom: 15px; position:
+    relative; display: inline-block; }
+    .section-title::after { content: ''; display: block; width: 50px; height: 4px; background: var(--accent-color);
+    margin: 15px auto 0; border-radius: 2px; }
+    .section-subtitle { font-size: 1.15rem; color: var(--text-light); max-width: 700px; margin: 0 auto; line-height:
+    1.8; }
+
+    /* 動畫類別 */
+    .fade-in-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
+
+    /* =========================================
+    2. Hero 區塊 - 沉浸式體驗
+    ========================================= */
+    .assessment-header {
+    position: relative;
+    height: 60vh;
+    min-height: 500px;
+    background-image: url("{% static 'images/safety assessment.jpg' %}");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    }
+
+    .assessment-header::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(45deg, rgba(15, 23, 42, 0.9), rgba(29, 53, 87, 0.75));
+    z-index: 1;
+    }
+
+    .header-content { position: relative; z-index: 2; max-width: 800px; padding: 0 20px; }
+
+    .header-tag {
+    display: inline-block; padding: 6px 16px;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 50px;
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(5px);
+    font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 20px;
+    color: #cbd5e1;
+    }
+
+    .header-content h1 {
+    font-size: 3.5rem; margin-bottom: 25px; font-weight: 800;
+    text-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .header-content p {
+    font-size: 1.25rem; line-height: 1.8; color: #e2e8f0; font-weight: 300;
+    }
+
+    /* =========================================
+    3. 鑑定種類卡片 - 4欄佈局
+    ========================================= */
+    .types-section { background-color: #fff; }
+
+    .types-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 兩欄 */
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    }
+
+    .type-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 50px 35px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #f1f5f9;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .type-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px;
+    background: var(--primary-light); transform: scaleX(0);
+    transform-origin: left; transition: transform 0.4s ease;
+    }
+
+    .type-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 20px 40px -10px rgba(29, 53, 87, 0.15);
+    border-color: transparent;
+    }
+
+    .type-card:hover::before { transform: scaleX(1); }
+
+    .type-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: var(--primary-main);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 30px;
+    font-size: 2.2rem;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+    }
+
+    .type-card:hover .type-icon { transform: rotate(10deg) scale(1.1); color: var(--accent-color); }
+
+    .type-card h3 { color: var(--primary-dark); margin-bottom: 10px; font-size: 1.5rem; font-weight: 700; }
+    .type-card .sub-text {
+    font-size: 0.95rem; color: var(--primary-light); margin-bottom: 20px;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block;
+    }
+    .type-card p { color: var(--text-light); line-height: 1.7; font-size: 1rem; text-align: left; }
+
+    /* =========================================
+    4. 損壞評估標準
+    ========================================= */
+    .criteria-section { background-color: var(--bg-light); }
+
+    .criteria-container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 50px;
+    }
+
+    .criteria-box {
+    background: #fff;
+    padding: 50px 40px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+    }
+
+    .criteria-box:hover { transform: translateY(-5px); }
+
+    .criteria-box .watermark-icon {
+    position: absolute; right: -20px; bottom: -20px;
+    font-size: 10rem; opacity: 0.05; pointer-events: none;
+    transition: transform 0.5s ease;
+    }
+    .criteria-box:hover .watermark-icon { transform: scale(1.1) rotate(-10deg); }
+
+    .criteria-box.safe { border-top: 6px solid var(--safe-color); }
+    .criteria-box.safe .status-badge { background: rgba(16, 185, 129, 0.1); color: var(--safe-color); }
+
+    .criteria-box.danger { border-top: 6px solid var(--danger-color); }
+    .criteria-box.danger .status-badge { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); }
+
+    .criteria-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+    .criteria-header h3 { font-size: 1.6rem; color: var(--primary-dark); margin: 0; font-weight: 800; }
+
+    .status-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.9rem;
+    }
+
+    .criteria-desc { font-size: 1.1rem; color: var(--text-main); margin-bottom: 25px; line-height: 1.6; }
+    .criteria-desc strong { color: var(--primary-dark); }
+
+    .criteria-list { list-style: none; padding: 0; }
+    .criteria-list li {
+    position: relative; padding-left: 30px; margin-bottom: 12px;
+    color: var(--text-light); line-height: 1.6;
+    }
+    .criteria-list li::before {
+    font-family: 'remixicon'; position: absolute; left: 0; top: 2px; font-size: 1.2rem;
+    }
+    .criteria-box.safe .criteria-list li::before { content: '\eb7a'; color: var(--safe-color); }
+    .criteria-box.danger .criteria-list li::before { content: '\eb98'; color: var(--danger-color); }
+
+    /* =========================================
+    5. 申請時機 - 流程圖風格
+    ========================================= */
+    .timing-section { background-color: #fff; }
+
+    .timing-wrapper {
+    display: flex; justify-content: space-between; position: relative; margin-top: 60px;
+    }
+
+    .timing-wrapper::before {
+    content: ''; position: absolute; top: 40px; left: 10%; right: 10%; height: 2px;
+    background: repeating-linear-gradient(to right, #e2e8f0 0, #e2e8f0 10px, transparent 10px, transparent 20px);
+    z-index: 0;
+    }
+
+    .timing-item {
+    flex: 1; text-align: center; position: relative; z-index: 1; padding: 0 10px;
+    }
+
+    .timing-icon-circle {
+    width: 80px; height: 80px; margin: 0 auto 30px;
+    background: #fff; border: 2px solid var(--primary-light);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: var(--primary-main);
+    transition: all 0.3s ease;
+    }
+
+    .timing-item:hover .timing-icon-circle {
+    background: var(--primary-main); color: #fff; border-color: var(--primary-main);
+    transform: scale(1.1); box-shadow: 0 10px 25px rgba(29, 53, 87, 0.3);
+    }
+
+    .timing-item h4 { font-size: 1.2rem; color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
+    .timing-item p { color: var(--text-light); line-height: 1.6; font-size: 0.95rem; }
+
+    /* =========================================
+    6. CTA 區塊
+    ========================================= */
+    .cta-container {
+    margin-top: 100px;
+    background: linear-gradient(135deg, var(--primary-dark), #1e293b);
+    border-radius: 24px;
+    padding: 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+    }
+
+    .cta-container::after {
+    content: ''; position: absolute; top: -50%; left: -20%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    }
+
+    .cta-container h3 { font-size: 2.2rem; margin-bottom: 20px; font-weight: 800; }
+    .cta-container p { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 40px; max-width: 600px; margin-left: auto;
+    margin-right: auto; }
+
+    .btn-white-glow {
+    background: #fff; color: var(--primary-dark); padding: 16px 40px;
+    border-radius: 50px; font-weight: 700; font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-white-glow:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(255,255,255,0.5); }
+
+    /* =========================================
+    7. 響應式 RWD
+    ========================================= */
+    @media (max-width: 992px) {
+    .types-grid { grid-template-columns: 1fr; gap: 30px; }
+    .criteria-container { grid-template-columns: 1fr; }
+
+    .timing-wrapper { flex-direction: column; gap: 50px; }
+    .timing-wrapper::before {
+    width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%);
+    background: repeating-linear-gradient(to bottom, #e2e8f0 0, #e2e8f0 10px, transparent 10px, transparent 20px);
+    }
+    .timing-item { padding: 0; background: #fff; z-index: 1; }
+    .timing-icon-circle { margin-bottom: 20px; background: #fff; }
+    }
+
+    @media (max-width: 768px) {
+    .assessment-header { height: auto; padding: 120px 0 80px; }
+    .header-content h1 { font-size: 2.5rem; }
+    .cta-container { padding: 40px 20px; }
+    .cta-container h3 { font-size: 1.8rem; }
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- 1. Hero 頁首 -->
+    <header class="assessment-header">
+        <div class="header-content">
+            <span class="header-tag fade-in-up">PROFESSIONAL ASSESSMENT</span>
+            <h1 class="fade-in-up" style="transition-delay: 0.1s;">建築結構安全鑑定</h1>
+            <p class="fade-in-up" style="transition-delay: 0.2s;">用專業數據釐清責任，守護您的居住安全。<br>無論是施工前的現況紀錄，或是施工造成的損鄰爭議，我們提供公正、客觀的技師簽證報告。
+            </p>
+        </div>
+    </header>
+
+    <!-- 2. 鑑定種類 -->
+    <section class="section types-section">
+        <div class="container">
+            <div class="section-title-wrapper fade-in-up">
+                <h2 class="section-title">鑑定服務項目</h2>
+                <p class="section-subtitle">依據法規與工程實務，我們將鑑定分為四大類別，涵蓋各階段需求。</p>
+            </div>
+
+            <div class="types-grid">
+                <!-- 1. 現況鑑定 -->
+                <div class="type-card fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="type-icon"><i class="ri-camera-lens-line"></i></div>
+                    <div class="sub-text">施工前的保命符</div>
+                    <h3>現況鑑定</h3>
+                    <p>
+                        在鄰近工程開工前，先行紀錄您房屋的現有狀況（如舊裂縫、傾斜度）。若未來發生損壞，這是最有利的比對證據。</p>
+                </div>
+
+                <!-- 2. 損鄰鑑定 (圖示已修正) -->
+                <div class="type-card fade-in-up" style="transition-delay: 0.2s;">
+                    <!-- 【修正】使用地震/裂縫圖示代表損壞 -->
+                    <div class="type-icon"><i class="ri-earthquake-line"></i></div>
+                    <div class="sub-text">爭議發生時的裁判</div>
+                    <h3>損鄰鑑定</h3>
+                    <p>施工期間若發生鄰房損壞，我們協助判定是否為施工造成，釐清責任歸屬，並估算合理的修復費用。</p>
+                </div>
+
+                <!-- 3. 結構安全評估 -->
+                <div class="type-card fade-in-up" style="transition-delay: 0.3s;">
+                    <div class="type-icon"><i class="ri-building-line"></i></div>
+                    <div class="sub-text">房屋的健康檢查</div>
+                    <h3>結構安全評估</h3>
+                    <p>針對老舊建築申請補辦執照，或是地震後對結構體進行強度檢測，確認樑柱、地基是否穩固。</p>
+                </div>
+
+                <!-- 4. 特殊工程鑑定 (新增) -->
+                <div class="type-card fade-in-up" style="transition-delay: 0.4s;">
+                    <div class="type-icon"><i class="ri-hammer-line"></i></div>
+                    <div class="sub-text">施工特殊需求</div>
+                    <h3>特殊工程鑑定</h3>
+                    <p>
+                        針對「未報勘驗先行施工」之結構安全鑑定，以及「地震前七日澆置混凝土」之結構物安全鑑定等特殊法規需求。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 損壞評估標準 -->
+    <section class="section criteria-section">
+        <div class="container">
+            <div class="section-title-wrapper fade-in-up">
+                <h2 class="section-title">鄰房損壞，到底嚴不嚴重？</h2>
+                <p class="section-subtitle">技師將依據現場測量結果（傾斜、沉陷、裂縫），將損壞分為兩類處理。</p>
+            </div>
+
+            <div class="criteria-container">
+                <!-- 安全 -->
+                <div class="criteria-box safe fade-in-up">
+                    <i class="ri-shield-check-line watermark-icon"></i>
+                    <div class="criteria-header">
+                        <h3>結構安全</h3>
+                        <span class="status-badge"><i class="ri-checkbox-circle-fill"></i> 無危害公共安全</span>
+                    </div>
+                    <p class="criteria-desc">結構主體（樑、柱）<strong>未受損或受損輕微</strong>，主要影響美觀或使用功能。
+                    </p>
+                    <ul class="criteria-list">
+                        <li>非結構性裂縫（如粉刷層、隔間牆龜裂）</li>
+                        <li>輕微滲漏水或門窗開啟不順</li>
+                        <li><strong>處置方式：</strong>由承造人協助修復，或協調金錢賠償，工程可繼續進行。</li>
+                    </ul>
+                </div>
+
+                <!-- 危險 -->
+                <div class="criteria-box danger fade-in-up" style="transition-delay: 0.1s;">
+                    <i class="ri-alarm-warning-line watermark-icon"></i>
+                    <div class="criteria-header">
+                        <h3>結構危險</h3>
+                        <span class="status-badge"><i class="ri-alert-fill"></i> 有危害公共安全之虞</span>
+                    </div>
+                    <p class="criteria-desc">結構主體<strong>嚴重受損</strong>，已影響建築物承載能力，有倒塌或重大災害風險。
+                    </p>
+                    <ul class="criteria-list">
+                        <li>樑柱主結構爆裂、鋼筋外露、混凝土剝落</li>
+                        <li>房屋嚴重傾斜、地基流失掏空</li>
+                        <li><strong>處置方式：</strong>立即停工，進行緊急支撐或補強，嚴重者需拆除。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 申請時機 & CTA -->
+    <section class="section timing-section">
+        <div class="container">
+            <div class="section-title-wrapper fade-in-up">
+                <h2 class="section-title">什麼時候您需要申請鑑定？</h2>
+            </div>
+
+            <div class="timing-wrapper">
+                <!-- 1 -->
+                <div class="timing-item fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="timing-icon-circle"><i class="ri-notification-3-line"></i></div>
+                    <h4>收到開工通知時</h4>
+                    <p>當您收到隔壁工地的開工通知，建議立即要求或自行委託進行「現況鑑定」，保全證據。</p>
+                </div>
+
+                <!-- 2 -->
+                <div class="timing-item fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="timing-icon-circle"><i class="ri-search-eye-line"></i></div>
+                    <h4>發現新裂縫時</h4>
+                    <p>施工期間發現家中牆壁、地板出現「新」的裂縫，且持續擴大或有粉塵掉落，請立即拍照並聯繫。</p>
+                </div>
+
+                <!-- 3 -->
+                <div class="timing-item fade-in-up" style="transition-delay: 0.3s;">
+                    <div class="timing-icon-circle"><i class="ri-question-answer-line"></i></div>
+                    <h4>協調無共識時</h4>
+                    <p>與建商協調修復賠償，但雙方對「損壞原因」或「賠償金額」認知差距過大。</p>
+                </div>
+
+                <!-- 4 (新增) -->
+                <div class="timing-item fade-in-up" style="transition-delay: 0.4s;">
+                    <div class="timing-icon-circle"><i class="ri-error-warning-line"></i></div>
+                    <h4>對結構有疑慮時</h4>
+                    <p>無論是地震後、老屋改建前，或是對現有建築結構安全性產生擔憂時，皆可申請。</p>
+                </div>
+            </div>
+
+            <div class="cta-container fade-in-up">
+                <h3>需要專業技師協助嗎？</h3>
+                <p>勤築工程擁有豐富鑑定經驗，為您提供最公正、客觀的結構安全報告。</p>
+                <a href="{% url 'CZ_contact' %}" class="btn-white-glow">立即預約諮詢 <i class="ri-arrow-right-line"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, {threshold: 0.15});
+
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        });
+    </script>
+{% endblock %}

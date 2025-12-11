@@ -1,0 +1,224 @@
+<!-- templates/retaining_wall_cantilever/report_page.html -->
+{% extends "retaining_wall_cantilever/report_base.html" %}
+
+{% block report_content %}
+
+    <!-- Page 1: 總覽 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p1_summary.html" %}
+
+    <!-- Page 2: 基本性質 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p2_properties.html" %}
+
+    <!-- Page 3: 模型圖 (SVG) -->
+    {% include "retaining_wall_cantilever/report_pages/report_p3_model.html" %}
+
+   <!-- Page 4: 參數計算 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p4_calculation.html" %}
+
+    <!-- Page 5: 抗滑動詳細計算 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p5_sliding.html" %}
+
+    <!-- [NEW] Page 6: 抗傾倒詳細計算 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p6_overturning.html" %}
+
+    <!-- [NEW] Page 7: 承載力與偏心距 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p7_bearing.html" %}
+
+    <!-- Page 8: 預留頁 -->
+    {% for i in "8" %}
+    <div class="a4-page">
+    <!-- ... (內容保持不變) ... -->
+    </div>
+    {% endfor %}
+
+{% endblock %}  <!-- 這裡結束 report_content -->
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 延遲執行以確保 DOM 完全載入
+            setTimeout(renderWallSVG, 100);
+
+            // 顯示當前日期
+            const dateEl = document.getElementById('currentDate');
+            if (dateEl) dateEl.innerText = new Date().toISOString().slice(0, 10);
+        });
+
+        function renderWallSVG() {
+            const container = document.getElementById('svg-container');
+            if (!container) {
+                console.error("SVG Container not found!");
+                return;
+            }
+
+            // 1. 取得數據 (使用 default:0 防止空值錯誤)
+            const d = {
+                H_stem: parseFloat("{{ input_data.H_stem|default:300 }}"),
+                t_top: parseFloat("{{ input_data.t_stem_top|default:30 }}"),
+                w_front: parseFloat("{{ input_data.w_stem_front|default:0 }}"),
+                w_back: parseFloat("{{ input_data.w_stem_back|default:20 }}"),
+                H_bp: parseFloat("{{ input_data.H_bp|default:50 }}"),
+                L_front: parseFloat("{{ input_data.L_bp_front|default:100 }}"),
+                L_back: parseFloat("{{ input_data.L_bp_back|default:200 }}"),
+                H_sk: parseFloat("{{ input_data.H_sk|default:0 }}"),
+                L_sk: parseFloat("{{ input_data.L_sk|default:0 }}"),
+                x_1: parseFloat("{{ input_data.x_1|default:0 }}"),
+
+                // 回填高與水位
+                H_fill: "{{ input_data.H_fill }}" ? parseFloat("{{ input_data.H_fill }}") : parseFloat("{{ input_data.H_stem|default:300 }}"),
+                H_water: parseFloat("{{ input_data.H_water|default:0 }}"),
+                alpha: parseFloat("{{ input_data.alpha_soil|default:0 }}"),
+                H_soil_front: parseFloat("{{ input_data.H_soil_front|default:50 }}")
+            };
+
+            const t_bot = d.w_front + d.t_top + d.w_back;
+            const B_total = d.L_front + t_bot + d.L_back;
+
+            // 清空並建立 SVG
+            container.innerHTML = '';
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+
+            // --- Scale Logic ---
+            let extraHeight = (d.alpha > 0) ? (B_total * 0.8) * Math.tan(d.alpha * Math.PI / 180) : 0;
+            const totalW = B_total * 1.8;
+            const totalH = Math.max(d.H_bp + d.H_fill + extraHeight, d.H_bp + d.H_stem) + d.H_sk + 50;
+
+            // 固定 A4 繪圖區大小
+            const availW = 650;
+            const availH = 800;
+
+            const scale = Math.min(availW / totalW, availH / totalH) * 0.9;
+            const offX = (availW - totalW * scale) / 2 + 50;
+            const maxY_struct = Math.max(d.H_bp + d.H_fill + extraHeight, d.H_bp + d.H_stem);
+            const offY = (availH - totalH * scale) / 2 + maxY_struct * scale + 50;
+
+            function toSVG(x, y) {
+                return {x: offX + x * scale, y: offY - y * scale};
+            }
+
+            // --- Helper Functions ---
+            function createLine(p1, p2, color, w = 2, dash = null) {
+                const l = document.createElementNS(svgNS, "line");
+                l.setAttribute("x1", p1.x);
+                l.setAttribute("y1", p1.y);
+                l.setAttribute("x2", p2.x);
+                l.setAttribute("y2", p2.y);
+                l.setAttribute("stroke", color);
+                l.setAttribute("stroke-width", w);
+                if (dash) l.setAttribute("stroke-dasharray", dash);
+                svg.appendChild(l);
+            }
+
+            function createText(x, y, txt, c) {
+                const t = document.createElementNS(svgNS, "text");
+                t.setAttribute("x", x);
+                t.setAttribute("y", y);
+                t.setAttribute("fill", c);
+                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("font-size", "12");
+                t.textContent = txt;
+                svg.appendChild(t);
+            }
+
+            function createPolygon(pts, fill, str) {
+                const p = document.createElementNS(svgNS, "path");
+                p.setAttribute("d", "M " + pts.map(pt => `${pt.x},${pt.y}`).join(" L ") + " Z");
+                p.setAttribute("fill", fill);
+                p.setAttribute("stroke", str);
+                p.setAttribute("stroke-width", 2);
+                svg.appendChild(p);
+            }
+
+            function drawDim(p1_cm, p2_cm, txt, off, orient) {
+                const c1 = toSVG(p1_cm.x, p1_cm.y);
+                const c2 = toSVG(p2_cm.x, p2_cm.y);
+                const c = "#0056b3";
+                const gap = 5;
+                if (orient === 'H') {
+                    const yl = c1.y - off;
+                    createLine({x: c1.x, y: c1.y - (off > 0 ? gap : -gap)}, {x: c1.x, y: yl}, c, 1);
+                    createLine({x: c2.x, y: c2.y - (off > 0 ? gap : -gap)}, {x: c2.x, y: yl}, c, 1);
+                    createLine({x: c1.x, y: yl}, {x: c2.x, y: yl}, c, 1);
+                    createText((c1.x + c2.x) / 2, yl - (off > 0 ? 5 : -15), txt, c);
+                } else {
+                    const xl = c1.x - off;
+                    createLine({x: c1.x - (off > 0 ? gap : -gap), y: c1.y}, {x: xl, y: c1.y}, c, 1);
+                    createLine({x: c2.x - (off > 0 ? gap : -gap), y: c2.y}, {x: xl, y: c2.y}, c, 1);
+                    createLine({x: xl, y: c1.y}, {x: xl, y: c2.y}, c, 1);
+                    const t = document.createElementNS(svgNS, "text");
+                    t.setAttribute("x", xl - (off > 0 ? 5 : -15));
+                    t.setAttribute("y", (c1.y + c2.y) / 2);
+                    t.setAttribute("fill", c);
+                    t.setAttribute("text-anchor", "middle");
+                    t.setAttribute("font-size", "12");
+                    t.setAttribute("transform", `rotate(-90, ${xl - (off > 0 ? 5 : -15)}, ${(c1.y + c2.y) / 2})`);
+                    t.textContent = txt;
+                    svg.appendChild(t);
+                }
+            }
+
+            // --- Drawing Sequence ---
+            // 1. Structure
+            const pt_toe_bot = toSVG(0, 0);
+            const pt_toe_top = toSVG(0, d.H_bp);
+            const pt_stem_front_base = toSVG(d.L_front, d.H_bp);
+            const pt_stem_front_top = toSVG(d.L_front + d.w_front, d.H_bp + d.H_stem);
+            const pt_stem_back_top = toSVG(d.L_front + d.w_front + d.t_top, d.H_bp + d.H_stem);
+            const pt_stem_back_base = toSVG(B_total - d.L_back, d.H_bp);
+            const pt_heel_top = toSVG(B_total, d.H_bp);
+            const pt_heel_bot = toSVG(B_total, 0);
+
+            let wallPts = [pt_toe_bot, pt_toe_top, pt_stem_front_base, pt_stem_front_top, pt_stem_back_top, pt_stem_back_base, pt_heel_top];
+            if (d.H_sk > 0) {
+                const x_sk_r = B_total - d.x_1;
+                const x_sk_l = x_sk_r - d.L_sk;
+                wallPts.push(toSVG(B_total, 0));
+                wallPts.push(toSVG(x_sk_r, 0));
+                wallPts.push(toSVG(x_sk_r, -d.H_sk));
+                wallPts.push(toSVG(x_sk_l, -d.H_sk));
+                wallPts.push(toSVG(x_sk_l, 0));
+            } else {
+                wallPts.push(pt_heel_bot);
+            }
+            createPolygon(wallPts, "#d3d3d3", "#333");
+
+            // 2. Backfill
+            let x_s_s = (d.H_fill <= d.H_stem) ? (B_total - d.L_back) - (d.H_fill * (d.w_back / d.H_stem)) : (d.L_front + d.w_front + d.t_top);
+            let y_s_s = d.H_bp + d.H_fill;
+            let x_s_e = totalW;
+            let y_s_e = y_s_s + (x_s_e - x_s_s) * Math.tan(d.alpha * Math.PI / 180);
+            createLine(toSVG(x_s_s, y_s_s), toSVG(x_s_e, y_s_e), "#4CAF50", 2, "5,5");
+            createText(toSVG(x_s_e, y_s_e).x - 40, toSVG(x_s_e, y_s_e).y - 10, "Backfill", "#4CAF50");
+
+            // 3. Front Soil
+            let y_f = d.H_bp + d.H_soil_front;
+            createLine(toSVG(d.L_front, y_f), toSVG(-50, y_f), "#D2691E", 2, "5,5");
+            createText(toSVG(-50, y_f).x + 20, toSVG(-50, y_f).y - 5, "Front", "#D2691E");
+
+            // 4. Water
+            if (d.H_water > 0) {
+                let p_w_s = {x: B_total - d.L_back, y: d.H_water};
+                let p_w_e = {x: totalW, y: d.H_water};
+                createLine(toSVG(p_w_s.x, p_w_s.y), toSVG(p_w_e.x, p_w_e.y), "#2196F3", 2, "10,5");
+                createText(toSVG(p_w_e.x, d.H_water).x - 50, toSVG(0, d.H_water).y - 10, "GWL", "#2196F3");
+            }
+
+            // 5. Dims
+            drawDim({x: d.L_front, y: d.H_bp}, {x: d.L_front, y: d.H_bp + d.H_stem}, `H=${d.H_stem}`, 40, 'V');
+            drawDim({x: 0, y: 0}, {x: B_total, y: 0}, `B=${B_total}`, -45, 'H');
+
+            if (d.H_sk > 0) {
+                const x_sk_r = B_total - d.x_1;
+                const x_sk_l = x_sk_r - d.L_sk;
+                drawDim({x: x_sk_l, y: -d.H_sk}, {x: x_sk_r, y: -d.H_sk}, `sk=${d.L_sk}`, -15, 'H');
+                drawDim({x: B_total, y: -d.H_sk}, {x: B_total, y: 0}, `hk=${d.H_sk}`, -30, 'V');
+            }
+
+            container.appendChild(svg);
+        }
+    </script>
+
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}農田水利設施兼作與搭排 - 勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    /* =========================================
+    1. 頁面專屬變數 & 基礎設定
+    ========================================= */
+    :root {
+    --water-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    --earth-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --bg-soft-blue: #f0f9ff;
+    }
+
+    .section { padding: 120px 0; position: relative; overflow: hidden; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+
+    /* 標題通用樣式 */
+    .section-header { text-align: center; margin-bottom: 70px; max-width: 800px; margin-left: auto; margin-right: auto;
+    }
+    .section-title { font-size: 2.6rem; font-weight: 800; color: var(--primary-main); margin-bottom: 20px;
+    letter-spacing: -0.5px; }
+    .section-subtitle { font-size: 1.15rem; color: var(--text-light); line-height: 1.8; }
+
+    /* 裝飾線 */
+    .divider-line { width: 60px; height: 4px; background: var(--accent-color); margin: 0 auto 25px; border-radius: 4px;
+    }
+
+    /* 動畫 */
+    .fade-in-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
+
+    /* =========================================
+    2. Hero 區塊 - 沉浸式水利意象
+    ========================================= */
+    .water-hero {
+    position: relative;
+    height: 65vh;
+    min-height: 550px;
+    background-image: url("{% static 'images/water-conservancy-facilities.jpg' %}");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* 視差滾動 */
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    }
+
+    /* 多層次遮罩，增加深邃感 */
+    .water-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(14, 165, 233, 0.4));
+    z-index: 1;
+    }
+
+    .hero-content {
+    position: relative; z-index: 2; text-align: center; max-width: 900px; padding: 0 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px); /* 毛玻璃 */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 60px 40px;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+
+    /* 【核心新增】設計語彙：膠囊標籤 */
+    .hero-tag {
+    display: inline-block; padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 50px;
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(5px);
+    font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 20px;
+    color: #e0f2fe; text-transform: uppercase;
+    }
+
+    .hero-content h1 { font-size: 3.5rem; margin-bottom: 20px; font-weight: 800; text-shadow: 0 4px 10px
+    rgba(0,0,0,0.2); }
+    .hero-content p { font-size: 1.3rem; line-height: 1.6; color: #e0f2fe; font-weight: 400; opacity: 0.95; }
+
+    /* 波浪分隔線 (SVG Wave) */
+    .wave-divider {
+    position: absolute; bottom: -1px; left: 0; width: 100%; overflow: hidden; line-height: 0; z-index: 3;
+    }
+    .wave-divider svg { display: block; width: calc(100% + 1.3px); height: 80px; fill: #fff; }
+
+    /* =========================================
+    3. 核心概念 (Concept) - 對比設計
+    ========================================= */
+    .concept-section { background-color: #fff; }
+
+    .concept-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+    align-items: stretch;
+    }
+
+    .concept-card {
+    padding: 60px 40px;
+    border-radius: 24px;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+    }
+
+    .concept-card:hover { transform: translateY(-15px); box-shadow: 0 20px 50px -10px rgba(0,0,0,0.15); }
+
+    /* 背景裝飾圓 */
+    .concept-card::before {
+    content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px;
+    border-radius: 50%; opacity: 0.1; z-index: 0;
+    }
+
+    /* 兼作樣式 */
+    .concept-card.combine { border-top: 6px solid #f59e0b; }
+    .concept-card.combine::before { background: var(--earth-gradient); }
+    .concept-card.combine .icon-box { background: var(--earth-gradient); box-shadow: 0 10px 20px rgba(245, 158, 11,
+    0.3); }
+
+    /* 搭排樣式 */
+    .concept-card.drain { border-top: 6px solid #0ea5e9; }
+    .concept-card.drain::before { background: var(--water-gradient); }
+    .concept-card.drain .icon-box { background: var(--water-gradient); box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+    }
+
+    .card-content { position: relative; z-index: 1; }
+
+    .icon-box {
+    width: 90px; height: 90px; margin: 0 auto 35px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 2.8rem; color: #fff;
+    }
+
+    .concept-card h3 { font-size: 2rem; margin-bottom: 20px; color: var(--primary-dark); text-align: center; }
+    .concept-card .definition {
+    font-size: 1.15rem; color: var(--text-main); line-height: 1.8;
+    text-align: center; margin-bottom: 35px; min-height: 90px;
+    }
+
+    .checklist { list-style: none; padding: 0; margin-top: 30px; border-top: 1px solid #f1f5f9; padding-top: 30px; }
+    .checklist li { margin-bottom: 12px; padding-left: 35px; position: relative; color: var(--text-light); font-size:
+    1.05rem; }
+    .checklist li::before {
+    content: '\eb7a'; font-family: 'remixicon'; position: absolute; left: 0; top: 2px;
+    color: #10b981; font-size: 1.4rem; font-weight: bold;
+    }
+
+    /* =========================================
+    4. 痛點分析 (Why Us) - 現代網格
+    ========================================= */
+    .pain-section { background-color: var(--bg-soft-blue); }
+
+    .pain-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+    }
+
+    .pain-card {
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease;
+    text-align: left;
+    }
+    .pain-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+
+    .pain-icon {
+    width: 60px; height: 60px;
+    background: #fff; border: 2px solid var(--primary-light);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: var(--primary-main); margin-bottom: 25px;
+    }
+
+    .pain-card h4 { font-size: 1.4rem; color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
+    .pain-card p { color: var(--text-light); line-height: 1.7; font-size: 1rem; margin: 0; }
+
+    /* =========================================
+    5. 代辦流程 - 步驟條
+    ========================================= */
+    .process-section { background: #fff; }
+
+    .process-container { margin-top: 50px; position: relative; }
+
+    /* 連接線 (桌機) */
+    .process-container::before {
+    content: ''; position: absolute; top: 40px; left: 10%; right: 10%; height: 2px;
+    background: #e2e8f0; z-index: 0;
+    }
+
+    .process-steps { display: flex; justify-content: space-between; position: relative; z-index: 1; }
+
+    .step-item { flex: 1; text-align: center; padding: 0 15px; }
+
+    .step-circle {
+    width: 80px; height: 80px; margin: 0 auto 25px;
+    background: #fff; border: 2px solid var(--primary-light);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: var(--primary-dark); font-weight: 800;
+    box-shadow: 0 0 0 8px #fff; /* 用陰影遮擋連接線 */
+    transition: all 0.3s ease;
+    }
+
+    .step-item:hover .step-circle {
+    background: var(--primary-main); color: #fff; border-color: var(--primary-main);
+    transform: scale(1.1); box-shadow: 0 10px 25px rgba(29, 53, 87, 0.2), 0 0 0 8px #fff;
+    }
+
+    .step-item h4 { font-size: 1.3rem; color: var(--primary-dark); margin-bottom: 10px; font-weight: 700; }
+    .step-item p { color: var(--text-light); font-size: 0.95rem; }
+
+    /* =========================================
+    6. CTA
+    ========================================= */
+    .cta-wrapper {
+    margin-top: 100px;
+    background: linear-gradient(135deg, var(--primary-dark), #243b55);
+    border-radius: 24px; padding: 70px;
+    text-align: center; color: #fff;
+    position: relative; overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    }
+
+    /* CTA 背景流動 */
+    .cta-wrapper::after {
+    content: ''; position: absolute; top: -50%; right: -20%; width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    }
+
+    .cta-wrapper h2 { font-size: 2.5rem; margin-bottom: 20px; font-weight: 800; }
+    .cta-wrapper p { font-size: 1.2rem; color: #cbd5e1; margin-bottom: 40px; max-width: 600px; margin-left: auto;
+    margin-right: auto; }
+
+    .btn-white-glow {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; color: var(--primary-main); padding: 18px 45px;
+    border-radius: 50px; font-weight: 700; font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+    }
+    .btn-white-glow:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(255,255,255,0.4); }
+
+    /* =========================================
+    7. RWD
+    ========================================= */
+    @media (max-width: 992px) {
+    .concept-grid { grid-template-columns: 1fr; }
+    .pain-grid { grid-template-columns: 1fr; }
+
+    .process-container::before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
+    .process-steps { flex-direction: column; gap: 50px; }
+    .step-circle { margin-bottom: 15px; }
+
+    .water-hero h1 { font-size: 2.8rem; }
+    .hero-content { padding: 40px 20px; }
+    }
+
+    @media (max-width: 768px) {
+    .section { padding: 80px 0; }
+    .water-hero { height: auto; padding: 120px 0 100px; }
+    .hero-content h1 { font-size: 2.4rem; }
+    .section-title { font-size: 2.2rem; }
+
+    .cta-wrapper { padding: 40px 20px; }
+    .cta-wrapper h2 { font-size: 2rem; }
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- 1. Hero 區塊 -->
+    <header class="water-hero">
+        <div class="hero-content fade-in-up">
+            <!-- 【核心新增】設計語彙：膠囊標籤 -->
+            <span class="hero-tag">WATER CONSERVANCY SERVICE</span>
+
+            <h1>農田水利設施兼作與搭排</h1>
+            <p>解決土地開發的排水與通行難題。<br>我們熟悉農田水利署規範，為您辦理渠道加蓋、排水銜接等複雜申請。</p>
+        </div>
+
+        <!-- 白色波浪分隔 -->
+        <div class="wave-divider">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"
+                 preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+            </svg>
+        </div>
+    </header>
+
+    <!-- 2. 服務說明 (Concept) -->
+    <section class="section concept-section">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2 class="section-title">服務項目說明</h2>
+                <div class="divider-line"></div>
+                <p class="section-subtitle">
+                    許多建案或土地開發常因無法取得排水許可或通行權而卡關，這兩項申請是關鍵解方。</p>
+            </div>
+
+            <div class="concept-grid">
+                <!-- 兼作 -->
+                <div class="concept-card combine fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="card-content">
+                        <div class="icon-box"><i class="ri-road-map-line"></i></div>
+                        <h3>設施兼作 (加蓋)</h3>
+                        <p class="definition">
+                            指在不影響原有農田水利設施功能的前提下，申請使用其空間。<br>
+                            <strong>最常見案例：將水利溝渠加蓋，作為通行道路或出入口。</strong>
+                        </p>
+                        <ul class="checklist">
+                            <li>申請架設橋樑、涵管</li>
+                            <li>建築物出入口版橋設置</li>
+                            <li>管線埋設或附掛</li>
+                            <li>需符合通水斷面與結構安全標準</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 搭排 -->
+                <div class="concept-card drain fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="card-content">
+                        <div class="icon-box"><i class="ri-drop-line"></i></div>
+                        <h3>搭排 (排水銜接)</h3>
+                        <p class="definition">
+                            指將非農田灌溉排水（如雨水、經處理之家庭污水），排放進入農田水利署管理之渠道。<br>
+                            <strong>這是取得建築執照的重要環節之一。</strong>
+                        </p>
+                        <ul class="checklist">
+                            <li>建築基地排水規劃</li>
+                            <li>廢污水排放許可申請</li>
+                            <li>需檢核渠道容量與水質標準</li>
+                            <li>簽訂搭排契約與繳納費用</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 痛點分析 (Why Us) -->
+    <section class="section pain-section">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2 class="section-title">自行申請的常見挑戰</h2>
+                <div class="divider-line"></div>
+                <p class="section-subtitle">水利地申請涉及複雜法規與跨機關協調，交給專業團隊能幫您省下大量時間與心力。</p>
+            </div>
+
+            <div class="pain-grid">
+                <div class="pain-card fade-in-up">
+                    <div class="pain-icon"><i class="ri-file-warning-line"></i></div>
+                    <h4>法規繁瑣複雜</h4>
+                    <p>涉及《農田水利法》及各地管理處（如桃園、石門）的特殊單行法規，文件要求嚴格，一般民眾難以釐清。</p>
+                </div>
+                <div class="pain-card fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="pain-icon"><i class="ri-ruler-2-line"></i></div>
+                    <h4>需專業工程圖說</h4>
+                    <p>申請必須檢附專業的水理計算書、結構計算書及工程設計圖，需由專業技師簽證方可受理。</p>
+                </div>
+                <div class="pain-card fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="pain-icon"><i class="ri-government-line"></i></div>
+                    <h4>跨機關協調</h4>
+                    <p>常需同時配合地政事務所進行鑑界、或與市府建管處協調建照申請進度，溝通成本極高。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 服務流程 & CTA -->
+    <section class="section process-section">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2 class="section-title">專業代辦流程</h2>
+                <div class="divider-line"></div>
+            </div>
+
+            <div class="process-container">
+                <div class="process-steps">
+                    <div class="step-item fade-in-up">
+                        <div class="step-circle">1</div>
+                        <h4>現場勘查</h4>
+                        <p>確認渠道現況、位置及水流方向</p>
+                    </div>
+                    <div class="step-item fade-in-up" style="transition-delay: 0.1s;">
+                        <div class="step-circle">2</div>
+                        <h4>規劃設計</h4>
+                        <p>繪製工程圖說、撰寫水理/結構計算書</p>
+                    </div>
+                    <div class="step-item fade-in-up" style="transition-delay: 0.2s;">
+                        <div class="step-circle">3</div>
+                        <h4>送件審查</h4>
+                        <p>向管轄管理處（桃園/石門）提出申請</p>
+                    </div>
+                    <div class="step-item fade-in-up" style="transition-delay: 0.3s;">
+                        <div class="step-circle">4</div>
+                        <h4>會勘與核准</h4>
+                        <p>配合官員現場會勘，取得同意函</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cta-wrapper fade-in-up">
+                <h2>遇到水利地問題卡關？</h2>
+                <p>勤築工程擁有豐富的農田水利署跑照經驗，協助您順利取得許可。</p>
+                <a href="{% url 'CZ_contact' %}" class="btn-white-glow">立即諮詢代辦 <i class="ri-arrow-right-line"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, {threshold: 0.1});
+
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        });
+    </script>
+{% endblock %}

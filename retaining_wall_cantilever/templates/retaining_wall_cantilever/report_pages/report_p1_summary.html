@@ -1,0 +1,160 @@
+<div class="a4-page">
+    <!-- Header -->
+    <div class="report-header">
+        <div class="report-title">懸臂式擋土牆結構計算書</div>
+        <div class="report-subtitle">Cantilever Retaining Wall Design Report</div>
+    </div>
+
+    <div class="content">
+        <!-- 專案資訊 (預留) -->
+        <div class="p-3 mb-4 bg-light border rounded">
+            <div class="row">
+                <div class="col-6"><strong>專案名稱：</strong> 擋土牆分析作業</div>
+                <div class="col-6"><strong>計算日期：</strong> <span id="currentDate"></span></div>
+            </div>
+        </div>
+
+        <!-- 1. 設計條件摘要 -->
+        <h4>1. 設計條件摘要 (Design Summary)</h4>
+        <table class="table table-bordered table-sm text-center align-middle">
+            <thead class="table-secondary">
+            <tr>
+                <th width="25%">項目</th>
+                <th>參數值</th>
+                <th width="25%">項目</th>
+                <th>參數值</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <th class="text-start ps-3">牆身全高 (H)</th>
+                <td>{{ input_data.H_stem|add:input_data.H_bp }} cm</td>
+                <th class="text-start ps-3">回填土高 (H_fill)</th>
+                <td>{{ input_data.H_fill }} cm</td>
+            </tr>
+            <tr>
+                <th class="text-start ps-3">基版總寬 (B)</th>
+                <td>{{ B_total_cm }} cm</td>
+                <th class="text-start ps-3">地下水位 (Hw)</th>
+                <td>{{ input_data.H_water }} cm</td>
+            </tr>
+            <tr>
+                <th class="text-start ps-3">設計地震力</th>
+                <td>$k_h={{ input_data.kh }}$, $k_v={{ input_data.kv }}$</td>
+                <th class="text-start ps-3">地表超載</th>
+                <td>{{ surcharge_info.type }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 2. 穩定性檢核結果 -->
+        <h4>2. 穩定性檢核結果 (Stability Check)</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered text-center align-middle">
+                <thead class="table-dark">
+                <tr>
+                    <th width="25%">檢核項目</th>
+                    <th width="20%">計算值 (FS)</th>
+                    <th width="35%">抵抗力 / 驅動力</th>
+                    <th width="20%">判定</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="fw-bold">抗滑動 (Sliding)</td>
+                    <td class="fs-5 fw-bold {% if stability.FS_slide < 1.5 %}text-danger{% else %}text-success{% endif %}">
+                        {{ stability.FS_slide }}
+                    </td>
+                    <td class="text-muted small">
+                        $F_r = {{ stability.F_resist }}$<br>
+                        $F_d = {{ stability.F_driving }}$
+                    </td>
+                    <td>
+                        {% if stability.FS_slide >= 1.5 %}
+                            <span class="badge bg-success rounded-pill px-3">OK</span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-3">NG</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fw-bold">抗傾倒 (Overturning)</td>
+                    <td class="fs-5 fw-bold {% if stability.FS_over < 2.0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ stability.FS_over }}
+                    </td>
+                    <td class="text-muted small">
+                        $M_r = {{ stability.M_resist }}$<br>
+                        $M_o = {{ stability.M_overturn }}$
+                    </td>
+                    <td>
+                        {% if stability.FS_over >= 2.0 %}
+                            <span class="badge bg-success rounded-pill px-3">OK</span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-3">NG</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fw-bold">偏心距 (Eccentricity)</td>
+                    <td class="fw-bold {% if stability.Eccentricity > stability.B_over_6 %}text-danger{% endif %}">
+                        $e = {{ stability.Eccentricity }}$ m
+                    </td>
+                    <td class="text-muted small">
+                        容許值 $B/6 = {{ stability.B_over_6 }}$
+                    </td>
+                    <td>
+                        {% if stability.Eccentricity <= stability.B_over_6 %}
+                            <span class="badge bg-success rounded-pill px-3">OK</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3">Check</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted small mt-1 text-end">* 註：一般工況要求 $FS_{slide} \ge 1.5, FS_{over} \ge 2.0$
+            (地震工況可折減)</p>
+
+        <!-- 3. 土壓力係數 -->
+        <h4>3. 關鍵設計參數 (Coefficients)</h4>
+        <table class="table table-bordered table-sm text-center">
+            <thead class="table-secondary">
+            <tr>
+                <th>靜態主動 $K_a$</th>
+                <th>動態主動 $K_{ae}$</th>
+                <th>靜態被動 $K_p$</th>
+                <th>動態被動 $K_{pe}$</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="fs-5">{{ Ka }}</td>
+                <td class="fs-5">{{ Kae }}</td>
+                <td class="fs-5">{{ Kp }}</td>
+                <td class="fs-5">{{ Kpe_base }} <span class="text-muted small">(榫)</span></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 簽核欄 -->
+        <div class="mt-5 border-top pt-4">
+            <div class="row">
+                <div class="col-6">設計工程師：___________________</div>
+                <div class="col-6 text-end">覆核工程師：___________________</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="report-footer">
+        <div class="d-flex justify-content-between">
+            <span>Generated by CNProject StructTool</span>
+            <span>Page 1 / 8</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('currentDate').innerText = new Date().toISOString().slice(0, 10);
+</script>

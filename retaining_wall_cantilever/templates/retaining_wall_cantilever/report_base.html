@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>懸臂式擋土牆計算書</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #525659;
+            padding: 20px 0;
+            font-family: "Times New Roman", "微軟正黑體", sans-serif;
+        }
+
+        /* A4 紙張標準設定 */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 0 auto 30px auto;
+            padding: 20mm;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 懸浮按鈕 */
+        .floating-controls {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            z-index: 10001;
+        }
+
+        /* 頁眉頁尾 */
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .report-subtitle {
+            font-size: 14px;
+            color: #666;
+            letter-spacing: 1px;
+        }
+
+        .report-footer {
+            position: absolute;
+            bottom: 15mm;
+            left: 20mm;
+            right: 20mm;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+            font-size: 10pt;
+            color: #888;
+        }
+
+        /* 內容樣式 */
+        h4 {
+            border-left: 6px solid #0d6efd;
+            padding-left: 12px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        h5 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #555;
+        }
+
+        .table-prop th {
+            background-color: #f1f3f5;
+            width: 35%;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .table-prop td {
+            font-size: 0.95rem;
+        }
+
+        /* MathJax 字體調整 */
+        .math-content {
+            font-size: 90%;
+        }
+
+        /* 列印模式 */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .floating-controls {
+                display: none !important;
+            }
+
+            .a4-page {
+                width: 100%;
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+        }
+    </style>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]},
+            svg: {fontCache: 'global'}
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<!-- 懸浮控制按鈕 -->
+<div class="floating-controls no-print">
+    <button class="btn btn-primary btn-lg shadow me-2" onclick="window.print()">
+        <i class="bi bi-printer"></i> 列印 / 儲存 PDF
+    </button>
+    <button class="btn btn-secondary btn-lg shadow" onclick="window.close()">
+        <i class="bi bi-x-lg"></i> 關閉
+    </button>
+</div>
+
+{% if not result_available %}
+    <div class="a4-page d-flex align-items-center justify-content-center">
+        <div class="text-center text-muted">
+            <h3><i class="bi bi-exclamation-circle"></i> 無計算資料</h3>
+            <p>請先回到輸入頁面進行計算。</p>
+        </div>
+    </div>
+{% else %}
+    {% block report_content %}{% endblock %}
+{% endif %}
+
+<!-- 額外腳本 -->
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,154 @@
+<div class="a4-page">
+    <div class="report-header">
+        <div class="report-title">1. 基本性質參數表</div>
+        <div class="report-subtitle">Basic Properties & Geometry</div>
+    </div>
+
+    <div class="content">
+        <!-- 1.1 幾何 -->
+        <h5 class="mt-4 border-bottom pb-2">1.1 擋土牆幾何性質 (Geometry)</h5>
+        <table class="table table-bordered table-sm table-prop align-middle">
+            <tbody>
+            <tr>
+                <th>牆身高度 ($H_{stem}$)</th>
+                <td>{{ input_data.H_stem }} cm</td>
+                <th>牆頂厚度 ($t_{top}$)</th>
+                <td>{{ input_data.t_stem_top }} cm</td>
+            </tr>
+            <tr>
+                <th>前側斜率寬 ($w_{front}$)</th>
+                <td>{{ input_data.w_stem_front }} cm</td>
+                <th>後側斜率寬 ($w_{back}$)</th>
+                <td>{{ input_data.w_stem_back }} cm</td>
+            </tr>
+            <tr>
+                <th>基版厚度 ($H_{bp}$)</th>
+                <td>{{ input_data.H_bp }} cm</td>
+                <th>基版總寬 ($B$)</th>
+                <td>{{ B_total_cm }} cm</td>
+            </tr>
+            <tr>
+                <th>趾部長度 ($L_{toe}$)</th>
+                <td>{{ input_data.L_bp_front }} cm</td>
+                <th>踵部長度 ($L_{heel}$)</th>
+                <td>{{ input_data.L_bp_back }} cm</td>
+            </tr>
+            <tr>
+                <th>止滑榫深度 ($H_{sk}$)</th>
+                <td>{{ input_data.H_sk }} cm</td>
+                <th>止滑榫寬度 ($L_{sk}$)</th>
+                <td>{{ input_data.L_sk }} cm</td>
+            </tr>
+            <tr>
+                <th>止滑榫位置 ($x_1$)</th>
+                <td>{{ input_data.x_1 }} cm</td>
+                <th>(自踵部起算)</th>
+                <td>-</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 1.2 材料 -->
+        <h5 class="mt-5 border-bottom pb-2">1.2 材料與土壤性質 (Material Properties)</h5>
+
+        <!-- 混凝土 -->
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary"><i class="bi bi-box-fill"></i> 1.2.1 混凝土 (Structure)</h6>
+            <table class="table table-bordered table-sm table-prop">
+                <tbody>
+                <tr>
+                    <th>單位重 ($\gamma_c$)</th>
+                    <td>{{ input_data.gamma_c }} tf/m³</td>
+                    <td colspan="2" class="bg-light"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 牆背土 -->
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary"><i class="bi bi-layers-fill"></i> 1.2.2 牆背回填土 (Backfill - Active Zone)
+            </h6>
+            <table class="table table-bordered table-sm table-prop">
+                <tbody>
+                <tr>
+                    <th>濕單位重 ($\gamma_t$)</th>
+                    <td>{{ input_data.gamma_soil }} tf/m³</td>
+                    <th>飽和單位重 ($\gamma_{sat}$)</th>
+                    <td>{{ input_data.gamma_sat }} tf/m³</td>
+                </tr>
+                <tr>
+                    <th>內摩擦角 ($\phi$)</th>
+                    <td>{{ input_data.phi_soil }}&deg;</td>
+                    <th>牆背摩擦角 ($\delta$)</th>
+                    <td>{{ input_data.delta_wall }}&deg;</td>
+                </tr>
+                <tr>
+                    <th>凝聚力 ($c'$)</th>
+                    <td>{{ input_data.c_soil }} tf/m²</td>
+                    <th>地表傾角 ($\alpha$)</th>
+                    <td>{{ input_data.alpha_soil }}&deg;</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 牆前土 -->
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary"><i class="bi bi-layers-half"></i> 1.2.3 牆前覆土 (Front Soil - Passive
+                Zone)</h6>
+            <table class="table table-bordered table-sm table-prop">
+                <tbody>
+                <tr>
+                    <th>覆土高度 ($H_{front}$)</th>
+                    <td>{{ input_data.H_soil_front }} cm</td>
+                    <th>-</th>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <th>濕單位重 ($\gamma_t$)</th>
+                    <td>{{ input_data.gamma_soil_front }} tf/m³</td>
+                    <th>飽和單位重 ($\gamma_{sat}$)</th>
+                    <td>{{ input_data.gamma_sat_front }} tf/m³</td>
+                </tr>
+                <tr>
+                    <th>內摩擦角 ($\phi$)</th>
+                    <td>{{ input_data.phi_soil_front }}&deg;</td>
+                    <th>凝聚力 ($c'$)</th>
+                    <td>{{ input_data.c_soil_front }} tf/m²</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 版底土 -->
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary"><i class="bi bi-bricks"></i> 1.2.4 基礎版底土壤 (Base Soil - Bearing/Key)
+            </h6>
+            <table class="table table-bordered table-sm table-prop">
+                <tbody>
+                <tr>
+                    <th>濕單位重 ($\gamma_t$)</th>
+                    <td>{{ input_data.gamma_soil_base }} tf/m³</td>
+                    <th>飽和單位重 ($\gamma_{sat}$)</th>
+                    <td>{{ input_data.gamma_sat_base }} tf/m³</td>
+                </tr>
+                <tr>
+                    <th>內摩擦角 ($\phi$)</th>
+                    <td>{{ input_data.phi_soil_base }}&deg;</td>
+                    <th>凝聚力 ($c'$)</th>
+                    <td>{{ input_data.c_soil_base }} tf/m²</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="report-footer">
+        <div class="d-flex justify-content-between">
+            <span>Generated by CNProject StructTool</span>
+            <span>Page 2 / 8</span>
+        </div>
+    </div>
+</div>

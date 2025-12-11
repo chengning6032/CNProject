@@ -1,0 +1,392 @@
+{% extends 'CZ_base.html' %}
+{% load static %}
+
+{% block title %}鋼結構設計 - 勤築工程實業有限公司{% endblock %}
+
+{% block extra_style %}
+    /* =========================================
+    1. 頁面專屬變數
+    ========================================= */
+    :root {
+    --steel-dark: #1e293b;
+    --steel-light: #f8fafc;
+    --tech-blue: #3b82f6;
+    --blueprint-grid: rgba(59, 130, 246, 0.05);
+    }
+
+    .section { padding: 120px 0; position: relative; overflow: hidden; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+
+    /* 標題樣式：簡潔版 */
+    .section-header { text-align: center; margin-bottom: 80px; position: relative; }
+    .section-title {
+    font-size: 2.8rem; font-weight: 800; color: var(--primary-dark);
+    margin-bottom: 20px; letter-spacing: -1px; text-transform: uppercase;
+    }
+    .section-subtitle {
+    font-size: 1.15rem; color: var(--text-light); max-width: 700px; margin: 0 auto; line-height: 1.8;
+    }
+
+    /* 動畫 */
+    .fade-in-up { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1); }
+    .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
+
+    /* =========================================
+    2. Hero 區塊
+    ========================================= */
+    .steel-hero {
+    position: relative;
+    height: 70vh; min-height: 600px;
+    background-image: url("{% static 'images/steel-design.jpg' %}");
+    background-size: cover; background-position: center; background-attachment: fixed;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    }
+
+    .steel-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    z-index: 1;
+    }
+    .steel-hero::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, #0f172a 120%);
+    z-index: 1;
+    }
+
+    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; padding: 0 20px; }
+
+    .hero-tag {
+    display: inline-block; padding: 10px 24px;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 50px;
+    background: rgba(255,255,255,0.05); backdrop-filter: blur(8px);
+    font-size: 0.95rem; letter-spacing: 3px; margin-bottom: 30px;
+    color: #cbd5e1; text-transform: uppercase; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .hero-content h1 {
+    font-size: 4.5rem; margin-bottom: 25px; font-weight: 900;
+    text-shadow: 0 10px 40px rgba(0,0,0,0.5); letter-spacing: 2px;
+    line-height: 1.1;
+    }
+    .hero-content p {
+    font-size: 1.35rem; line-height: 1.7; color: #e2e8f0; font-weight: 300;
+    max-width: 700px; margin: 0 auto;
+    }
+
+    /* =========================================
+    3. 服務範疇
+    ========================================= */
+    .scope-section {
+    background-color: #fff;
+    background-image:
+    linear-gradient(var(--blueprint-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    }
+
+    .scope-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+    }
+
+    .scope-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    padding: 50px 35px;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.4s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    }
+
+    .scope-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--primary-main), var(--primary-light));
+    transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease;
+    }
+
+    .scope-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 20px 50px rgba(29, 53, 87, 0.15);
+    border-color: transparent;
+    }
+    .scope-card:hover::before { transform: scaleX(1); }
+
+    .scope-icon {
+    width: 80px; height: 80px; margin-bottom: 30px;
+    background: #f1f5f9; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.4s ease;
+    }
+    .scope-icon i {
+    font-size: 3rem; color: var(--primary-main);
+    }
+
+    .scope-card:hover .scope-icon {
+    background: var(--primary-main);
+    transform: scale(1.1) rotate(-5deg);
+    }
+    .scope-card:hover .scope-icon i { color: #fff; }
+
+    .scope-card h3 { font-size: 1.6rem; margin-bottom: 15px; color: var(--primary-dark); font-weight: 700; }
+    .scope-card p { color: var(--text-light); line-height: 1.6; margin-bottom: 25px; }
+
+    .feature-list li {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; color: var(--text-main); font-size: 0.95rem;
+    padding-left: 0;
+    }
+    .feature-list li i { color: var(--accent-color); font-size: 1.2rem; }
+
+    /* =========================================
+    4. 我們的優勢 (Advantage) - 無圖片純設計版
+    ========================================= */
+    .adv-section {
+    background-color: var(--primary-dark);
+    color: #fff;
+    position: relative;
+    }
+
+    .adv-grid {
+    display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; align-items: center;
+    }
+
+    /* 左側：抽象視覺區 */
+    .adv-visual {
+    position: relative;
+    padding: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+    }
+
+    .adv-visual h3 {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+    }
+
+    .adv-visual .highlight-text {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+    }
+
+    .adv-visual p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    }
+
+    /* 裝飾線條 */
+    .adv-visual::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 100px; height: 100px;
+    border-right: 2px solid var(--tech-blue);
+    border-bottom: 2px solid var(--tech-blue);
+    }
+    .adv-visual::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100px; height: 100px;
+    border-left: 2px solid var(--tech-blue);
+    border-top: 2px solid var(--tech-blue);
+    }
+
+    /* 右側：內容區 */
+    .adv-list { display: flex; flex-direction: column; gap: 40px; }
+
+    .adv-item {
+    display: flex; gap: 25px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.3s ease;
+    }
+    .adv-item:last-child { border-bottom: none; }
+    .adv-item:hover { transform: translateX(10px); }
+
+    .adv-icon-box {
+    flex-shrink: 0; width: 60px; height: 60px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--tech-blue);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .adv-text h4 { font-size: 1.5rem; margin-bottom: 10px; font-weight: 700; color: #fff; }
+    .adv-text p { color: #cbd5e1; font-size: 1.1rem; line-height: 1.7; }
+
+    /* =========================================
+    5. CTA
+    ========================================= */
+    .cta-box {
+    margin-top: 0;
+    background: linear-gradient(135deg, #e2e8f0 0%, #ffffff 100%);
+    padding: 100px 0; text-align: center;
+    border-top: 5px solid var(--primary-main);
+    }
+
+    .cta-content h2 { font-size: 2.5rem; color: var(--primary-dark); margin-bottom: 20px; font-weight: 800; }
+    .cta-content p { font-size: 1.2rem; color: var(--text-light); margin-bottom: 40px; }
+
+    .btn-solid {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--primary-main); color: #fff; padding: 18px 50px;
+    border-radius: 4px;
+    font-weight: 700; font-size: 1.1rem; letter-spacing: 1px;
+    box-shadow: 0 10px 25px rgba(29, 53, 87, 0.3);
+    transition: all 0.3s ease;
+    }
+    .btn-solid:hover {
+    background: var(--primary-dark); transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(29, 53, 87, 0.4);
+    }
+
+    /* RWD */
+    @media (max-width: 992px) {
+    .scope-grid { grid-template-columns: 1fr; }
+    .adv-grid { grid-template-columns: 1fr; gap: 50px; }
+    .steel-hero h1 { font-size: 3rem; }
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- 1. Hero -->
+    <header class="steel-hero">
+        <div class="hero-content fade-in-up">
+            <span class="hero-tag">STEEL STRUCTURE</span>
+            <h1>鋼結構設計</h1>
+            <p>力量與美學的結合，精準與安全的承諾。<br>我們專注於為各類建築提供最優化的鋼結構解決方案。</p>
+        </div>
+    </header>
+
+    <!-- 2. 服務範疇 -->
+    <section class="section scope-section">
+        <div class="container">
+            <!-- 修正：移除橫線 -->
+            <div class="section-header fade-in-up">
+                <h2 class="section-title">設計服務範疇</h2>
+                <p class="section-subtitle">從工業廠房到特殊造型建築，我們提供全方位的結構分析與設計服務。</p>
+            </div>
+
+            <div class="scope-grid">
+                <!-- 1. 鋼構廠房 -->
+                <div class="scope-card fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="scope-icon">
+                        <i class="ri-building-4-line"></i>
+                    </div>
+                    <h3>鋼構廠房</h3>
+                    <p>針對大跨度、重載需求的工業建築，提供兼具經濟性與施工效率的結構方案。</p>
+                    <ul class="feature-list">
+                        <li><i class="ri-check-double-line"></i> 大跨度鋼構架設計</li>
+                        <li><i class="ri-check-double-line"></i> 預力混凝土基樁規劃</li>
+                        <li><i class="ri-check-double-line"></i> 重型設備基座檢核</li>
+                    </ul>
+                </div>
+
+                <!-- 2. 一般建築 -->
+                <div class="scope-card fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="scope-icon">
+                        <i class="ri-community-line"></i>
+                    </div>
+                    <h3>一般建築結構</h3>
+                    <p>包括商辦大樓、集合住宅及公共設施，注重結構安全與建築美學的完美平衡。</p>
+                    <ul class="feature-list">
+                        <li><i class="ri-check-double-line"></i> 鋼骨鋼筋混凝土 (SRC)</li>
+                        <li><i class="ri-check-double-line"></i> 純鋼骨結構 (SC)</li>
+                        <li><i class="ri-check-double-line"></i> 減震與隔震設計規劃</li>
+                    </ul>
+                </div>
+
+                <!-- 3. 特殊結構 -->
+                <div class="scope-card fade-in-up" style="transition-delay: 0.3s;">
+                    <div class="scope-icon">
+                        <i class="ri-compasses-2-line"></i>
+                    </div>
+                    <h3>特殊結構與補強</h3>
+                    <p>針對老舊建築的耐震補強，以及造型特殊的非標準結構進行精密數值分析。</p>
+                    <ul class="feature-list">
+                        <li><i class="ri-check-double-line"></i> 結構耐震補強設計</li>
+                        <li><i class="ri-check-double-line"></i> 太陽能/設備支撐架</li>
+                        <li><i class="ri-check-double-line"></i> 特殊造型鋼構分析</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 我們的優勢 (修正：無圖片純設計版) -->
+    <section class="section adv-section">
+        <div class="container">
+            <div class="adv-grid">
+
+                <!-- 左側：視覺化文字區塊 (取代原圖片) -->
+                <div class="adv-visual fade-in-up">
+                    <span class="highlight-text">Why Choose Us?</span>
+                    <h3>Precision &<br>Efficiency</h3>
+                    <p>
+                        我們不僅計算數據，更為建築注入靈魂。透過精密分析與豐富經驗，確保每一根樑柱都精準到位，在安全與經濟之間取得最佳平衡。</p>
+                </div>
+
+                <!-- 右側：列表 -->
+                <div class="adv-list">
+                    <!-- 優勢 1 -->
+                    <div class="adv-item fade-in-up" style="transition-delay: 0.1s;">
+                        <div class="adv-icon-box"><i class="ri-cpu-line"></i></div>
+                        <div class="adv-text">
+                            <h4>先進分析技術</h4>
+                            <p>運用 ETABS、SAP2000
+                                等國際級結構分析軟體，進行精確的地震力與風力模擬，確保結構在極端環境下的安全性。</p>
+                        </div>
+                    </div>
+
+                    <!-- 優勢 2 -->
+                    <div class="adv-item fade-in-up" style="transition-delay: 0.2s;">
+                        <div class="adv-icon-box"><i class="ri-scales-3-line"></i></div>
+                        <div class="adv-text">
+                            <h4>法規與經濟並重</h4>
+                            <p>
+                                在嚴格遵守國家耐震規範的前提下，透過結構斷面優化設計，為業主節省不必要的鋼材用量，創造最大價值。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. CTA -->
+    <section class="cta-box">
+        <div class="container fade-in-up">
+            <div class="cta-content">
+                <h2>打造安全穩固的建築基石</h2>
+                <p>無論是新建案規劃或結構補強，勤築工程都是您最專業的合作夥伴。</p>
+                <a href="{% url 'CZ_contact' %}" class="btn-solid">索取報價與諮詢 <i
+                        class="ri-arrow-right-line"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, {threshold: 0.15});
+
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        });
+    </script>
+{% endblock %}
