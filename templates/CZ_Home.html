@@ -36,12 +36,16 @@
     transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .fade-in-up.is-visible { opacity: 1; transform: translateY(0); }
 
+    /* 【核心修正】Hero 文字斷行控制 (預設：桌機版) */
+    .mobile-br { display: none; }       /* 桌機版：隱藏換行 */
+    .desktop-comma { display: inline; } /* 桌機版：顯示逗號 */
+
     /* =========================================
     2. Hero 區塊 (主視覺) - 現代大氣風格
     ========================================= */
     .hero {
     position: relative;
-    height: 85vh; /* 加大高度，更有氣勢 */
+    height: 85vh;
     min-height: 600px;
     background-image: url("{% static 'images/hero-background.jpg' %}");
     background-size: cover;
@@ -92,10 +96,10 @@
     .features-intro h2 { font-size: 2.8rem; line-height: 1.3; color: var(--primary-dark); margin-bottom: 25px; }
     .features-intro p { font-size: 1.15rem; color: var(--text-light); line-height: 1.8; margin-bottom: 40px; }
 
-    .features-list { display: flex; flex-direction: column; gap: 25px; } /* 增加項目間距 */
+    .features-list { display: flex; flex-direction: column; gap: 25px; }
 
     .feature-list-item {
-    display: flex; align-items: center; /* 改為垂直置中對齊，讓大圖標更好看 */
+    display: flex; align-items: center;
     gap: 30px;
     padding: 30px;
     background: #fff; border-radius: var(--radius-lg);
@@ -114,20 +118,18 @@
     }
     .feature-list-item:hover::before { opacity: 1; }
 
-    /* 【核心修正】圖標容器放大 */
     .icon-box {
     flex-shrink: 0;
-    width: 80px;  /* 加大寬度 */
-    height: 80px; /* 加大高度 */
+    width: 80px;
+    height: 80px;
     background: linear-gradient(135deg, #eaf2f6 0%, #ffffff 100%);
-    border-radius: 16px; /* 圓角稍微調整 */
+    border-radius: 16px;
     display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* 增加陰影 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
 
-    /* 【核心修正】圖標本身放大 */
     .feature-list-item .icon-box i {
-    font-size: 3rem; /* 加大圖標字體大小 */
+    font-size: 3rem;
     color: var(--primary-main);
     transition: all 0.3s ease;
     line-height: 1;
@@ -158,7 +160,6 @@
     .service-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
     .service-card:hover .service-img-wrap img { transform: scale(1.1); }
 
-    /* 圖片上的標籤 */
     .service-tag {
     position: absolute; top: 20px; left: 20px;
     background: rgba(255,255,255,0.9); padding: 6px 12px;
@@ -178,13 +179,12 @@
     .service-link:hover i { transform: translateX(5px); }
 
     /* =========================================
-    5. OLi 平台 (Tech Showcase) - 深色主題
+    5. OLi 平台 (Tech Showcase)
     ========================================= */
     .oli-section {
     background: var(--primary-dark); color: #fff;
     position: relative; overflow: hidden;
     }
-    /* 背景裝飾圓 */
     .oli-section::after {
     content: ''; position: absolute; top: -100px; right: -100px;
     width: 600px; height: 600px; background: radial-gradient(circle, rgba(69, 123, 157, 0.2) 0%, transparent 70%);
@@ -243,19 +243,26 @@
     /* =========================================
     7. 響應式調整
     ========================================= */
+
+    /*
+    【核心修正】將斷行邏輯移到 992px
+    確保在 平板直向 或 手機 瀏覽時，只要空間不夠，
+    就會直接強制換行，避免出現尷尬的 "勤於專業，築" + "就未來"
+    */
     @media (max-width: 992px) {
-    .section { padding: 60px 0; } /* 稍微縮小垂直間距 */
+    .section { padding: 60px 0; }
     .hero-content h1 { font-size: 3rem; }
+
+    /* 在 992px 以下 (含手機) 強制換行並隱藏逗號 */
+    .desktop-comma { display: none; }
+    .mobile-br { display: block; }
 
     .features-container, .oli-container {
     grid-template-columns: 1fr;
-    /* 【建議調整】將間距縮小，避免在小手機上內容太寬 */
     gap: 30px;
     text-align: center;
     }
     .features-list { align-items: stretch; }
-
-    /* 手機版移除 hover 位移 */
     .feature-list-item:hover { transform: none; }
 
     .feature-list-item {
@@ -274,20 +281,14 @@
 
     @media (max-width: 768px) {
     .hero { height: 70vh; }
-    .hero-content h1 { font-size: 2.5rem; }
-    .section-title { font-size: 2.2rem; }
-
     .services-grid { grid-template-columns: 1fr; }
     .cta-content h2 { font-size: 2.2rem; }
-
-    /* 【核心新增】Hero 文字斷行控制 */
-    .desktop-comma { display: none; } /* 手機版隱藏逗號 */
-    .mobile-br { display: block; }    /* 手機版顯示換行 */
     }
 
-    /* 【核心新增】桌機版預設樣式 (寫在 media query 外面或上方) */
-    .mobile-br { display: none; }      /* 桌機版隱藏換行 */
-    .desktop-comma { display: inline; } /* 桌機版顯示逗號 */
+    /* 針對超小螢幕稍微縮小標題字體，確保一行四個字不換行 */
+    @media (max-width: 576px) {
+    .hero-content h1 { font-size: 2.5rem; }
+    }
 {% endblock %}
 
 {% block content %}
@@ -295,7 +296,7 @@
     <header class="hero">
         <div class="hero-content fade-in-up">
             <span class="hero-label">Engineering Excellence</span>
-            <!-- 【核心修正】斷行控制 -->
+            <!-- 【核心修正】斷行結構 -->
             <h1>
                 勤於專業<span class="desktop-comma">，</span>
                 <br class="mobile-br">
@@ -322,7 +323,6 @@
                 <div class="features-list">
                     <!-- 1. 效率展現 -->
                     <div class="feature-list-item fade-in-up" style="transition-delay: 0.1s;">
-                        <!-- 【核心修正】使用 icon-box 包裹 i 標籤 -->
                         <div class="icon-box">
                             <i class="ri-timer-flash-line"></i>
                         </div>
