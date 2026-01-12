@@ -1,0 +1,24 @@
+<div class="a4-page fixed-page">
+    <div class="report-header"><div class="report-title">9. 牆踵版(Heel)結構設計 (2/7)</div></div>
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">9.2 垂直因數化載重詳算 ($W_{u,down}$)</h5>
+        <p class="small">計算每一延米長度內，牆踵版承受之穩定載重（向下）：</p>
+
+        <div class="ms-3 small">
+            <p class="mb-1 text-muted">1. 版體自重 ($D_c$):</p>
+            $$ w_{conc} = H_{bp} \times \gamma_c = {{ input_data.H_bp }} \times 0.01 \times {{ input_data.gamma_c }} = \mathbf{ {{ heel_design.w_conc }} } \text{ tf/m}^2 $$
+
+            <p class="mb-1 mt-3 text-muted">2. 回填土壓重 ($D_s$):</p>
+            $$ w_{soil} = H_{fill} \times \gamma_{soil} = \mathbf{ {{ heel_design.w_soil }} } \text{ tf/m}^2 $$
+
+            <p class="mb-1 mt-3 text-muted">3. 地表均佈超載 ($L$):</p>
+            $$ w_{surcharge} = q \times 1.6 = \mathbf{ {{ heel_design.w_q_u }} } \text{ tf/m}^2 $$
+
+            <div class="alert alert-info mt-4">
+                <h6 class="fw-bold mb-1">合計下壓分布載重包絡值 ($q_{u,down}$)：</h6>
+                $$ q_{u,down} = 1.2(w_{conc} + w_{soil}) + 1.6w_{surcharge} = \mathbf{ {{ heel_design.qu_down }} } \text{ tf/m}^2 $$
+            </div>
+        </div>
+    </div>
+    <div class="report-footer"><span>Page 26</span></div>
+</div>

@@ -1,0 +1,17 @@
+<div class="a4-page fixed-page">
+    <div class="report-header"><div class="report-title">9. 牆踵版(Heel)結構設計 (3/7)</div></div>
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">9.3 因數化地基反力分布 ($q_{u,up}$)</h5>
+        <p class="small">依據 LRFD 計算之最終基底應力，求得牆踵區域之分布值：</p>
+
+        <div class="formula-card">
+            <p class="small text-muted mb-1">臨界斷面處應力 ($q_{u,stem}$):</p>
+            $$ q_{u,stem} = \mathbf{ {{ toe_design.qu_toe_stem }} } \text{ tf/m}^2 $$
+            <p class="small text-muted mb-1 mt-2">版末端處應力 ($q_{u,heel}$):</p>
+            $$ q_{u,heel} = \mathbf{ {{ heel_design.qu_heel }} } \text{ tf/m}^2 $$
+        </div>
+
+        <p class="mt-4 small">地基應力對牆踵版提供有利之抵抗（減少向上彎矩），計算時採取保守因數 0.9 或忽略其影響。</p>
+    </div>
+    <div class="report-footer"><span>Page 27</span></div>
+</div>

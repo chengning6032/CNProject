@@ -1,0 +1,140 @@
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">7. 牆身配筋設計詳算 (2/4)</div>
+        <div class="report-subtitle">Stem Design - Static Forces Detail</div>
+    </div>
+
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">7.3 靜態橫向力與力矩計算 (基準點：牆腳)</h5>
+
+        <!-- 1. 幾何角度摘要 -->
+        <div class="p-3 mb-4 border bg-light rounded shadow-sm">
+            <div class="row text-center">
+                <div class="col-4 border-end">
+                    <div class="verdict-label">牆背傾角 ($\theta$)</div>
+                    <div class="fw-bold">{{ stem_design_details.theta_deg }}°</div>
+                </div>
+                <div class="col-4 border-end">
+                    <div class="verdict-label">牆面摩擦角 ($\delta$)</div>
+                    <div class="fw-bold">{{ stem_design_details.delta_deg }}°</div>
+                </div>
+                <div class="col-4">
+                    <div class="verdict-label">合力傾角 ($\Omega = \delta + \theta$)</div>
+                    <div class="fw-bold text-primary">{{ stem_design_details.omega_deg }}°</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- (1) 主動土壓力 -->
+        <p class="fw-bold text-primary mb-2">(1) 分層主動土壓力 ($P_{ah}$)</p>
+        <div class="ms-3 mb-5">
+            <h6 class="fw-bold text-secondary small mb-2"><i class="bi bi-caret-right-fill"></i> A. 點位有效垂直應力與側向壓力詳算：
+            </h6>
+            <div class="ps-3 border-start mb-4">
+                <p class="mb-1 text-muted small">1. 牆頂處 ($z = 0$):</p>
+                $$ \sigma'_{v,top} = 0 \Rightarrow p'_{a,top} = \mathbf{ 0 } \text{ tf/m}^2 $$
+
+                {% if stem_design_details.has_water %}
+                    <p class="mb-1 mt-3 text-muted small">2. 地下水位面處 ($z = h_{dry}
+                        = {{ stem_design_details.h_dry }} \text{m}$):</p>
+                    $$ \begin{aligned}
+                    \sigma'_{v,wat} &= \gamma_t \cdot h_{dry} = {{ input_data.gamma_soil }} \times
+                    {{ stem_design_details.h_dry }} = \mathbf{ {{ stem_design_details.sig_v_wat }} } \text{ tf/m}^2 \\
+                    p'_{a,wat} &= K_a \cdot \sigma'_{v,wat} = {{ Ka }} \times {{ stem_design_details.sig_v_wat }} =
+                    \mathbf{ {{ stem_design_details.pa_wat }} } \text{ tf/m}^2
+                    \end{aligned} $$
+
+                    <p class="mb-1 mt-3 text-muted small">3. 牆底臨界斷面處 ($z = H_s = {{ stem_design_details.h_s }}
+                        \text{m}$):</p>
+                    $$ \begin{aligned}
+                    \sigma'_{v,bot} &= \sigma'_{v,wat} + (\gamma_{sat} - \gamma_w) \cdot h_{w} \\
+                    &= {{ stem_design_details.sig_v_wat }} + ({{ input_data.gamma_sat }} - 1.0) \times
+                    {{ stem_design_details.h_w_s }} = \mathbf{ {{ stem_design_details.sig_v_bot }} } \text{ tf/m}^2 \\
+                    p'_{a,bot} &= K_a \cdot \sigma'_{v,bot} = {{ Ka }} \times {{ stem_design_details.sig_v_bot }} =
+                    \mathbf{ {{ stem_design_details.pa_bot }} } \text{ tf/m}^2
+                    \end{aligned} $$
+                {% else %}
+                    <p class="mb-1 mt-3 text-muted small">2. 牆底臨界斷面處 ($z = H_s = {{ stem_design_details.h_s }}
+                        \text{m}$):</p>
+                    $$ \begin{aligned}
+                    \sigma'_{v,bot} &= \gamma_t \cdot h_s = {{ input_data.gamma_soil }} \times
+                    {{ stem_design_details.h_s }} = \mathbf{ {{ stem_design_details.sig_v_bot }} } \text{ tf/m}^2 \\
+                    p'_{a,bot} &= K_a \cdot \sigma'_{v,bot} = {{ Ka }} \times {{ stem_design_details.sig_v_bot }} =
+                    \mathbf{ {{ stem_design_details.pa_bot }} } \text{ tf/m}^2
+                    \end{aligned} $$
+                {% endif %}
+            </div>
+
+            <h6 class="fw-bold text-secondary small mb-2"><i class="bi bi-caret-right-fill"></i> B. 分層合力分解與力矩合計：
+            </h6>
+            <div class="ps-3 border-start">
+                <p class="mb-1 text-muted small">壓力圖總面積 $P_{area} = P_1 + P_2$:</p>
+                $$ P_{area} = {{ stem_design_details.P1 }} + {{ stem_design_details.P2 }} =
+                \mathbf{ {{ stem_design_details.P_total_area }} } \text{ tf/m} $$
+
+                <p class="mb-1 mt-3 text-muted small">考慮傾斜與摩擦之水平投影力 $P_{ah,h} = P_{area} \cdot
+                    \cos\Omega$:</p>
+                $$ P_{ah,h} = {{ stem_design_details.P_total_area }} \times \cos({{ stem_design_details.omega_deg }}°) =
+                \mathbf{ {{ stem_design_details.PaH_h }} } \text{ tf/m} $$
+
+                <p class="mb-1 mt-3 text-muted small">靜態土壓力力矩 ($y_{pa}$ 為自牆腳向上距離):</p>
+                $$ M_{ah} = P_{ah,h} \cdot y_{pa} = {{ stem_design_details.PaH_h }} \times {{ stem_design_details.ypa }}
+                = \mathbf{ {{ stem_design_details.Mah_static }} } \text{ tf-m/m} $$
+            </div>
+        </div>
+
+        <!-- (2) 靜水壓力 -->
+        <p class="fw-bold text-primary mb-2">(2) 靜水壓力 ($P_{wh}$)</p>
+        <div class="ms-3">
+            {% if stem_design_details.has_water %}
+                <h6 class="fw-bold text-secondary small mb-2"><i class="bi bi-caret-right-fill"></i> 水壓力水平投影與力矩詳算：
+                </h6>
+                <div class="ps-3 border-start">
+                    <p class="mb-1 text-muted small">1. 斜面上之水平水壓力 $P_{wh} = \frac{1}{2} \gamma_w h_w^2
+                        \cos\theta$:</p>
+                    $$ P_{wh} = 0.5 \times 1.0 \times {{ stem_design_details.h_w_s }}^2 \times
+                    \cos({{ stem_design_details.theta_deg }}°) = \mathbf{ {{ stem_design_details.PwH }} } \text{ tf/m}
+                    $$
+
+                    <p class="mb-1 mt-3 text-muted small">2. 水壓力作用點高度 $y_{pw} = h_w / 3$:</p>
+                    $$ y_{pw} = {{ stem_design_details.h_w_s }} / 3 = \mathbf{ {{ stem_design_details.ypw }} } \text{ m}
+                    $$
+
+                    <p class="mb-1 mt-3 text-muted small">3. 靜水壓力力矩 $M_{wh} = P_{wh} \cdot y_{pw}$:</p>
+                    <div class="p-2 bg-white border border-primary-subtle rounded d-inline-block">
+                        $$ M_{wh} = {{ stem_design_details.PwH }} \times {{ stem_design_details.ypw }} =
+                        \mathbf{ {{ stem_design_details.Mwh_static }} } \text{ tf-m/m} $$
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-light border small text-muted">
+                    <i class="bi bi-info-circle"></i> 地下水位低於牆腳臨界斷面（$H_w \le H_{bp}$），牆身結構計算不計入靜水壓力。
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 最終設計卡片 -->
+        <div class="formula-card mt-5 bg-dark text-white border-0 shadow">
+            <div class="row text-center align-items-center">
+                <div class="col-6 border-end border-secondary">
+                    <div class="verdict-label text-light opacity-75">合計靜態橫向名義剪力</div>
+                    <div class="h5 fw-bold mb-0">$V_{static} =
+                        \mathbf{ {{ stem_design_details.PaH_h|add:stem_design_details.PwH }} } \text{ tf/m}$
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="verdict-label text-light opacity-75">合計靜態橫向名義彎矩</div>
+                    <div class="h5 fw-bold mb-0">$M_{static} =
+                        \mathbf{ {{ stem_design_details.Mah_static|add:stem_design_details.Mwh_static }} } \text{
+                        tf-m/m}$
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-footer">
+        <span>Generated by CNProject StructTool</span>
+        <span class="float-end">Page 19</span>
+    </div>
+</div>

@@ -1,0 +1,25 @@
+<div class="a4-page fixed-page">
+    <div class="report-header"><div class="report-title">9. 牆踵版(Heel)結構設計 (5/7)</div></div>
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">9.5 牆踵版抗彎強度檢核 ($\phi M_n$)</h5>
+        <p class="small">配置 {{ input_data.rebar_heel_size }} @ {{ input_data.rebar_heel_spacing }} cm (版頂筋)：</p>
+
+        <div class="ms-3">
+            <p class="mb-1 small">有效高度 $d = {{ heel_design.d }} \text{ cm}$</p>
+            <p class="mb-1 small">提供面積 $A_s = {{ heel_design.As }} \text{ cm}^2/\text{m}$</p>
+
+            <div class="formula-card">
+                $$ a = \frac{A_s \cdot f_y}{0.85 \cdot f'_c \cdot b} = \mathbf{ {{ heel_design.a }} } \text{ cm} $$
+                $$ \phi M_n = 0.9 \cdot A_s \cdot f_y \cdot (d - a/2) = \mathbf{ {{ heel_design.phiMn }} } \text{ tf-m/m} $$
+            </div>
+
+            <div class="fs-check-card border-success mt-4">
+                <div class="row align-items-center">
+                    <div class="col-8">檢核：$M_u = {{ heel_design.Mu }} \le \phi M_n = {{ heel_design.phiMn }}$</div>
+                    <div class="col-4 text-center fw-bold text-success">判定：OK</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="report-footer"><span>Page 29</span></div>
+</div>

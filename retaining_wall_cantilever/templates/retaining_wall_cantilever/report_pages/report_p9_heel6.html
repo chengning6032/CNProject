@@ -1,0 +1,22 @@
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">9. 牆踵版(Heel)結構設計 (6/7)</div>
+    </div>
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">9.6 牆踵版抗剪強度檢核 ($\phi V_c$)</h5>
+        <p class="small">檢核牆踵版斷面厚度是否足以抵抗剪力（一向剪力）：</p>
+
+        <div class="ps-3 border-start">
+            $$ \phi V_c = 0.75 \cdot 0.53 \sqrt{f'_c} \cdot b \cdot d = \mathbf{ {{ heel_design.phiVc }} } \text{ tf/m}
+            $$
+        </div>
+
+        <div class="fs-check-card border-success mt-4">
+            <div class="row align-items-center">
+                <div class="col-8">檢核：$V_u = {{ heel_design.Vu }} \le \phi V_c = {{ heel_design.phiVc }}$</div>
+                <div class="col-4 text-center fw-bold text-success">判定：OK</div>
+            </div>
+        </div>
+    </div>
+    <div class="report-footer"><span>Page 30</span></div>
+</div>
