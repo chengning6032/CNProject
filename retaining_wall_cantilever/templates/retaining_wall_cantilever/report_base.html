@@ -2,57 +2,74 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>懸臂式擋土牆計算書</title>
-    <!-- Bootstrap CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>懸臂式擋土牆結構計算書 - CNProject</title>
+
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        body {
-            background-color: #525659;
-            padding: 20px 0;
-            font-family: "Times New Roman", "微軟正黑體", sans-serif;
+        /* --- 專業工程報表色彩體系 --- */
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --emerald-700: #047857; /* 判定 OK 色 */
+            --rose-700: #be123c; /* 判定 NG 色 */
+            --amber-600: #d97706; /* 警告色 */
         }
 
-        /* A4 紙張標準設定 */
-        .a4-page {
+        /* --- 全域背景與環境設定 --- */
+        body {
+            background-color: #525659; /* 模擬 PDF 閱讀器背景 */
+            padding: 40px 0;
+            font-family: "Times New Roman", "微軟正黑體", serif;
+            margin: 0;
+            color: var(--slate-900);
+        }
+
+        /* --- A4 紙張規格鎖定 --- */
+        .a4-page, .fixed-page {
             width: 210mm;
-            min-height: 297mm;
-            background: white;
-            margin: 0 auto 30px auto;
+            height: 297mm;
             padding: 20mm;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            margin: 0 auto 40px auto !important;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
             position: relative;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: hidden; /* 防止內容溢出撐開頁面 */
+            display: flex;
+            flex-direction: column;
         }
 
-        /* 懸浮按鈕 */
-        .floating-controls {
-            position: fixed;
-            top: 20px;
-            right: 30px;
-            z-index: 10001;
-        }
-
-        /* 頁眉頁尾 */
+        /* --- 頁首與頁尾樣式 --- */
         .report-header {
             text-align: center;
-            border-bottom: 2px solid #333;
+            border-bottom: 1.5px solid var(--slate-800);
             padding-bottom: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .report-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            color: #333;
+            color: var(--slate-800);
+            letter-spacing: 1px;
         }
 
         .report-subtitle {
-            font-size: 14px;
-            color: #666;
-            letter-spacing: 1px;
+            font-size: 12px;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .report-footer {
@@ -60,70 +77,149 @@
             bottom: 15mm;
             left: 20mm;
             right: 20mm;
-            border-top: 1px solid #ccc;
+            border-top: 1px solid var(--slate-200);
             padding-top: 8px;
-            font-size: 10pt;
-            color: #888;
+            font-size: 9pt;
+            color: var(--slate-600);
         }
 
-        /* 內容樣式 */
+        /* --- 內容層次與字體規範 --- */
         h4 {
-            border-left: 6px solid #0d6efd;
-            padding-left: 12px;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            font-size: 18px;
+            font-size: 1rem; /* 16px */
             font-weight: bold;
-            color: #444;
+            color: var(--slate-900);
+            border-left: 5px solid var(--slate-800);
+            padding-left: 12px;
+            margin: 20px 0 12px 0;
         }
 
         h5 {
-            font-size: 16px;
+            font-size: 0.9rem; /* 14.4px */
             font-weight: bold;
-            margin-top: 20px;
-            color: #555;
+            color: var(--slate-700);
+            margin-top: 18px;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 4px;
         }
 
-        .table-prop th {
-            background-color: #f1f3f5;
-            width: 35%;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .table-prop td {
-            font-size: 0.95rem;
-        }
-
-        /* MathJax 字體調整 */
         .math-content {
-            font-size: 90%;
+            font-size: 0.85rem; /* 核心：公式內容微縮增加專業感 */
+            line-height: 1.5;
         }
 
-        /* 列印模式 */
+        /* --- 專業表格規範 (25% 標籤對齊) --- */
+        .report-table-fixed {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            font-size: 0.8rem; /* 表格字體設定為 0.8rem */
+        }
+
+        .report-table-fixed th, .report-table-fixed td {
+            border: 1px solid var(--slate-300);
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+
+        /* 標籤欄 (1, 3 column) */
+        .label-col {
+            width: 25%;
+            background-color: var(--slate-50);
+            color: var(--slate-700);
+            font-weight: 600;
+            text-align: left !important;
+        }
+
+        /* 數據欄 (2, 4 column) */
+        .value-col {
+            width: 25%;
+            background-color: #ffffff;
+            text-align: center;
+        }
+
+        .table-section-head {
+            background-color: var(--slate-700) !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* --- 精緻公式與判定卡片 --- */
+        .formula-card {
+            background-color: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 4px;
+            padding: 12px 18px;
+            margin: 12px 0;
+        }
+
+        .fs-check-card {
+            border: 1px solid var(--slate-200);
+            border-left-width: 6px;
+            border-radius: 4px;
+            background-color: #ffffff;
+            padding: 15px 25px;
+            margin: 15px 0;
+        }
+
+        .fs-check-card.border-success {
+            border-left-color: var(--emerald-700);
+        }
+
+        .fs-check-card.border-danger {
+            border-left-color: var(--rose-700);
+        }
+
+        .fs-formula-wrapper {
+            font-size: 0.9rem; /* 判定卡公式字體 */
+            color: var(--slate-800);
+        }
+
+        .verdict-label {
+            font-size: 0.7rem;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- 懸浮控制按鈕 --- */
+        .floating-controls {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            z-index: 10001;
+        }
+
+        /* --- 列印模式優化 --- */
         @media print {
             body {
-                background: none;
+                background-color: white;
                 padding: 0;
+                margin: 0;
             }
 
             .floating-controls {
                 display: none !important;
             }
 
-            .a4-page {
-                width: 100%;
-                margin: 0;
-                box-shadow: none;
+            .a4-page, .fixed-page {
+                margin: 0 !important;
+                box-shadow: none !important;
                 page-break-after: always;
+                width: 210mm;
+                height: 297mm;
             }
         }
     </style>
 
-    <!-- MathJax -->
+    <!-- MathJax 數學公式引擎配置 -->
     <script>
         window.MathJax = {
-            tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]},
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
             svg: {fontCache: 'global'}
         };
     </script>
@@ -131,28 +227,31 @@
 </head>
 <body>
 
-<!-- 懸浮控制按鈕 -->
+<!-- 懸浮控制區 (僅瀏覽器顯示) -->
 <div class="floating-controls no-print">
-    <button class="btn btn-primary btn-lg shadow me-2" onclick="window.print()">
+    <button class="btn btn-dark btn-sm shadow-sm me-2" onclick="window.print()">
         <i class="bi bi-printer"></i> 列印 / 儲存 PDF
     </button>
-    <button class="btn btn-secondary btn-lg shadow" onclick="window.close()">
+    <button class="btn btn-outline-secondary btn-sm shadow-sm bg-white" onclick="window.close()">
         <i class="bi bi-x-lg"></i> 關閉
     </button>
 </div>
 
+<!-- 報表內容區塊 -->
 {% if not result_available %}
     <div class="a4-page d-flex align-items-center justify-content-center">
         <div class="text-center text-muted">
-            <h3><i class="bi bi-exclamation-circle"></i> 無計算資料</h3>
-            <p>請先回到輸入頁面進行計算。</p>
+            <i class="bi bi-exclamation-circle fs-1"></i>
+            <h3 class="mt-3">無計算資料</h3>
+            <p>請先回到設計輸入頁面進行穩定性分析。</p>
         </div>
     </div>
 {% else %}
     {% block report_content %}{% endblock %}
 {% endif %}
 
-<!-- 額外腳本 -->
+<!-- 額外腳本區塊 -->
 {% block extra_scripts %}{% endblock %}
+
 </body>
 </html>

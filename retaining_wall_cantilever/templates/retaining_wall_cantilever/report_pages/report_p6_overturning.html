@@ -1,119 +1,182 @@
-<div class="a4-page">
+<!-- [PAGE 11] 第一頁：5.1 檢核公式 與 5.2 傾倒力矩詳算 -->
+<div class="a4-page fixed-page">
     <div class="report-header">
-        <div class="report-title">5. 抗傾倒穩定性檢核詳細計算</div>
-        <div class="report-subtitle">Overturning Stability Check</div>
+        <div class="report-title">5. 抗傾倒穩定性檢核詳細計算 (1/3)</div>
+        <div class="report-subtitle">Overturning Stability - Driving Moments Detail</div>
     </div>
 
     <div class="content math-content">
-        <!-- 5.1 公式 -->
         <h5 class="mt-4 border-bottom pb-2">5.1 檢核公式 (Formula)</h5>
-        <div class="mb-3">
-            <p>抗傾倒安全係數 ($FS_{overturning}$) 定義為對牆趾 (Toe) 之總抵抗力矩與總傾倒力矩之比值：</p>
-            <div style="overflow-x: auto;">
-                $$ FS_{over} = \dfrac{M_{resist}}{M_{overturn}} = \dfrac{\sum M_{weight} + \sum M_{Pv}}{M_{driving}} \ge 2.0 $$
-            </div>
+        <div class="p-3 bg-light border rounded mb-3 text-center">
+            $$ FS_{over} = \dfrac{M_{resist}}{M_{overturn}} \ge 2.0 $$
         </div>
 
-        <!-- 5.2 抵抗力矩 -->
-        <h5 class="mt-4 border-bottom pb-2">5.2 抵抗力矩計算 ($M_{resist}$)</h5>
-        <p>包含結構自重 ($W$) 與主動土壓力之垂直分量 ($P_v$)：</p>
+        <h5 class="mt-4 border-bottom pb-2">5.2 傾倒力矩詳算表 ($M_{overturn}$)</h5>
+        <p class="small text-muted">計算各水平分力對基版底部 (座標原點 [0,0]) 產生之逆時針力矩：</p>
 
-        <table class="table table-striped table-bordered table-sm text-center align-middle">
-            <thead class="table-success">
-                <tr>
-                    <th>項目 (Item)</th>
-                    <th>垂直力 $N$ (tf/m)</th>
-                    <th>力臂 $X$ (m)</th>
-                    <th>抵抗力矩 $M_R$ (tf-m/m)</th>
-                </tr>
+        <table class="report-table-fixed text-center align-middle mb-4" style="font-size: 0.85rem;">
+            <thead>
+            <tr class="table-section-head">
+                <th width="22%">項目名稱</th>
+                <th width="18%">水平力 $P_h$ (tf/m)</th>
+                <th width="15%">力臂 $y$ (m)</th>
+                <th width="30%">彎矩計算公式</th>
+                <th width="15%">彎矩 $M_o$ (tf-m/m)</th>
+            </tr>
             </thead>
             <tbody>
-                <!-- 結構自重迴圈 -->
-                {% for block in blocks %}
-                <tr>
-                    <td class="text-start">{{ block.name }}</td>
-                    <td>{{ block.weight|floatformat:3 }}</td>
-                    <td>-</td> <!-- 這裡沒傳X臂，直接顯示計算後的 Moment -->
-                    <td>{{ block.moment|floatformat:3 }}</td>
-                </tr>
-                {% endfor %}
-
-                <!-- 土壓垂直分量 -->
-                <tr>
-                    <td class="text-start text-primary">土壓垂直分量 ($P_v$)</td>
-                    <td>{{ stability.Pv_force }}</td>
-                    <td>{{ stability.arm_Pv }}</td>
-                    <td>{{ stability.M_resist_Pv }}</td>
-                </tr>
-
-                <!-- 總和 -->
-                <tr class="table-dark fw-bold">
-                    <td class="text-start">總抵抗力矩 ($M_{resist}$)</td>
-                    <td>{{ stability.N_total }}</td>
-                    <td>-</td>
-                    <td>{{ stability.M_resist }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="alert alert-secondary py-2 small">
-            註：$P_v$ 包含牆背摩擦力、超載垂直分量及斜背上的水重。力臂 $X$ 為合力作用點至牆趾之水平距離。
-        </div>
-
-        <!-- 5.3 傾倒力矩 -->
-        <h5 class="mt-4 border-bottom pb-2">5.3 傾倒力矩計算 ($M_{overturn}$)</h5>
-        <p>來自土壓力、水壓力與地震力之水平分量：</p>
-
-        <table class="table table-striped table-bordered table-sm text-center align-middle">
-            <thead class="table-danger">
-                <tr>
-                    <th>項目 (Item)</th>
-                    <th>水平力 $P_H$ (tf/m)</th>
-                    <th>力臂 $Y$ (m)</th>
-                    <th>傾倒力矩 $M_O$ (tf-m/m)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for force in driving_forces %}
-                {% if force.force != 0 %}
-                <tr>
-                    <td class="text-start">{{ force.name }}</td>
-                    <td>{{ force.force|floatformat:3 }}</td>
-                    <td>{% if force.arm != '-' %}{{ force.arm|floatformat:3 }}{% else %}-{% endif %}</td>
-                    <td>{{ force.moment|floatformat:3 }}</td>
-                </tr>
+            {% for item in over_details_list %}
+                {% if item.active %}
+                    <tr>
+                        <td class="text-start ps-3 fw-bold">{{ item.name }}</td>
+                        <td>{{ item.force_val }}</td>
+                        <td>{{ item.arm_val }}</td>
+                        <td class="text-muted small">
+                            $ {{ item.force_val }} \times {{ item.arm_val }} $
+                        </td>
+                        <td class="fw-bold">{{ item.moment_val }}</td>
+                    </tr>
                 {% endif %}
-                {% endfor %}
-
-                <tr class="table-dark fw-bold">
-                    <td class="text-start">總傾倒力矩 ($M_{overturn}$)</td>
-                    <td>{{ P_total|floatformat:3 }}</td>
-                    <td>{{ y_resultant|floatformat:3 }}</td>
-                    <td>{{ stability.M_overturn }}</td>
-                </tr>
+            {% endfor %}
             </tbody>
+            <tfoot>
+            <tr class="table-danger fw-bold" style="border-top: 2px solid var(--slate-800);">
+                <td colspan="4" class="text-end pe-4">合計總傾倒力矩 ($\sum M_{o,i}$)：</td>
+                <td class="text-danger" style="font-size: 1rem;">{{ M_overturn_sum }}</td>
+            </tr>
+            </tfoot>
         </table>
 
-        <!-- 5.4 結果 -->
-        <h5 class="mt-4 border-bottom pb-2">5.4 安全係數檢核 ($FS$)</h5>
-        <div class="alert {% if stability.FS_over >= 2.0 %}alert-success{% else %}alert-danger{% endif %}">
-            $$
-            \begin{aligned}
-            FS_{over} &= \dfrac{ {{ stability.M_resist }} }{ {{ stability.M_overturn }} } \\[1em]
-                      &= \mathbf{ {{ stability.FS_over }} }
-            \end{aligned}
-            $$
-            <div class="text-end fw-bold mt-2">
-                判定：{% if stability.FS_over >= 2.0 %} OK ( $\ge 2.0$ ) {% else %} NG ( $< 2.0$ ) {% endif %}
-            </div>
+        <div class="p-2 mb-4 bg-light border-start border-4 border-danger rounded small">
+            <strong>註記：</strong><br>
+            1. 力臂 $y$ 係指各分力作用點距離基版底部之垂直距離。<br>
+            2. 主動土壓力重心 $y_{pa}$ 採分層面積矩加權計算之結果。
         </div>
 
+        <!-- 傾倒力矩總結 -->
+        <div class="alert alert-danger mt-4 py-2">
+            <h6 class="fw-bold mb-1">合計總傾倒力矩 ($M_{overturn}$)：</h6>
+            $$ M_{overturn} = \sum M_{o,i} = \mathbf{ {{ M_overturn_sum }} } \text{ tf-m/m} $$
+        </div>
+    </div>
+    <div class="report-footer"><span>Generated by CNProject StructTool</span><span class="float-end">Page 11 / 13</span>
+    </div>
+</div>
+
+<!-- [PAGE 12] 第二頁：5.3 抵抗力矩計算 (垂直力對 Toe) -->
+<!-- [PAGE 12] 第二頁：5.3 抵抗力矩詳細計算 (Mr) -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">5. 抗傾倒穩定性檢核詳細計算 (2/3)</div>
+        <div class="report-subtitle">Overturning Stability - Resisting Moment Detail</div>
     </div>
 
-    <div class="report-footer">
-        <div class="d-flex justify-content-between">
-            <span>Generated by CNProject StructTool</span>
-            <span>Page 6 / 8</span>
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">5.3 抵抗力矩詳細計算 ($M_{resist}$)</h5>
+        <p class="small">計算各垂直分力對牆趾 (Toe) 產生之順時針力矩（穩定趨勢）：</p>
+
+        <!-- A. 結構自重部分 -->
+        <h6 class="text-success fw-bold mt-3"><i class="bi bi-box-fill"></i> A. 結構自重部分 ($\sum M_{blocks}$)</h6>
+        {% for block in struct_blocks %}
+            <div class="mb-3 ps-3 border-start border-success">
+                <p class="fw-bold text-success mb-1 small">{{ forloop.counter }}. {{ block.name }}</p>
+                <div class="ms-2 small">
+                    <p class="mb-0 text-muted">力矩計算 ($M_r = V \times X_a$)：</p>
+                    <div class="p-1">
+                        $$ M_r = {{ block.val|floatformat:2 }} \text{ (tf)} \times {{ block.x_arm|floatformat:2 }}
+                        \text{ (m)} = \mathbf{ {{ block.moment|floatformat:2 }} } \text{ tf-m/m} $$
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- B. 回填土重部分 -->
+        <h6 class="text-success fw-bold mt-4"><i class="bi bi-layers-fill"></i> B. 回填土重部分 ($\sum M_{soil}$)</h6>
+        {% for layer in soil_layers %}
+            <div class="mb-3 ps-3 border-start border-success">
+                <p class="fw-bold text-success mb-1 small">{{ forloop.counter }}. {{ layer.name }}</p>
+                <div class="ms-2 small">
+                    <p class="mb-0 text-muted">力矩計算 ($M_r = V \times X_a$)：</p>
+                    $$ M_r = {{ layer.val|floatformat:2 }} \times {{ layer.x_arm|floatformat:2 }} =
+                    \mathbf{ {{ layer.moment|floatformat:2 }} } \text{ tf-m/m} $$
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- C. 外部載重與浮力矩 -->
+        <h6 class="text-success fw-bold mt-4"><i class="bi bi-plus-circle"></i> C. 外部載重與揚壓力矩</h6>
+        {% for ext in v_ext_items %}
+            <div class="mb-3 ps-3 border-start border-success">
+                <p class="fw-bold text-success mb-1 small">{{ ext.name }}</p>
+                <div class="ms-2 small">$$ {{ ext.res_formula }} \text{ tf-m/m} $$</div>
+            </div>
+        {% endfor %}
+
+        <div class="mb-3 ps-3 border-start border-danger">
+            <p class="fw-bold text-danger mb-1 small">扣除：地下水揚壓力矩 ($M_{uplift}$)</p>
+            <div class="ms-2 small">
+                $$ M_{uplift} = U \cdot \frac{B}{2} = {{ sliding_details.U_uplift|floatformat:2 }}
+                \times {{ overturning_details.B_over_2|floatformat:2 }} =
+                \mathbf{ {{ overturning_details.U_moment|floatformat:2 }} } \text{ tf-m/m} $$
+            </div>
         </div>
+
+        <!-- 抵抗力矩總結 -->
+        <div class="alert alert-success mt-4 py-2">
+            <h6 class="fw-bold mb-1">合計淨抵抗力矩 ($M_{resist}$)：</h6>
+            $$ \begin{aligned}
+            M_{resist} &= \sum M_{blocks} + \sum M_{soil} + \sum M_{ext} - M_{uplift} \\
+            &= {{ overturning_details.M_resist_gross }} - {{ overturning_details.U_moment }}
+            = \mathbf{ {{ overturning_details.M_resist_gross }} } \text{ tf-m/m}
+            \end{aligned} $$
+        </div>
+    </div>
+    <div class="report-footer"><span>Generated by CNProject StructTool</span><span class="float-end">Page 12 / 13</span>
+    </div>
+</div>
+
+<!-- [PAGE 13] 第三頁：5.4 安全係數判定 -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">5. 抗傾倒穩定性檢核詳細計算 (3/3)</div>
+        <div class="report-subtitle">Final Safety Factor Verification</div>
+    </div>
+
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">5.4 安全係數判定 ($FS_{over}$)</h5>
+
+        <div class="fs-check-container mt-4">
+            <div class="fs-check-card {% if stability.FS_over >= 2.0 %}border-success{% else %}border-danger{% endif %}">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="fs-formula-wrapper">
+                            $$
+                            FS_{over}
+                            = \dfrac{M_{resist}}{M_{overturn}}
+                            = \dfrac{ {{ overturning_details.M_resist_gross|floatformat:2 }}
+                            }{ {{ M_overturn_sum|floatformat:2 }} } =
+                            \mathbf{ {{ stability.FS_over }} }
+                            $$
+                        </div>
+                    </div>
+                    <div class="col-4 text-center border-start">
+                        <div class="verdict-label mb-1">判定結果</div>
+                        {% if stability.FS_over >= 2.0 %}
+                            <div class="text-success fw-bold"><i class="bi bi-check2-circle"></i> OK</div>
+                            <div class="verdict-note">($\ge 2.0$)</div>
+                        {% else %}
+                            <div class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> NG</div>
+                            <div class="verdict-note">($< 2.0$)</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-muted mt-4 small">
+            * 註：依據設計規範 7.4.2 節，擋土牆抵抗傾覆之安全係數，於長期載重狀況應大於 2.0。
+        </p>
+    </div>
+    <div class="report-footer"><span>Generated by CNProject StructTool</span><span class="float-end">Page 13</span>
     </div>
 </div>

@@ -1,6 +1,25 @@
 {% extends 'retaining_wall_cantilever/base.html' %}
 {% load static %}
+{% block extra_css %}
+    <style>
+        /* 讓左側欄位在捲動時固定 */
+        .sticky-preview {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 20px; /* 距離視窗頂部的距離，可依導覽列高度調整 */
+            z-index: 100;
+            height: fit-content; /* 確保容器高度只包含 Canvas 卡片 */
+        }
 
+        /* 調整右側內容捲動，左側不移動 */
+        @media (min-width: 768px) {
+            .row {
+                display: flex;
+                align-items: flex-start; /* 核心：防止左側欄位被拉伸到跟右側一樣長 */
+            }
+        }
+    </style>
+{% endblock %}
 {% block content %}
     <div class="container mt-4">
         <h2 class="mb-4 text-center">懸臂式擋土牆設計 (L型)</h2>
@@ -9,8 +28,32 @@
             {% csrf_token %}
             <div class="row">
                 <!-- 左側：幾何即時預覽 -->
-                <div class="col-md-6 mb-4 text-center">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-4 text-center sticky-preview">
+                    <!-- 在 <form> 標籤內，建議放在最上方或是開始計算按鈕上方 -->
+                    <div class="card mb-3 border-secondary shadow-sm">
+                        <div class="card-body bg-light py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-secondary"><i class="bi bi-gear-fill"></i> 參數管理</span>
+                                <div>
+                                    <!-- 儲存按鈕 -->
+                                    <button type="button" class="btn btn-outline-primary btn-sm me-2"
+                                            onclick="saveOliFile()">
+                                        <i class="bi bi-download"></i> 儲存參數 (.olirt)
+                                    </button>
+
+                                    <!-- 讀取按鈕 (觸發隱藏的 input) -->
+                                    <button type="button" class="btn btn-outline-success btn-sm"
+                                            onclick="document.getElementById('importFile').click()">
+                                        <i class="bi bi-upload"></i> 讀取參數
+                                    </button>
+                                    <!-- 隱藏的檔案選擇器，限定 .olirt -->
+                                    <input type="file" id="importFile" style="display:none" accept=".olirt"
+                                           onchange="loadOliFile(this)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card shadow-sm"> <!-- 移除 h-100，避免強制拉長 -->
                         <div class="card-header bg-secondary text-white">幾何即時預覽</div>
                         <div class="card-body d-flex flex-column align-items-center justify-content-center bg-light">
                             <canvas id="wallCanvas" width="500" height="500"
@@ -199,7 +242,17 @@
 
                     <!-- 3-2. 牆前覆土 -->
                     <div class="card mb-3 border-success">
-                        <div class="card-header bg-success text-white">3-2. 牆前覆土 (Front Soil) - 被動側</div>
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <span>3-2. 牆前覆土 (Front Soil) - 被動側</span>
+                            <!-- 新增開關 -->
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ignore_h_front"
+                                       name="ignore_h_front"
+                                       {% if input_data.ignore_h_front %}checked{% endif %}>
+                                <label class="form-check-label text-white small"
+                                       for="ignore_h_front">忽略覆土高($H_{front}$)</label>
+                            </div>
+                        </div>
                         <div class="card-body">
                             <div class="mb-2 row"><label class="col-sm-7 col-form-label">牆前覆土高
                                 ($H_{front}$):</label>
@@ -251,97 +304,205 @@
                     <div class="card mb-3 border-dark">
                         <div class="card-header bg-dark text-white">3-3. 基礎版底土壤 (Base Soil) - 止滑/承載</div>
                         <div class="card-body">
-                            <div class="mb-2 row"><label class="col-sm-7 col-form-label">濕單位重
-                                ($\gamma_{t3}$):</label>
+                            <!-- 濕單位重 -->
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">濕單位重 ($\gamma_{t3}$):</label>
                                 <div class="col-sm-5">
-                                    <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                    name="gamma_soil_base"
-                                                                    value="{{ input_data.gamma_soil_base|default:'1.9' }}"
-                                                                    required><span class="input-group-text">tf/m³</span>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control" name="gamma_soil_base"
+                                               value="{{ input_data.gamma_soil_base|default:'1.8' }}" required>
+                                        <span class="input-group-text">tf/m³</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-2 row"><label class="col-sm-7 col-form-label">飽和單位重
-                                ($\gamma_{sat3}$):</label>
+
+                            <!-- 飽和單位重 -->
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">飽和單位重 ($\gamma_{sat3}$):</label>
                                 <div class="col-sm-5">
-                                    <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                    name="gamma_sat_base"
-                                                                    value="{{ input_data.gamma_sat_base|default:'2.1' }}"
-                                                                    required><span class="input-group-text">tf/m³</span>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control" name="gamma_sat_base"
+                                               value="{{ input_data.gamma_sat_base|default:'2.0' }}" required>
+                                        <span class="input-group-text">tf/m³</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-2 row"><label class="col-sm-7 col-form-label">摩擦角 ($\phi_3$):</label>
+
+                            <!-- 內摩擦角 -->
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">內摩擦角 ($\phi_3$):</label>
                                 <div class="col-sm-5">
-                                    <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                    name="phi_soil_base"
-                                                                    value="{{ input_data.phi_soil_base|default:'32' }}"
-                                                                    required><span class="input-group-text">deg</span>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" class="form-control" name="phi_soil_base"
+                                               value="{{ input_data.phi_soil_base|default:'24.0' }}" required>
+                                        <span class="input-group-text">deg</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-2 row"><label class="col-sm-7 col-form-label">凝聚力 ($c'_3$):</label>
+
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">摩擦係數 ($\mu$):</label>
                                 <div class="col-sm-5">
-                                    <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                    name="c_soil_base"
-                                                                    value="{{ input_data.c_soil_base|default:'0' }}"><span
-                                            class="input-group-text">tf/m²</span></div>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control" name="friction_coeff"
+                                               value="{{ input_data.friction_coeff|default:'0.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 承壓強度 (新增項目，預設 19.5) -->
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">承壓強度 ($q_{allow}$):</label>
+                                <div class="col-sm-5">
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" class="form-control" name="q_allow"
+                                               value="{{ input_data.q_allow|default:'19.5' }}" required>
+                                        <span class="input-group-text">tf/m²</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 3-4. 超載 -->
+                    <!-- 3-4. 地表超載 (修正：區分 Dead/Live Load) -->
                     <div class="card mb-3">
-                        <div class="card-header bg-dark text-white">3-4. 超載 (Surcharge)</div>
+                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                            <span>3-4. 地表超載 (Surcharge - 區分 DL / LL)</span>
+                            <small>規範圖 7.3-2</small>
+                        </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <select class="form-select" id="surcharge_type" name="surcharge_type"
-                                        onchange="toggleSurchargeInputs()">
-                                    <option value="none"
-                                            {% if input_data.surcharge_type == 'none' %}selected{% endif %}>無
-                                    </option>
-                                    <option value="uniform"
-                                            {% if input_data.surcharge_type == 'uniform' %}selected{% endif %}>無限均佈
-                                    </option>
-                                    <option value="strip"
-                                            {% if input_data.surcharge_type == 'strip' %}selected{% endif %}>帶狀載重
-                                    </option>
-                                </select>
+                            <!-- 1. 均佈超載 -->
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enable_uniform"
+                                       name="enable_uniform"
+                                       {% if input_data.enable_uniform %}checked{% endif %}
+                                       onchange="toggleSurchargeFields()">
+                                <label class="form-check-label fw-bold" for="enable_uniform">1. 無限均佈超載 (q)</label>
                             </div>
-                            <div id="input_uniform" style="display:none;">
-                                <div class="mb-2 row"><label class="col-sm-7 col-form-label">強度 ($q$):</label>
-                                    <div class="col-sm-5">
-                                        <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                        name="q_uniform"
-                                                                        value="{{ input_data.q_uniform|default:'0' }}"><span
-                                                class="input-group-text">tf/m²</span></div>
+                            <div id="section_uniform" class="ps-4 mb-3" style="display:none;">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">靜 (DL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_uniform_dead"
+                                                   value="{{ input_data.q_uniform_dead|default:'0' }}">
+                                            <span class="input-group-text">tf/m²</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">活 (LL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_uniform_live"
+                                                   value="{{ input_data.q_uniform_live|default:'0' }}">
+                                            <span class="input-group-text">tf/m²</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div id="input_strip" style="display:none;">
-                                <div class="mb-2 row"><label class="col-sm-7 col-form-label">強度 ($q$):</label>
-                                    <div class="col-sm-5">
-                                        <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                        name="q_strip"
-                                                                        value="{{ input_data.q_strip|default:'0' }}"><span
-                                                class="input-group-text">tf/m²</span></div>
+                            <hr>
+                            <!-- 2. 集中超載 -->
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enable_point" name="enable_point"
+                                       {% if input_data.enable_point %}checked{% endif %}
+                                       onchange="toggleSurchargeFields()">
+                                <label class="form-check-label fw-bold" for="enable_point">2. 集中超載 (QP)</label>
+                            </div>
+                            <div id="section_point" class="ps-4" style="display:none;">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">靜 (DL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_point_dead"
+                                                   value="{{ input_data.q_point_dead|default:'0' }}">
+                                            <span class="input-group-text">tf</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">活 (LL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_point_live"
+                                                   value="{{ input_data.q_point_live|default:'0' }}">
+                                            <span class="input-group-text">tf</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="mb-2 row"><label class="col-sm-7 col-form-label">距離 ($x$):</label>
-                                    <div class="col-sm-5">
-                                        <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                        name="strip_x"
-                                                                        value="{{ input_data.strip_x|default:'0' }}"><span
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6"><small>距離牆面 (X):</small></div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm"><input type="number" step="0.01"
+                                                                                       class="form-control"
+                                                                                       name="point_x"
+                                                                                       value="{{ input_data.point_x|default:'0' }}"><span
                                                 class="input-group-text">m</span></div>
                                     </div>
                                 </div>
-                                <div class="mb-2 row"><label class="col-sm-7 col-form-label">寬度 ($B$):</label>
-                                    <div class="col-sm-5">
-                                        <div class="input-group"><input type="number" step="0.01" class="form-control"
-                                                                        name="strip_B"
-                                                                        value="{{ input_data.strip_B|default:'0' }}"><span
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6"><small>載重深度 (D):</small></div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm"><input type="number" step="1"
+                                                                                       class="form-control"
+                                                                                       name="point_depth"
+                                                                                       value="{{ input_data.point_depth|default:'0' }}"><span
+                                                class="input-group-text">cm</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <!-- 3. 帶狀超載 -->
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enable_strip" name="enable_strip"
+                                       {% if input_data.enable_strip %}checked{% endif %}
+                                       onchange="toggleSurchargeFields()">
+                                <label class="form-check-label fw-bold" for="enable_strip">3. 帶狀超載 (Strip
+                                    Load)</label>
+                            </div>
+                            <div id="section_strip" class="ps-4" style="display:none;">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">靜 (DL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_strip_dead"
+                                                   value="{{ input_data.q_strip_dead|default:'0' }}">
+                                            <span class="input-group-text">tf/m²</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">活 (LL)</span>
+                                            <input type="number" step="0.01" class="form-control" name="q_strip_live"
+                                                   value="{{ input_data.q_strip_live|default:'0' }}">
+                                            <span class="input-group-text">tf/m²</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6"><small>距離牆面 (Dist.):</small></div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm"><input type="number" step="0.01"
+                                                                                       class="form-control"
+                                                                                       name="strip_x"
+                                                                                       value="{{ input_data.strip_x|default:'0' }}"><span
                                                 class="input-group-text">m</span></div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6"><small>載重寬度 (B):</small></div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm"><input type="number" step="0.01"
+                                                                                       class="form-control"
+                                                                                       name="strip_width"
+                                                                                       value="{{ input_data.strip_width|default:'0' }}"><span
+                                                class="input-group-text">m</span></div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6"><small>載重深度 (D):</small></div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm"><input type="number" step="1"
+                                                                                       class="form-control"
+                                                                                       name="strip_depth"
+                                                                                       value="{{ input_data.strip_depth|default:'0' }}"><span
+                                                class="input-group-text">cm</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -400,7 +561,224 @@
                         </div>
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <!-- 5. 鋼筋材料與強度 -->
+                    <div class="card mb-3 border-dark">
+                        <div class="card-header bg-dark text-white">5. 鋼筋材料與設計強度</div>
+                        <div class="card-body">
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">混凝土強度 ($f'_c$):</label>
+                                <div class="col-sm-5">
+                                    <div class="input-group">
+                                        <input type="number" step="1" class="form-control" name="fc"
+                                               value="{{ input_data.fc|default:'280' }}">
+                                        <span class="input-group-text">kg/cm²</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2 row">
+                                <label class="col-sm-7 col-form-label">鋼筋屈服強度 ($f_y$):</label>
+                                <div class="col-sm-5">
+                                    <div class="input-group">
+                                        <input type="number" step="1" class="form-control" name="fy"
+                                               value="{{ input_data.fy|default:'4200' }}">
+                                        <span class="input-group-text">kg/cm²</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. 牆身配筋 (Stem Rebar) -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-secondary text-white">6. 牆身配筋資訊 (Stem)</div>
+                        <div class="card-body small">
+                            <h6 class="fw-bold border-bottom pb-1">垂直主筋 (Vertical Bars)</h6>
+                            <!-- 背填側 (承受土壓力主要鋼筋) -->
+                            <div class="row g-2 mb-2 align-items-center">
+                                <div class="col-5">後側(牆背):</div>
+                                <div class="col-3">
+                                    <select class="form-select form-select-sm" name="rebar_stem_back_size">
+                                        {% for i in "345678" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_stem_back_size == i %}selected{% elif not input_data.rebar_stem_back_size and i == '8' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" step="0.1" class="form-control"
+                                               name="rebar_stem_back_spacing"
+                                               value="{{ input_data.rebar_stem_back_spacing|default:'30.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 前側 (受壓側) -->
+                            <div class="row g-2 mb-2 align-items-center">
+                                <div class="col-5">前側(牆面):</div>
+                                <div class="col-3">
+                                    <select class="form-select form-select-sm" name="rebar_stem_front_size">
+                                        {% for i in "3456" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_stem_front_size == i %}selected{% elif not input_data.rebar_stem_front_size and i == '4' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" step="0.1" class="form-control"
+                                               name="rebar_stem_front_spacing"
+                                               value="{{ input_data.rebar_stem_front_spacing|default:'30.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 row">
+                                <label class="col-sm-7">混凝土保護層 (Cover):</label>
+                                <div class="col-sm-5">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.1" class="form-control" name="cover_stem"
+                                               value="{{ input_data.cover_stem|default:'5.1' }}">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold border-bottom pb-1">水平/分佈筋 (Horizontal Bars)</h6>
+                            <div class="row g-2 align-items-center mb-3">
+                                <div class="col-5">號數與間距:</div>
+                                <div class="col-3">
+                                    <select class="form-select form-select-sm" name="rebar_stem_dist_size">
+                                        {% for i in "3456" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_stem_dist_size == i %}selected{% elif not input_data.rebar_stem_dist_size and i == '4' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" step="0.1" class="form-control"
+                                               name="rebar_stem_dist_spacing"
+                                               value="{{ input_data.rebar_stem_dist_spacing|default:'30.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. 基版配筋 (Footing Rebar) -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-dark">7. 基版配筋資訊 (Footing)</div>
+                        <div class="card-body small">
+                            <h6 class="fw-bold border-bottom pb-1">牆趾受彎筋 (Toe Bars - Bot)</h6>
+                            <div class="row g-2 mb-3 align-items-center">
+                                <div class="col-4">#
+                                    <select class="d-inline w-50 form-select form-select-sm" name="rebar_toe_size">
+                                        {% for i in "45678" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_toe_size == i %}selected{% elif not input_data.rebar_toe_size and i == '8' %}selected{% endif %}>{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">@ <input type="number" step="0.1"
+                                                            class="d-inline w-75 form-control form-control-sm"
+                                                            name="rebar_toe_spacing"
+                                                            value="{{ input_data.rebar_toe_spacing|default:'30.5' }}">
+                                </div>
+                                <div class="col-4 text-end">保護層 <input type="number" step="0.1"
+                                                                          class="d-inline w-50 form-control form-control-sm"
+                                                                          name="cover_foot_bot"
+                                                                          value="{{ input_data.cover_foot_bot|default:'7.6' }}">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold border-bottom pb-1">牆踵受彎筋 (Heel Bars - Top)</h6>
+                            <div class="row g-2 mb-3 align-items-center">
+                                <div class="col-4">#
+                                    <select class="d-inline w-50 form-select form-select-sm" name="rebar_heel_size">
+                                        {% for i in "45678" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_heel_size == i %}selected{% elif not input_data.rebar_heel_size and i == '6' %}selected{% endif %}>{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">@ <input type="number" step="0.1"
+                                                            class="d-inline w-75 form-control form-control-sm"
+                                                            name="rebar_heel_spacing"
+                                                            value="{{ input_data.rebar_heel_spacing|default:'30.5' }}">
+                                </div>
+                                <div class="col-4 text-end">保護層 <input type="number" step="0.1"
+                                                                          class="d-inline w-50 form-control form-control-sm"
+                                                                          name="cover_foot_top"
+                                                                          value="{{ input_data.cover_foot_top|default:'5.1' }}">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold border-bottom pb-1">基版分佈筋 (Transverse Bars)</h6>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-5">號數與間距:</div>
+                                <div class="col-3">
+                                    <select class="form-select form-select-sm" name="rebar_foot_dist_size">
+                                        {% for i in "3456" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_foot_dist_size == i %}selected{% elif not input_data.rebar_foot_dist_size and i == '4' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" step="0.1" class="form-control"
+                                               name="rebar_foot_dist_spacing"
+                                               value="{{ input_data.rebar_foot_dist_spacing|default:'30.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. 止滑榫配筋 (Shear Key Rebar) -->
+                    <div id="card_shear_key_rebar" class="card mb-3 border-warning">
+                        <div class="card-header bg-warning text-dark">8. 止滑榫配筋資訊 (Shear Key)</div>
+                        <div class="card-body small">
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-5">垂直主筋/U型筋:</div>
+                                <div class="col-3">
+                                    <select class="form-select form-select-sm" name="rebar_key_vert_size">
+                                        {% for i in "345" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_key_vert_size == i %}selected{% elif not input_data.rebar_key_vert_size and i == '4' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" step="0.1" class="form-control"
+                                               name="rebar_key_vert_spacing"
+                                               value="{{ input_data.rebar_key_vert_spacing|default:'30.5' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-5">橫向筋數量:</div>
+                                <div class="col-3">
+                                    <input type="number" class="form-control form-control-sm" name="rebar_key_horz_qty"
+                                           value="{{ input_data.rebar_key_horz_qty|default:'2' }}">
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm" name="rebar_key_horz_size">
+                                        {% for i in "345" %}
+                                            <option value="{{ i }}"
+                                                    {% if input_data.rebar_key_horz_size == i %}selected{% elif not input_data.rebar_key_horz_size and i == '4' %}selected{% endif %}>
+                                                #{{ i }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="d-grid gap-2 mb-5"> <!-- 底部增加 margin 方便捲動 -->
                         <button type="submit" class="btn btn-primary btn-lg">開始計算</button>
                     </div>
                 </div>
@@ -409,30 +787,177 @@
     </div>
 
     {% include 'retaining_wall_cantilever/result_modal.html' %}
+{% endblock %}
 
+{% block extra_js %}
+    <!-- 1. MathJax 配置 (必須在載入 MathJax.js 之前) -->
     <script>
-        function toggleSurchargeInputs() {
-            const type = document.getElementById('surcharge_type').value;
-            const u = document.getElementById('input_uniform');
-            const s = document.getElementById('input_strip');
-            if (u && s) {
-                u.style.display = (type === 'uniform') ? 'block' : 'none';
-                s.style.display = (type === 'strip') ? 'block' : 'none';
+        window.MathJax = {
+            tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]},
+            svg: {fontCache: 'global'},
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady();
+                }
+            }
+        };
+    </script>
+
+    <!-- 2. 載入 MathJax 腳本 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- 3. 引入繪圖腳本 -->
+    <script src="{% static 'js/retaining_wall_cantilever/retaining_wall_draw.js' %}"></script>
+
+    <!-- 4. 頁面控制腳本 -->
+    <script>
+        /**
+         * 切換超載欄位顯示
+         */
+        function toggleSurchargeFields() {
+            const sections = {
+                'section_uniform': 'enable_uniform',
+                'section_line': 'enable_line',
+                'section_point': 'enable_point',
+                'section_strip': 'enable_strip'
+            };
+            for (let secId in sections) {
+                const checkbox = document.getElementById(sections[secId]);
+                const section = document.getElementById(secId);
+                if (checkbox && section) {
+                    section.style.display = checkbox.checked ? 'block' : 'none';
+                }
             }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            if (document.getElementById('surcharge_type')) toggleSurchargeInputs();
-            {% if result_available %}
-                var myModal = new bootstrap.Modal(document.getElementById('resultModal'), {keyboard: false});
-                myModal.show();
-            {% endif %}
-        });
-        window.MathJax = {tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}};
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-{% endblock %}
+            // 初始化超載顯示狀態
+            toggleSurchargeFields();
 
-{% block extra_js %}
-    <script src="{% static 'js/retaining_wall_cantilever/retaining_wall_draw.js' %}"></script>
+            // 處理計算結果 Modal
+            {% if result_available %}
+                const modalEl = document.getElementById('resultModal');
+                if (modalEl) {
+                    // 修正：在實例化前移除 aria-hidden 以避免焦點衝突警告
+                    modalEl.removeAttribute('aria-hidden');
+
+                    const myModal = new bootstrap.Modal(modalEl, {keyboard: false});
+
+                    // 使用 requestAnimationFrame 確保瀏覽器已處理完 DOM 變更再顯示
+                    requestAnimationFrame(() => {
+                        myModal.show();
+                    });
+
+                    // Modal 顯示後重新渲染 MathJax 公式
+                    modalEl.addEventListener('shown.bs.modal', function () {
+                        if (window.MathJax && MathJax.typesetPromise) {
+                            MathJax.typesetPromise();
+                        }
+                    });
+                }
+            {% endif %}
+
+            // 強制觸發一次 Canvas 繪圖
+            setTimeout(function () {
+                window.dispatchEvent(new Event('resize'));
+            }, 200);
+        });
+    </script>
+    <script>
+        function updateStripUnit() {
+            const width = parseFloat(document.getElementById('strip_width_input').value);
+            const unitSpan = document.getElementById('strip_unit');
+            if (unitSpan) {
+                unitSpan.innerText = (width === 0 || isNaN(width)) ? 'tf/m' : 'tf/m²';
+            }
+        }
+
+        // 頁面載入時先執行一次
+        document.addEventListener('DOMContentLoaded', updateStripUnit);
+    </script>
+    <script>
+        // --- 儲存/讀取參數邏輯 ---
+
+        /**
+         * 儲存 .olirt 檔案
+         */
+        function saveOliFile() {
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            const data = {};
+
+            // 排除 csrfmiddlewaretoken 並將其餘資料存入物件
+            formData.forEach((value, key) => {
+                if (key !== 'csrfmiddlewaretoken') {
+                    data[key] = value;
+                }
+            });
+
+            // 產生成 JSON 字串
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], {type: "application/json"});
+
+            // 建立臨時下載連結
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+
+            // 設定檔名，你可以根據專案名稱動態命名
+            const projName = data['project_name'] || 'retaining_wall_params';
+            a.href = url;
+            a.download = `${projName}.olirt`;
+
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        /**
+         * 讀取 .olirt 檔案並填入表單
+         */
+        function loadOliFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // 遍歷所有欄位並填入
+                    for (const key in data) {
+                        const el = document.querySelector(`[name="${key}"]`);
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                el.checked = (data[key] === 'on' || data[key] === true);
+                            } else {
+                                el.value = data[key];
+                            }
+
+                            // 重要：觸發事件讓 Canvas 即時更新，並觸發 toggleSurchargeFields
+                            el.dispatchEvent(new Event('input', {bubbles: true}));
+                            el.dispatchEvent(new Event('change', {bubbles: true}));
+                        }
+                    }
+
+                    // 讀取完後手動執行一次超載欄位顯示切換
+                    if (typeof toggleSurchargeFields === 'function') {
+                        toggleSurchargeFields();
+                    }
+
+                    alert('參數已成功載入！');
+                } catch (err) {
+                    console.error(err);
+                    alert('檔案格式錯誤或損壞，無法讀取。');
+                }
+                // 清空 input 讓同一個檔案可以重複選取
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+    </script>
 {% endblock %}

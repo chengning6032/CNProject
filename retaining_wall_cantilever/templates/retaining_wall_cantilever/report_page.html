@@ -12,24 +12,46 @@
     <!-- Page 3: 模型圖 (SVG) -->
     {% include "retaining_wall_cantilever/report_pages/report_p3_model.html" %}
 
-   <!-- Page 4: 參數計算 -->
-    {% include "retaining_wall_cantilever/report_pages/report_p4_calculation.html" %}
+    <!-- Page 4: 參數計算 -->
+    <!-- 重新處理的設計參數詳細計算 -->
+    {% include "retaining_wall_cantilever/report_pages/report_p4_calculation_1.html" %}
+    {% include "retaining_wall_cantilever/report_pages/report_p4_calculation_2.html" %}
+    {% include "retaining_wall_cantilever/report_pages/report_p4_calculation_3.html" %}
 
-    <!-- Page 5: 抗滑動詳細計算 -->
+    {#    <!-- Page 5 & 6: 抗滑動詳細計算 (由 report_p5_sliding.html 產生兩頁) -->#}
     {% include "retaining_wall_cantilever/report_pages/report_p5_sliding.html" %}
+    {% include "retaining_wall_cantilever/report_pages/report_p5_sliding_dyn1.html" %}
+    {% include "retaining_wall_cantilever/report_pages/report_p5_sliding_dyn2.html" %}
+    {##}
+    {#    <!-- [NEW] Page 7: 抗傾倒詳細計算 -->#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p6_overturning.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p6_overturning_dyn1.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p6_overturning_dyn2.html" %}#}
+    {##}
+    {#    <!-- [NEW] Page 8: 承載力與偏心距 -->#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p7_bearing.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p7_bearing_dyn1.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p7_bearing_dyn2.html" %}#}
+    {##}
+    {#    <!-- [NEW] 擋土牆身設計 -->#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem1.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem2.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem3.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem4.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem_rebar.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem_shear.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p8_stem_detail.html" %}#}
+    {##}
+    {#        <!-- [NEW] 擋土牆踵設計 -->#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel1.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel2.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel3.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel4.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel5.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel6.html" %}#}
+    {#    {% include "retaining_wall_cantilever/report_pages/report_p9_heel7.html" %}#}
 
-    <!-- [NEW] Page 6: 抗傾倒詳細計算 -->
-    {% include "retaining_wall_cantilever/report_pages/report_p6_overturning.html" %}
 
-    <!-- [NEW] Page 7: 承載力與偏心距 -->
-    {% include "retaining_wall_cantilever/report_pages/report_p7_bearing.html" %}
-
-    <!-- Page 8: 預留頁 -->
-    {% for i in "8" %}
-    <div class="a4-page">
-    <!-- ... (內容保持不變) ... -->
-    </div>
-    {% endfor %}
 
 {% endblock %}  <!-- 這裡結束 report_content -->
 
@@ -46,30 +68,33 @@
 
         function renderWallSVG() {
             const container = document.getElementById('svg-container');
-            if (!container) {
-                console.error("SVG Container not found!");
-                return;
-            }
+            if (!container) return;
 
-            // 1. 取得數據 (使用 default:0 防止空值錯誤)
-            const d = {
-                H_stem: parseFloat("{{ input_data.H_stem|default:300 }}"),
-                t_top: parseFloat("{{ input_data.t_stem_top|default:30 }}"),
-                w_front: parseFloat("{{ input_data.w_stem_front|default:0 }}"),
-                w_back: parseFloat("{{ input_data.w_stem_back|default:20 }}"),
-                H_bp: parseFloat("{{ input_data.H_bp|default:50 }}"),
-                L_front: parseFloat("{{ input_data.L_bp_front|default:100 }}"),
-                L_back: parseFloat("{{ input_data.L_bp_back|default:200 }}"),
-                H_sk: parseFloat("{{ input_data.H_sk|default:0 }}"),
-                L_sk: parseFloat("{{ input_data.L_sk|default:0 }}"),
-                x_1: parseFloat("{{ input_data.x_1|default:0 }}"),
-
-                // 回填高與水位
-                H_fill: "{{ input_data.H_fill }}" ? parseFloat("{{ input_data.H_fill }}") : parseFloat("{{ input_data.H_stem|default:300 }}"),
-                H_water: parseFloat("{{ input_data.H_water|default:0 }}"),
-                alpha: parseFloat("{{ input_data.alpha_soil|default:0 }}"),
-                H_soil_front: parseFloat("{{ input_data.H_soil_front|default:50 }}")
+            // 1. 取得數據並確保型別正確 (解決空字串與單位不一致問題)
+            const getSafeVal = (val, backup = 0) => {
+                const parsed = parseFloat(val);
+                return isNaN(parsed) ? backup : parsed;
             };
+
+            const d = {
+                H_stem: getSafeVal("{{ input_data.H_stem }}", 300),
+                t_top: getSafeVal("{{ input_data.t_stem_top }}", 30),
+                w_front: getSafeVal("{{ input_data.w_stem_front }}", 0),
+                w_back: getSafeVal("{{ input_data.w_stem_back }}", 20),
+                H_bp: getSafeVal("{{ input_data.H_bp }}", 50),
+                L_front: getSafeVal("{{ input_data.L_bp_front }}", 100),
+                L_back: getSafeVal("{{ input_data.L_bp_back }}", 200),
+                H_sk: getSafeVal("{{ input_data.H_sk }}", 0),
+                L_sk: getSafeVal("{{ input_data.L_sk }}", 0),
+                x_1: getSafeVal("{{ input_data.x_1 }}", 0),
+                H_water: getSafeVal("{{ input_data.H_water }}", 0),
+                alpha: getSafeVal("{{ input_data.alpha_soil }}", 0),
+                H_soil_front: getSafeVal("{{ input_data.H_soil_front }}", 50)
+            };
+
+            // 修正：H_fill 如果沒輸入則預設等於牆高
+            const hFillInput = "{{ input_data.H_fill }}".trim();
+            d.H_fill = (hFillInput === "") ? d.H_stem : parseFloat(hFillInput);
 
             const t_bot = d.w_front + d.t_top + d.w_back;
             const B_total = d.L_front + t_bot + d.L_back;
@@ -80,26 +105,23 @@
             const svg = document.createElementNS(svgNS, "svg");
             svg.setAttribute("width", "100%");
             svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 800 600"); // 固定視角
 
-            // --- Scale Logic ---
+            // --- 計算縮放 ---
             let extraHeight = (d.alpha > 0) ? (B_total * 0.8) * Math.tan(d.alpha * Math.PI / 180) : 0;
             const totalW = B_total * 1.8;
             const totalH = Math.max(d.H_bp + d.H_fill + extraHeight, d.H_bp + d.H_stem) + d.H_sk + 50;
 
-            // 固定 A4 繪圖區大小
-            const availW = 650;
-            const availH = 800;
-
-            const scale = Math.min(availW / totalW, availH / totalH) * 0.9;
-            const offX = (availW - totalW * scale) / 2 + 50;
+            const scale = Math.min(700 / totalW, 500 / totalH);
+            const offX = (800 - totalW * scale) / 2 + 50;
             const maxY_struct = Math.max(d.H_bp + d.H_fill + extraHeight, d.H_bp + d.H_stem);
-            const offY = (availH - totalH * scale) / 2 + maxY_struct * scale + 50;
+            const offY = 50 + maxY_struct * scale;
 
             function toSVG(x, y) {
                 return {x: offX + x * scale, y: offY - y * scale};
             }
 
-            // --- Helper Functions ---
+            // --- 繪圖輔助 ---
             function createLine(p1, p2, color, w = 2, dash = null) {
                 const l = document.createElementNS(svgNS, "line");
                 l.setAttribute("x1", p1.x);
@@ -112,109 +134,108 @@
                 svg.appendChild(l);
             }
 
-            function createText(x, y, txt, c) {
+            function createText(x, y, txt, c, align = "middle") {
                 const t = document.createElementNS(svgNS, "text");
                 t.setAttribute("x", x);
                 t.setAttribute("y", y);
                 t.setAttribute("fill", c);
-                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("text-anchor", align);
                 t.setAttribute("font-size", "12");
                 t.textContent = txt;
                 svg.appendChild(t);
             }
 
-            function createPolygon(pts, fill, str) {
-                const p = document.createElementNS(svgNS, "path");
-                p.setAttribute("d", "M " + pts.map(pt => `${pt.x},${pt.y}`).join(" L ") + " Z");
-                p.setAttribute("fill", fill);
-                p.setAttribute("stroke", str);
-                p.setAttribute("stroke-width", 2);
-                svg.appendChild(p);
+            // --- 1. 繪製牆體結構 ---
+            const p1 = toSVG(0, 0);
+            const p2 = toSVG(0, d.H_bp);
+            const p3 = toSVG(d.L_front, d.H_bp);
+            const p4 = toSVG(d.L_front + d.w_front, d.H_bp + d.H_stem);
+            const p5 = toSVG(d.L_front + d.w_front + d.t_top, d.H_bp + d.H_stem);
+            const p6 = toSVG(B_total - d.L_back, d.H_bp);
+            const p7 = toSVG(B_total, d.H_bp);
+            const p8 = toSVG(B_total, 0);
+
+            let wallPoints = [p1, p2, p3, p4, p5, p6, p7, p8];
+
+            // 如果有止滑榫，插入榫頭點
+            if (d.H_sk > 0) {
+                const x_sk_r = B_total - d.x_1;
+                const x_sk_l = x_sk_r - d.L_sk;
+                wallPoints = [
+                    p1, p2, p3, p4, p5, p6, p7, p8,
+                    toSVG(B_total, 0),
+                    toSVG(x_sk_r, 0),
+                    toSVG(x_sk_r, -d.H_sk),
+                    toSVG(x_sk_l, -d.H_sk),
+                    toSVG(x_sk_l, 0)
+                ];
             }
 
+            const poly = document.createElementNS(svgNS, "polygon");
+            poly.setAttribute("points", wallPoints.map(p => `${p.x},${p.y}`).join(" "));
+            poly.setAttribute("fill", "#d3d3d3");
+            poly.setAttribute("stroke", "#333");
+            poly.setAttribute("stroke-width", "2");
+            svg.appendChild(poly);
+
+            // --- 2. 繪製填土與水位 (修正關鍵位置) ---
+            // 回填土起點：牆背交接點
+            let x_s_s = (d.H_fill <= d.H_stem) ? (B_total - d.L_back) - (d.H_fill * (d.w_back / d.H_stem || 0)) : (d.L_front + d.w_front + d.t_top);
+            let y_s_s = d.H_bp + d.H_fill;
+            let x_s_e = B_total * 1.5;
+            let y_s_e = y_s_s + (x_s_e - x_s_s) * Math.tan(d.alpha * Math.PI / 180);
+
+            createLine(toSVG(x_s_s, y_s_s), toSVG(x_s_e, y_s_e), "#4CAF50", 2, "5,5");
+            const labelPos = toSVG(x_s_e - 30, y_s_e);
+            createText(labelPos.x, labelPos.y - 10, `Backfill H_f=${d.H_fill}`, "#4CAF50", "end");
+
+            // 牆前土
+            createLine(toSVG(d.L_front, d.H_bp + d.H_soil_front), toSVG(-50, d.H_bp + d.H_soil_front), "#D2691E", 2, "5,5");
+
+            // 地下水位
+            if (d.H_water > 0) {
+                createLine(toSVG(B_total - d.L_back, d.H_water), toSVG(x_s_e, d.H_water), "#2196F3", 2, "10,5");
+                const wLabel = toSVG(x_s_e, d.H_water);
+                createText(wLabel.x, wLabel.y - 10, `GWL=${d.H_water}`, "#2196F3", "end");
+            }
+
+            // --- 3. 標註修正 ---
             function drawDim(p1_cm, p2_cm, txt, off, orient) {
                 const c1 = toSVG(p1_cm.x, p1_cm.y);
                 const c2 = toSVG(p2_cm.x, p2_cm.y);
                 const c = "#0056b3";
-                const gap = 5;
                 if (orient === 'H') {
                     const yl = c1.y - off;
-                    createLine({x: c1.x, y: c1.y - (off > 0 ? gap : -gap)}, {x: c1.x, y: yl}, c, 1);
-                    createLine({x: c2.x, y: c2.y - (off > 0 ? gap : -gap)}, {x: c2.x, y: yl}, c, 1);
+                    createLine(c1, {x: c1.x, y: yl}, c, 1);
+                    createLine(c2, {x: c2.x, y: yl}, c, 1);
                     createLine({x: c1.x, y: yl}, {x: c2.x, y: yl}, c, 1);
-                    createText((c1.x + c2.x) / 2, yl - (off > 0 ? 5 : -15), txt, c);
+                    createText((c1.x + c2.x) / 2, yl - 5, txt, c);
                 } else {
                     const xl = c1.x - off;
-                    createLine({x: c1.x - (off > 0 ? gap : -gap), y: c1.y}, {x: xl, y: c1.y}, c, 1);
-                    createLine({x: c2.x - (off > 0 ? gap : -gap), y: c2.y}, {x: xl, y: c2.y}, c, 1);
+                    createLine(c1, {x: xl, y: c1.y}, c, 1);
+                    createLine(c2, {x: xl, y: c2.y}, c, 1);
                     createLine({x: xl, y: c1.y}, {x: xl, y: c2.y}, c, 1);
+                    const midY = (c1.y + c2.y) / 2;
                     const t = document.createElementNS(svgNS, "text");
-                    t.setAttribute("x", xl - (off > 0 ? 5 : -15));
-                    t.setAttribute("y", (c1.y + c2.y) / 2);
+                    t.setAttribute("x", xl - 5);
+                    t.setAttribute("y", midY);
                     t.setAttribute("fill", c);
                     t.setAttribute("text-anchor", "middle");
-                    t.setAttribute("font-size", "12");
-                    t.setAttribute("transform", `rotate(-90, ${xl - (off > 0 ? 5 : -15)}, ${(c1.y + c2.y) / 2})`);
+                    t.setAttribute("transform", `rotate(-90, ${xl - 5}, ${midY})`);
                     t.textContent = txt;
                     svg.appendChild(t);
                 }
             }
 
-            // --- Drawing Sequence ---
-            // 1. Structure
-            const pt_toe_bot = toSVG(0, 0);
-            const pt_toe_top = toSVG(0, d.H_bp);
-            const pt_stem_front_base = toSVG(d.L_front, d.H_bp);
-            const pt_stem_front_top = toSVG(d.L_front + d.w_front, d.H_bp + d.H_stem);
-            const pt_stem_back_top = toSVG(d.L_front + d.w_front + d.t_top, d.H_bp + d.H_stem);
-            const pt_stem_back_base = toSVG(B_total - d.L_back, d.H_bp);
-            const pt_heel_top = toSVG(B_total, d.H_bp);
-            const pt_heel_bot = toSVG(B_total, 0);
-
-            let wallPts = [pt_toe_bot, pt_toe_top, pt_stem_front_base, pt_stem_front_top, pt_stem_back_top, pt_stem_back_base, pt_heel_top];
-            if (d.H_sk > 0) {
-                const x_sk_r = B_total - d.x_1;
-                const x_sk_l = x_sk_r - d.L_sk;
-                wallPts.push(toSVG(B_total, 0));
-                wallPts.push(toSVG(x_sk_r, 0));
-                wallPts.push(toSVG(x_sk_r, -d.H_sk));
-                wallPts.push(toSVG(x_sk_l, -d.H_sk));
-                wallPts.push(toSVG(x_sk_l, 0));
-            } else {
-                wallPts.push(pt_heel_bot);
-            }
-            createPolygon(wallPts, "#d3d3d3", "#333");
-
-            // 2. Backfill
-            let x_s_s = (d.H_fill <= d.H_stem) ? (B_total - d.L_back) - (d.H_fill * (d.w_back / d.H_stem)) : (d.L_front + d.w_front + d.t_top);
-            let y_s_s = d.H_bp + d.H_fill;
-            let x_s_e = totalW;
-            let y_s_e = y_s_s + (x_s_e - x_s_s) * Math.tan(d.alpha * Math.PI / 180);
-            createLine(toSVG(x_s_s, y_s_s), toSVG(x_s_e, y_s_e), "#4CAF50", 2, "5,5");
-            createText(toSVG(x_s_e, y_s_e).x - 40, toSVG(x_s_e, y_s_e).y - 10, "Backfill", "#4CAF50");
-
-            // 3. Front Soil
-            let y_f = d.H_bp + d.H_soil_front;
-            createLine(toSVG(d.L_front, y_f), toSVG(-50, y_f), "#D2691E", 2, "5,5");
-            createText(toSVG(-50, y_f).x + 20, toSVG(-50, y_f).y - 5, "Front", "#D2691E");
-
-            // 4. Water
-            if (d.H_water > 0) {
-                let p_w_s = {x: B_total - d.L_back, y: d.H_water};
-                let p_w_e = {x: totalW, y: d.H_water};
-                createLine(toSVG(p_w_s.x, p_w_s.y), toSVG(p_w_e.x, p_w_e.y), "#2196F3", 2, "10,5");
-                createText(toSVG(p_w_e.x, d.H_water).x - 50, toSVG(0, d.H_water).y - 10, "GWL", "#2196F3");
-            }
-
-            // 5. Dims
+            drawDim({x: 0, y: 0}, {x: B_total, y: 0}, `B=${B_total}`, -40, 'H');
             drawDim({x: d.L_front, y: d.H_bp}, {x: d.L_front, y: d.H_bp + d.H_stem}, `H=${d.H_stem}`, 40, 'V');
-            drawDim({x: 0, y: 0}, {x: B_total, y: 0}, `B=${B_total}`, -45, 'H');
 
             if (d.H_sk > 0) {
                 const x_sk_r = B_total - d.x_1;
                 const x_sk_l = x_sk_r - d.L_sk;
+                // 修正標註位置，避免重疊
                 drawDim({x: x_sk_l, y: -d.H_sk}, {x: x_sk_r, y: -d.H_sk}, `sk=${d.L_sk}`, -15, 'H');
-                drawDim({x: B_total, y: -d.H_sk}, {x: B_total, y: 0}, `hk=${d.H_sk}`, -30, 'V');
+                drawDim({x: B_total, y: -d.H_sk}, {x: B_total, y: 0}, `hk=${d.H_sk}`, -60, 'V');
             }
 
             container.appendChild(svg);

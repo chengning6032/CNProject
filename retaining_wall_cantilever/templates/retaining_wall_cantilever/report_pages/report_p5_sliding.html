@@ -1,112 +1,519 @@
-<div class="a4-page">
+<!-- templates/retaining_wall_cantilever/report_pages/report_p5_sliding.html -->
+
+<!-- 第一頁：4.1 檢核公式 與 4.2 主動側壓力與水壓力計算 -->
+<div class="a4-page fixed-page">
     <div class="report-header">
-        <div class="report-title">4. 抗滑動穩定性檢核詳細計算</div>
-        <div class="report-subtitle">Detailed Calculation of Sliding Stability</div>
+        <div class="report-title">4. 抗滑動穩定性檢核詳細計算 (1/3)</div>
+        <div class="report-subtitle">Sliding Stability - Active & Water Pressure</div>
     </div>
 
     <div class="content math-content">
-        <!-- 4.1 理論公式 -->
         <h5 class="mt-4 border-bottom pb-2">4.1 檢核公式 (Formula)</h5>
-        <div class="mb-3">
-            <p>抗滑動安全係數 ($FS_{sliding}$) 定義為總抵抗力與總驅動力之比值：</p>
-            <div style="overflow-x: auto;">
-                $$ FS_{sliding} = \dfrac{F_{resist}}{F_{driving}} = \dfrac{F_{friction} + P_{passive}}{F_{driving}} \ge
-                1.5 \text{ (Static)} $$
-            </div>
-            <p class="text-muted small">其中：<br>
-                $F_{friction} = N \cdot \tan(\delta_b) + c_a \cdot B$ (基底摩擦阻力)<br>
-                $P_{passive}$ = 牆前及止滑榫提供之被動土壓力</p>
+        <div class="p-3 bg-light border rounded mb-3 text-center">
+            $$ FS_{sliding} = \dfrac{F_{resist}}{F_{driving}} \ge 1.5 $$
+            <p class="small text-muted mb-0">其中 $F_{resist}$ 為總水平抵抗力，$F_{driving}$ 為總水平驅動力。</p>
         </div>
 
-        <!-- 4.2 垂直力計算 -->
-        <h5 class="mt-4 border-bottom pb-2">4.2 總垂直正向力計算 ($N$)</h5>
-        <div class="mb-3">
-            <p>包含結構自重 ($W$) 與土壓力垂直分量 ($P_v$)：</p>
-            <div style="overflow-x: auto;">
-                $$
-                \begin{aligned}
-                N &= \sum W + \sum P_v \\
-                &= {{ sliding_details.N_weight }} + {{ sliding_details.N_soil_v }} \\
-                &= \mathbf{ {{ sliding_details.N_total }} } \text{ tf/m}
-                \end{aligned}
-                $$
-            </div>
+        <h5 class="mt-4 border-bottom pb-2">4.2 主動側壓力與水壓力計算</h5>
+
+        <h6><strong>(1) 穩定性分析高度 ($H_s$)</strong></h6>
+        <div class="ps-3 border-start mb-3">
+            $$ \begin{aligned}
+            H_s &= H_{stem} + H_{bp} + (L_{heel} + w_{stem\_back}) \cdot \tan\alpha \\
+            &= {{ input_data.H_stem|floatformat:2 }} + {{ input_data.H_bp|floatformat:2 }} +
+            ({{ input_data.L_bp_back|floatformat:2 }} + {{ input_data.w_stem_back|floatformat:2 }}) \cdot
+            \tan({{ input_data.alpha_soil }}^\circ) \\
+            &= \mathbf{ {{ active_calc_details.Hs|floatformat:2 }} } \text{ m}
+            \end{aligned} $$
         </div>
 
-        <!-- 4.3 摩擦阻力計算 -->
-        <h5 class="mt-4 border-bottom pb-2">4.3 基底摩擦阻力計算 ($F_{friction}$)</h5>
-        <div class="mb-3">
-            <p>參數：$\phi_b = {{ input_data.phi_soil_base }}^\circ \Rightarrow \delta_b = 2/3 \phi_b
-                = {{ sliding_details.delta_base|floatformat:1 }}^\circ, \quad c_a = {{ sliding_details.c_base }} \text{
-                tf/m}^2, \quad B = {{ sliding_details.B_total }} \text{ m}$</p>
-            <div style="overflow-x: auto;">
-                $$
-                \begin{aligned}
-                F_{friction} &= N \cdot \tan(\delta_b) + c_a \cdot B \\
-                &= {{ sliding_details.N_total }} \cdot \tan({{ sliding_details.delta_base|floatformat:1 }}^\circ)
-                + {{ sliding_details.c_base }} \cdot {{ sliding_details.B_total }} \\
-                &= {{ sliding_details.N_total }} \cdot {{ sliding_details.tan_delta }}
-                + {{ sliding_details.F_friction_C }} \\
-                &= \mathbf{ {{ sliding_details.F_friction_total }} } \text{ tf/m}
-                \end{aligned}
-                $$
-            </div>
+        <h6><strong>(2) 基底有效垂直應力檢核 ($\sigma'_{v,b}$)</strong></h6>
+        <div class="ps-3 border-start mb-3">
+            {% if active_calc_details.has_water %}
+                <p class="small">考慮地下水位 $H_w = {{ active_calc_details.Hw|floatformat:2 }} \text{
+                    m}$，分為兩層應力：</p>
+                $$ \begin{aligned}
+                \sigma'_{v,w} &= \gamma_t \cdot (H_s - H_w) = {{ input_data.gamma_soil }} \times (
+                {{ active_calc_details.Hs|floatformat:2 }} - {{ active_calc_details.Hw|floatformat:2 }}) =
+                {{ active_calc_details.sig_v_water|floatformat:2 }} \text{ tf/m}^2 \\
+                \sigma'_{v,b} &= \sigma'_{v,w} + (\gamma_{sat} - \gamma_w) \cdot H_w \\
+                &= {{ active_calc_details.sig_v_water|floatformat:2 }} + ({{ input_data.gamma_sat }} - 1.0) \times
+                {{ active_calc_details.Hw|floatformat:2 }} = \mathbf{ {{ active_calc_details.sig_v_bot|floatformat:2 }}
+                } \text{ tf/m}^2
+                \end{aligned} $$
+            {% else %}
+                <p class="small">無地下水位影響，應力隨深度線性增加：</p>
+                $$ \begin{aligned}
+                \sigma'_{v,b} &= \gamma_t \cdot H_s = {{ input_data.gamma_soil }} \times
+                {{ active_calc_details.Hs|floatformat:2 }} \\
+                &= \mathbf{ {{ active_calc_details.sig_v_bot|floatformat:2 }} } \text{ tf/m}^2
+                \end{aligned} $$
+            {% endif %}
         </div>
 
-        <!-- 4.4 被動阻力與結果 -->
-        <h5 class="mt-4 border-bottom pb-2">4.4 總抵抗力與安全係數 ($FS$)</h5>
-        <div class="mb-3">
-            <p>
-                <strong>被動土壓力 ($P_{passive}$):</strong>
-                採用
-                {% if sliding_details.is_seismic %}
-                    <span class="text-danger fw-bold">動態 (Dynamic $P_{pe}$)</span>
-                {% else %}
-                    <span class="text-primary fw-bold">靜態 (Static $P_p$)</span>
+        <h6><strong>(3) 界面點位主動土壓力計算 ($p'_a = K_a \cdot \sigma'_v - 2c\sqrt{K_a}$)</strong></h6>
+        <div class="ps-3 border-start mb-3">
+            <p class="small">依據各界面有效垂直應力計算點位側壓力（本案 $c = {{ input_data.c_soil|default:0 }}$）：</p>
+            <div style="overflow-x: auto;">
+                $$ \begin{aligned}
+                p'_{a,top} &= K_a \cdot \sigma'_{v,top} = {{ Ka }}
+                \times {{ active_calc_details.sig_v_top|floatformat:2 }} =
+                \mathbf{ {{ active_calc_details.pa_top|floatformat:2 }} } \text{ tf/m}^2 \\[10pt]
+                {% if active_calc_details.has_water %}
+                    p'_{a,water} &= K_a \cdot \sigma'_{v,water} = {{ Ka }} \times
+                    {{ active_calc_details.sig_v_water|floatformat:2 }} = \mathbf{
+                    {{ active_calc_details.pa_water|floatformat:2 }} } \text{ tf/m}^2 \\[10pt]
                 {% endif %}
-                計算結果。
-            </p>
-            <div style="overflow-x: auto;">
-                $$
-                \begin{aligned}
-                F_{resist} &= F_{friction} + P_{passive} \\
-                &= {{ sliding_details.F_friction_total }} + {{ sliding_details.P_passive }} \\
-                &= \mathbf{ {{ sliding_details.F_resist_total }} } \text{ tf/m}
-                \end{aligned}
-                $$
+                p'_{a,bot} &= K_a \cdot \sigma'_{v,bot} = {{ Ka }}
+                \times {{ active_calc_details.sig_v_bot|floatformat:2 }} =
+                \mathbf{ {{ active_calc_details.pa_bot|floatformat:2 }} } \text{ tf/m}^2
+                \end{aligned} $$
             </div>
-
-            <p class="mt-3"><strong>總水平驅動力 ($F_{driving}$):</strong></p>
-            <div style="overflow-x: auto;">
-                $$ F_{driving} = \sum P_H = \mathbf{ {{ sliding_details.F_driving }} } \text{ tf/m} $$
-            </div>
-
-            <p class="mt-3"><strong>安全係數計算:</strong></p>
-            <div class="alert {% if sliding_details.FS >= 1.5 %}alert-success{% else %}alert-danger{% endif %}">
-                $$
-                \begin{aligned}
-                FS_{sliding} &= \dfrac{ {{ sliding_details.F_resist_total }} }{ {{ sliding_details.F_driving }} }
-                \\[1em]
-                &= \mathbf{ {{ sliding_details.FS }} }
-                \end{aligned}
-                $$
-            </div>
-            <p class="text-end">
-                判定：
-                {% if sliding_details.FS >= 1.5 %}
-                    <span class="badge bg-success fs-6">OK (符合規範 $\ge 1.5$)</span>
-                {% else %}
-                    <span class="badge bg-danger fs-6">NG (不符規範 $< 1.5$)</span>
-                {% endif %}
-            </p>
         </div>
+        <h6><strong>(4) 分層土壓力合力計算 ($P_i$)</strong></h6>
+        <div class="ps-3 border-start mb-3">
+            <p class="small">將側壓力分佈圖依水位界面分割為梯形進行面積積分：</p>
+            <div style="overflow-x: auto;">
+                {% if active_calc_details.has_water %}
+                    $$ \begin{aligned}
+                    P_1 &= \dfrac{p'_{a,top} + p'_{a,water}}{2} \cdot H_{dry} = \dfrac{
+                    {{ active_calc_details.pa_top|floatformat:2 }} + {{ active_calc_details.pa_water|floatformat:2 }}
+                    }{2} \times {{ active_calc_details.Hdry|floatformat:2 }} = \mathbf{
+                    {{ active_calc_details.P1|floatformat:2 }} } \text{ tf/m} \\[10pt]
+                    P_2 &= \dfrac{p'_{a,water} + p'_{a,bot}}{2} \cdot H_w = \dfrac{
+                    {{ active_calc_details.pa_water|floatformat:2 }} + {{ active_calc_details.pa_bot|floatformat:2 }}
+                    }{2} \times {{ active_calc_details.Hw|floatformat:2 }} = \mathbf{
+                    {{ active_calc_details.P2|floatformat:2 }} } \text{ tf/m}
+                    \end{aligned} $$
+                {% else %}
+                    $$ \begin{aligned}
+                    P'_a &= \dfrac{p'_{a,top} + p'_{a,bot}}{2} \cdot H_s = \dfrac{
+                    {{ active_calc_details.pa_top|floatformat:2 }} + {{ active_calc_details.pa_bot|floatformat:2 }} }{2}
+                    \times {{ active_calc_details.Hs|floatformat:2 }} = \mathbf{
+                    {{ active_calc_details.Pa_eff|floatformat:2 }} } \text{ tf/m}
+                    \end{aligned} $$
+                {% endif %}
+            </div>
+        </div>
+
 
     </div>
 
     <div class="report-footer">
-        <div class="d-flex justify-content-between">
-            <span>Generated by CNProject StructTool</span>
-            <span>Page 5 / 8</span>
+        <span>Generated by CNProject StructTool</span>
+        <span class="float-end">Page 7 / 10</span>
+    </div>
+</div>
+
+<!-- 第二頁：地表超載引致之側向力 -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">4. 抗滑動穩定性檢核詳細計算 (2/3)</div>
+        <div class="report-subtitle">Sliding Stability - Surcharge Pressure</div>
+    </div>
+
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">4.2 主動側壓力計算 (續) - 地表超載分量</h5>
+
+        <h6><strong>(5) 主動土壓力總合力 ($P'_a$) 與分量解析</strong></h6>
+        <div class="ps-3 border-start mb-3">
+            <p class="small">合計主動土壓力並依作用角 $\Omega = \delta + \theta
+                = {{ active_calc_details.angle_soil_deg|floatformat:2 }}^\circ$ 解析：</p>
+            <div style="overflow-x: auto;">
+                $$ \begin{aligned}
+                P'_a &= {% if active_calc_details.has_water %} P_1 + P_2 = {{ active_calc_details.P1|floatformat:2 }} +
+                {{ active_calc_details.P2|floatformat:2 }} = {% endif %}
+                \mathbf{ {{ active_calc_details.Pa_eff|floatformat:2 }} } \text{ tf/m} \\[10pt]
+                P_{ah} &= P'_a \cdot \cos\Omega = {{ active_calc_details.Pa_eff|floatformat:2 }} \cdot
+                \cos({{ active_calc_details.angle_soil_deg|floatformat:2 }}^\circ) =
+                \mathbf{ {{ active_calc_details.Pa_H|floatformat:2 }} } \text{ tf/m} \\[10pt]
+                P_{av} &= P'_a \cdot \sin\Omega = {{ active_calc_details.Pa_eff|floatformat:2 }} \cdot
+                \sin({{ active_calc_details.angle_soil_deg|floatformat:2 }}^\circ) =
+                \mathbf{ {{ active_calc_details.Pa_V|floatformat:2 }} } \text{ tf/m}
+                \end{aligned} $$
+            </div>
         </div>
+
+        <h6><strong>(6) 靜水壓力 ($P_w$)</strong></h6>
+        <div class="ps-3 border-start">
+            {% if active_calc_details.has_water %}
+                $$ \begin{aligned}
+                P_w &= \frac{1}{2} \gamma_w H_w^2 = \frac{1}{2} \cdot 1.0 \cdot (
+                {{ active_calc_details.Hw|floatformat:2 }})^2 = \mathbf{
+                {{ active_calc_details.Pw_total|floatformat:2 }} } \text{ tf/m} \\
+                P_{wh} &= P_w \cdot \cos\theta = {{ active_calc_details.Pw_total|floatformat:2 }} \cdot \cos(
+                {{ theta_deg }} ^\circ) = \mathbf{ {{ active_calc_details.Pw_H|floatformat:2 }} } \text{ tf/m}
+                \end{aligned} $$
+            {% else %}
+                <p class="text-muted fst-italic">無地下水位，靜水壓力 $P_w = 0$。</p>
+            {% endif %}
+        </div>
+
+        <!-- 均佈超載 -->
+        <h6><strong>(7) 均佈超載 ($q$)</strong></h6>
+        <div class="ps-3 border-start mb-4">
+            {% if input_data.enable_uniform == 'on' %}
+                $$ \begin{aligned}
+                P_{qh} &= (K_a \cdot q \cdot H_s) \cdot \cos\Omega \\
+                &= ({{ Ka }} \times {{ input_data.q_uniform }} \times {{ active_calc_details.Hs|floatformat:2 }}) \cdot
+                \cos({{ active_calc_details.angle_soil_deg|floatformat:2 }}^\circ) = \mathbf{
+                {{ active_calc_details.P_qh|floatformat:2 }} } \text{ tf/m} \\
+                W_q &= q \cdot L_{back\_eff} = {{ active_calc_details.q_uniform }} \times
+                {{ active_calc_details.W_q_width|floatformat:2 }} = \mathbf{
+                {{ active_calc_details.W_q_vertical|floatformat:2 }} } \text{ tf/m}
+                \end{aligned} $$
+            {% else %}
+                <p class="text-muted">未施加均佈超載。</p>
+            {% endif %}
+        </div>
+
+        <!-- (8) 集中載重 (Point Load, QP) -->
+        <h6><strong>(8) 集中載重 (Point Load, $Q_P$) 詳細計算</strong></h6>
+        <div class="ps-3 border-start mb-4">
+            {% if input_data.enable_point == 'on' %}
+                <p class="small mb-2">
+                    載重強度 $Q_P = {{ input_data.q_point }} \text{ tf}$，作用距離 $X = {{ input_data.point_x }} \text{
+                    m}$，分析高度 $H_s = {{ active_calc_details.Hs|floatformat:2 }} \text{ m}$。<br>
+                    相對距離參數 $m = \dfrac{X}{H_s} = \dfrac{ {{ input_data.point_x }}
+                    }{ {{ active_calc_details.Hs|floatformat:2 }} } = \mathbf{ {{ active_calc_details.point_m }} }$
+                </p>
+
+                <p class="small"><strong>側向應力函數 $\sigma_H(z)$ 代值：</strong></p>
+                <div class="bg-light p-3 rounded mb-2">
+                    {% if active_calc_details.point_m <= 0.4 %}
+                        $$ \sigma_H(z)
+                        =\left(\dfrac{Q_{P}}{H_{s}^2}\right) \cdot \dfrac{0.28 n^2}{\left(0.16+n^2\right)^3}
+                        =\left(\dfrac{ {{ input_data.q_point }} }{ {{ active_calc_details.Hs|floatformat:2 }}
+                        ^2 }\right) \cdot \dfrac{0.28 \cdot (z/{{ active_calc_details.Hs|floatformat:2 }})^2}{\left[
+                        0.16 + (z/
+                        {{ active_calc_details.Hs|floatformat:2 }})^2 \right]^3} $$
+                    {% else %}
+                        $$ \sigma_H(z)
+                        =\left(\dfrac{Q_{P}}{H_{s}^2}\right) \cdot \dfrac{1.77 m^2 n^2}{\left(m^2+n^2\right)^3}
+                        =\left( \dfrac{ {{ input_data.q_point }} }{ {{ active_calc_details.Hs|floatformat:2 }}
+                        ^2 }\left) \cdot \dfrac{1.77 \cdot {{ active_calc_details.point_m }}^2 \cdot (z/
+                        {{ active_calc_details.Hs|floatformat:2 }})^2}{\left[ {{ active_calc_details.point_m }}^2 + (z/
+                        {{ active_calc_details.Hs|floatformat:2 }})^2 \right]^3} $$
+                    {% endif %}
+                </div>
+
+                <p class="small"><strong>水平推力積分展開：</strong></p>
+                <div style="overflow-x: auto;">
+                    $$ \begin{aligned}
+                    P_{ph} &= \int_{0}^{H_s} \sigma_H(z) dz \\
+                    &= \int_{0}^{ {{ active_calc_details.Hs|floatformat:2 }} } \left( \dfrac{ {{ input_data.q_point }}
+                    }{ {{ active_calc_details.Hs|floatformat:2 }}^2 } \cdot \dfrac{
+                    {% if active_calc_details.point_m <= 0.4 %}0.28{% else %}1.77 \cdot
+                        {{ active_calc_details.point_m }}^2{% endif %} \cdot
+                    (z/{{ active_calc_details.Hs|floatformat:2 }})^2 }{ \left[
+                    {% if active_calc_details.point_m <= 0.4 %}0.16{% else %}{{ active_calc_details.point_m }}
+                        ^2{% endif %} + (z/{{ active_calc_details.Hs|floatformat:2 }})^2 \right]^3 } \right) dz \\
+                    &= \mathbf{ {{ active_calc_details.P_ph|floatformat:2 }} } \text{ tf/m}
+                    \end{aligned} $$
+                </div>
+            {% else %}
+                <p class="text-muted fst-italic">本案未配置集中超載項目。</p>
+            {% endif %}
+        </div>
+
+
+    </div>
+
+    <div class="report-footer">
+        <span>Generated by CNProject StructTool</span>
+        <span class="float-end">Page 8 / 10</span>
+    </div>
+</div>
+
+<!-- 第三頁：4.3 垂直力詳細計算 與 4.4 安全係數檢核 -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">4. 抗滑動穩定性檢核詳細計算 (3/3)</div>
+        <div class="report-subtitle">Sliding Stability - Vertical Sum & FS</div>
+    </div>
+
+    <div class="content math-content">
+        <!-- (9) 帶狀載重 (Strip Load, q) -->
+        <h6><strong>(9) 帶狀載重 (Strip Load, $q$) 詳細計算</strong></h6>
+        <div class="ps-3 border-start mb-4">
+            {% if input_data.enable_strip == 'on' %}
+                <p class="small mb-2">
+                    <strong>A. 參數定義：</strong><br>
+                    超載強度 $q = {{ input_data.q_strip }} \text{ tf/m}^2$，寬度 $B = {{ input_data.strip_width }} \text{
+                    m}$，起始距離 $X = {{ input_data.strip_x }} \text{ m}$。<br>
+                    帶狀壓力由線載重公式 $\sigma_{H,line}(x, z)$ 對寬度進行積分。
+                </p>
+
+                <p class="small"><strong>B. 線載重基礎公式定義：</strong></p>
+                <div class="bg-light p-2 rounded mb-2 small">
+                    設變動距離參數 $m(x) = \dfrac{x}{H_s}$，相對深度 $n(z) = \dfrac{z}{H_s}$：
+                    $$ \sigma_{H,line}(x, z) = \begin{cases}
+                    \dfrac{q}{H_s} \cdot \dfrac{0.20 n}{(0.16 + n^2)^2} & (m \le 0.4) \\[10pt]
+                    \dfrac{q}{H_s} \cdot \dfrac{1.28 m^2 n}{(m^2 + n^2)^2} & (m > 0.4)
+                    \end{cases} $$
+                </div>
+
+                <p class="small"><strong>C. 雙重積分代值過程：</strong></p>
+                <div style="overflow-x: auto;">
+                    $$ \begin{aligned}
+                    P_{sh} &= \int_{0}^{H_s} \left[ \int_{X}^{X+B} \sigma_{H,line}(x, z) dx \right] dz \\
+                    &= \int_{0}^{ {{ active_calc_details.Hs|floatformat:2 }} } \left[ \int_{ {{ input_data.strip_x }}
+                    }^{ {{ active_calc_details.strip_x_end|floatformat:2 }} } \sigma_{H,line}(x, z) dx \right] dz \\
+                    &= \mathbf{ {{ active_calc_details.P_sh|floatformat:2 }} } \text{ tf/m}
+                    \end{aligned} $$
+                </div>
+            {% else %}
+                <p class="text-muted fst-italic">本案未配置帶狀超載項目。</p>
+            {% endif %}
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <h6 class="fw-bold mb-2">總水平驅動力 ($F_{driving}$) 彙整：</h6>
+            $$ \begin{aligned}
+            F_{driving} &= P_{ah} + P_{wh} + P_{qh} + P_{ph} + P_{sh} \\
+            &= {{ active_calc_details.Pa_H|floatformat:2 }} + {{ active_calc_details.Pw_H|floatformat:2 }}
+            + {{ active_calc_details.P_qh|floatformat:2 }} + {{ active_calc_details.P_ph|floatformat:2 }}
+            + {{ active_calc_details.P_sh|floatformat:2 }} \\
+            &= \mathbf{ {{ active_calc_details.P_stat_H_total|floatformat:2 }} } \text{ tf/m}
+            \end{aligned} $$
+        </div>
+
+
+    </div>
+
+    <div class="report-footer">
+        <span>Generated by CNProject StructTool</span>
+        <span class="float-end">Page 9 / 10</span>
+    </div>
+</div>
+
+<!-- [PAGE 9] 第三頁：4.3 垂直正向力與浮力詳算 -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">4. 抗滑動穩定性檢核詳細計算 (3/4)</div>
+        <div class="report-subtitle">Detailed Vertical Forces & Buoyancy</div>
+    </div>
+
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">4.3 有效垂直正向力計算 ($N'$)</h5>
+
+        <!-- (1) 結構自重 -->
+        <h6><strong>(1) 結構自重明細 ($\sum W_{blocks}$)</strong></h6>
+        <table class="table table-sm table-bordered text-center align-middle small mb-4">
+            <thead class="table-light">
+            <tr>
+                <th width="30%">區塊名稱</th>
+                <th width="45%">計算公式 (面積 $\times$ $\gamma_c$)</th>
+                <th width="25%">數值 (tf/m)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for block in struct_blocks %}
+                <tr>
+                    <td class="ps-2">{{ block.name }}</td>
+                    <td>$ {{ block.formula }} $</td>
+                    <td>{{ block.val|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot class="fw-bold table-secondary">
+            <tr>
+                <td colspan="2" class="text-end pe-3">結構自重小計 ($\sum W_{blocks}$)：</td>
+                <td>{{ N_weight_sum|floatformat:2 }}</td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <!-- (2) 回填土重 -->
+        <h6><strong>(2) 回填土重明細 ($\sum V_{soil}$)</strong></h6>
+        <table class="table table-sm table-bordered text-center align-middle small mb-3">
+            <thead class="table-light">
+            <tr>
+                <th width="30%">項目名稱</th>
+                <th width="45%">幾何面積與單位重代值 ($A \times \gamma$)</th>
+                <th width="25%">數值 (tf/m)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for layer in soil_layers %}
+                <tr>
+                    <td class="ps-2">{{ layer.name }}</td>
+                    <td>$ {{ layer.formula }} $</td>
+                    <td>{{ layer.val|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot class="fw-bold table-secondary">
+            <tr>
+                <td colspan="2" class="text-end pe-3">回填土重小計 ($\sum V_{soil}$)：</td>
+                <td>{{ N_soil_sum|floatformat:2 }}</td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <!-- (3) 外加超載垂直力 -->
+        <h6><strong>(3) 外加超載垂直載重 ($\sum V_{ext}$)</strong></h6>
+        <table class="table table-sm table-bordered text-center align-middle small mb-3">
+            <thead class="table-light">
+            <tr>
+                <th width="30%">載重來源</th>
+                <th width="45%">計算公式</th>
+                <th width="25%">數值 (tf/m)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ext in v_ext_items %}
+                <tr>
+                    <td class="ps-2">{{ ext.name }}</td>
+                    <td>$ {{ ext.formula }} $</td>
+                    <td>{{ ext.val|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot class="fw-bold table-secondary">
+            <tr>
+                <td colspan="2" class="text-end pe-3">外加載重總和 ($\sum V_{ext}$)：</td>
+                <td>{{ V_ext_sum|floatformat:2 }}</td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <!-- (4) 地下水浮力 -->
+        <h6><strong>(4) 地下水浮力計算 ($U$)</strong></h6>
+        <div class="ps-3 mb-4">
+            <p class="small">考慮地下水位高度對基礎底面產生之向上浮力：</p>
+            $$
+            U = \gamma_w \cdot H_w \cdot B_{total}
+            = 1.0 \times {{ active_calc_details.Hw|floatformat:2 }} \times {{ sliding_details.B_total|floatformat:2 }}
+            = \mathbf{ {{ sliding_details.U_uplift|floatformat:2 }} } \text{ tf/m}
+            $$
+        </div>
+
+        <div class="alert alert-info py-2">
+            <h6 class="fw-bold mb-1">合計有效垂直正向力 ($N'$)：</h6>
+            $$
+            N' = \sum W_{blocks} + \sum V_{soil} + \sum V_{ext} - U \\
+            = {{ N_weight_sum }} + {{ N_soil_sum }} + {{ active_calc_details.V_ext_total|floatformat:2 }}
+            - {{ sliding_details.U_uplift|floatformat:2 }} \\
+            = \mathbf{ {{ sliding_details.N_prime|floatformat:2 }} } \text{ tf/m}
+            $$
+        </div>
+    </div>
+    <div class="report-footer"><span>Page 9 / 11</span></div>
+</div>
+
+<!-- [PAGE 10] 第四頁：抵抗力詳算與 FS 判定 -->
+<div class="a4-page fixed-page">
+    <div class="report-header">
+        <div class="report-title">4. 抗滑動穩定性檢核詳細計算 (4/4)</div>
+        <div class="report-subtitle">Horizontal Resistance & Final Safety Factor</div>
+    </div>
+
+    <div class="content math-content">
+        <h5 class="mt-4 border-bottom pb-2">4.4 水平抵抗力計算 ($F_{resist}$)</h5>
+
+        <!-- (1) 版底摩擦力 -->
+        <h6 class="text-primary fw-bold">(1) 版底摩擦抗力 ($F_{friction}$)</h6>
+        <div class="ps-3 mb-4">
+            <p class="small">依據基礎底面之有效垂直正向力 $N'$ 與界面摩擦係數 $\mu$ 計算：</p>
+            $$ F_{friction}
+            = N' \cdot \mu
+            = {{ sliding_details.N_prime|floatformat:2 }} \times {{ sliding_details.mu|floatformat:2 }}
+            = \mathbf{ {{ sliding_details.F_friction_total|floatformat:2 }} } \text{ tf/m}
+            $$
+        </div>
+
+        <!-- (2) 被動土壓力 -->
+        <h6 class="text-primary fw-bold">(2) 被動土壓力抵抗力 ($P_{p,total}$)</h6>
+        <div class="ps-3 border-start mb-4">
+
+            <!-- 牆前覆土部分 -->
+            <p class="small fw-bold">A. 牆前側向被動抗力 ($P_{p,front}$)：</p>
+            <p class="small text-muted">工況說明：{{ passive_status_text }}，有效深度 $h = {{ h_eff_f }} \text{ m}$。</p>
+            $$
+            P_{p,f} = \frac{1}{2} \cdot \gamma_f \cdot h^2 \cdot K_{p,f}
+            = {{ f_pp_f }}
+            = \mathbf{ {{ Pp_f }} } \text{ tf/m}
+            $$
+
+            <!-- 剪力榫部分 -->
+            {% if input_data.H_sk and input_data.H_sk != "0" %}
+                <p class="small fw-bold mt-3">B. 剪力榫被動抗力 ($P_{p,key}$)：</p>
+                <p class="small text-muted">位於基版底面下之矩形榫體，深度 $H_{sk} = {{ input_data.H_sk }} \text{
+                    cm}$。</p>
+                <div class="p-2 bg-light rounded mb-2 small">
+                    <p class="mb-1">1. 榫頂應力(基版底):
+                        $\sigma_{p,top}
+                        = K_{p,base} \cdot (\gamma_f \cdot h)
+                        = {{ Kp_base }} \times \left( {{ gamma_s_f }} \times {{ h_eff_f }} \right)
+                        = \mathbf{ {{ sig_p_top }} } \text{ tf/m}^2$</p>
+                    <p class="mb-0">2. 榫底應力:
+                        $\sigma_{p,bot}
+                        = K_{p,base} \cdot (\gamma_f \cdot h + \gamma_{base} \cdot H_{sk})
+                        = {{ Kp_base }} \times \left( {{ gamma_s_f }} \times {{ h_eff_f }} + {{ gamma_s_b }} \times {{ H_sk_m }} \right)
+                        = \mathbf{ {{ sig_p_bot }} } \text{ tf/m}^2$</p>
+                </div>
+                $$
+                P_{p,sk} = \dfrac{\sigma_{p,top} + \sigma_{p,bot}}{2} \cdot H_{sk}
+                = {{ f_pp_sk }}
+                = \mathbf{ {{ Pp_sk }} } \text{ tf/m}
+                $$
+            {% else %}
+                <p class="text-muted fst-italic small">本案未設置剪力榫，不計入此項抗力。</p>
+            {% endif %}
+
+            <!-- 被動總和 -->
+            <p class="small fw-bold mt-3">C. 總被動抗力彙整：</p>
+            $$ P_{p,total} = P_{p,f} + P_{p,sk} = {{ Pp_f }} + {{ Pp_sk|default:0 }} =
+            \mathbf{ {{ passive_details.Pp_total|floatformat:2 }} } \text{ tf/m} $$
+        </div>
+
+        <!-- 抵抗力總計 -->
+        <h6 class="text-primary fw-bold">(3) 總水平抵抗力彙整 ($F_{resist}$)</h6>
+        <div class="ps-3 mb-4">
+            $$ F_{resist} = F_{friction} + P_{p,total} = {{ sliding_details.F_friction_total|floatformat:2 }}
+            + {{ passive_details.Pp_total|floatformat:2 }} = \mathbf{ {{ sliding_details.F_resist_total|floatformat:2 }}
+            } \text{ tf/m} $$
+        </div>
+
+        <h5 class="mt-5 border-bottom pb-2">4.5 安全係數判定 ($FS_{slide}$)</h5>
+
+        <div class="fs-check-container mt-4">
+            <!-- 狀態指示條與公式區 -->
+            <div class="fs-check-card {% if stability.FS_slide >= 1.5 %}border-success{% else %}border-danger{% endif %}">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="fs-formula-wrapper">
+                            $$
+                            FS_{slide} = \dfrac{F_{resist}}{F_{driving}}
+                            = \dfrac{ {{ sliding_details.F_resist_total|floatformat:2 }}
+                            }{ {{ active_calc_details.P_stat_H_total|floatformat:2 }} } =
+                            \mathbf{ {{ stability.FS_slide }} }
+                            $$
+                        </div>
+                    </div>
+                    <div class="col-4 text-center border-start">
+                        <div class="verdict-label mb-1">判定結果</div>
+                        {% if stability.FS_slide >= 1.5 %}
+                            <div class="text-success fw-bold">
+                                <i class="bi bi-check2-circle"></i> OK
+                            </div>
+                            <div class="verdict-note">($\ge 1.5$)</div>
+                        {% else %}
+                            <div class="text-danger fw-bold">
+                                <i class="bi bi-exclamation-triangle"></i> NG
+                            </div>
+                            <div class="verdict-note">($< 1.5$)</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-muted mt-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+            * 註：依據設計規範，平時工況之抗滑動安全係數基準值為 1.5。
+        </p>
+    </div>
+    <div class="report-footer"><span>Generated by CNProject StructTool</span><span class="float-end">Page 10 / 11</span>
     </div>
 </div>
