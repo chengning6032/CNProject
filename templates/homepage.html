@@ -4,939 +4,1054 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OLI | Optimal Lean Interface</title>
+    <title>OLI | Optimal Lean Interface - 結構工程輔助設計系統</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
-    <!-- 引入 Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
           rel="stylesheet">
 
     <style>
         /* ==========================================================
-           1. 設計系統變數 (Design Tokens)
+           1. 設計系統變數 (Design Tokens - 高質感中性工程色調)
            ========================================================== */
         :root {
-            --primary-dark: #0f172a;
-            --primary-main: #334155;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --bg-body: #f1f5f9;
-            --bg-card: #ffffff;
-            --bg-glass: rgba(255, 255, 255, 0.85);
-            --text-main: #1e293b;
-            --text-secondary: #64748b;
-            --text-light: #94a3b8;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-blue: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-pill: 50px;
-            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --surface-bg: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-subtle: #f1f5f9;
+            --surface-hover: #e2e8f0;
+
+            --border-subtle: rgba(226, 232, 240, 0.9);
+            --border-strong: #cbd5e1;
+            --border-focus: #0f172a;
+
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+
+            /* 核心品牌點綴：深沉精密的鈷藍與純黑灰階 */
+            --brand-primary: #1e293b;
+            --brand-accent: #2563eb;
+            --brand-accent-glow: rgba(37, 99, 235, 0.08);
+
+            --font-sans: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+
+            --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+            --shadow-card: 0 4px 12px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+            --shadow-float: 0 12px 30px -4px rgba(15, 23, 42, 0.08);
+
+            --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* ==========================================================
-           2. 全域設定 (Global Reset)
+           2. 全域重置與背景紋理
            ========================================================== */
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            scroll-behavior: smooth;
         }
 
         body {
-            background-color: var(--bg-body);
-            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.05) 0px, transparent 50%);
+            background-color: var(--surface-bg);
+            /* 精密工程點陣背景 (Dot Grid) */
+            background-image: radial-gradient(circle, rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+            background-size: 24px 24px;
             background-attachment: fixed;
-            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-            color: var(--text-main);
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         a {
             text-decoration: none;
             color: inherit;
-            transition: var(--transition-fast);
         }
 
-        .mono-font, .version-tag, .date {
-            font-family: 'JetBrains Mono', monospace;
+        .mono {
+            font-family: var(--font-mono);
+            letter-spacing: -0.02em;
         }
 
         /* ==========================================================
-           3. 頁首導覽列 (Header)
+           3. 導覽列 (Header)
            ========================================================== */
         .top-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5%;
-            height: 72px;
-            background-color: var(--bg-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: var(--shadow-sm);
             position: sticky;
             top: 0;
             z-index: 1000;
+            height: 68px;
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            width: 100%;
+        }
+
+        .header-inner {
+            width: 100%;
+            max-width: 1320px;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 140px; /* 保持左右視覺平衡 */
         }
 
         .logo-img {
-            height: 42px;
+            height: 36px;
+            object-fit: contain;
         }
 
         .main-nav {
             display: flex;
             align-items: center;
-            gap: 8px;
-            height: 100%;
+            gap: 6px;
             position: relative;
+            background: rgba(241, 245, 249, 0.8);
+            padding: 4px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
         }
 
         .main-nav-link {
-            padding: 8px 20px;
-            color: var(--text-secondary);
+            padding: 6px 18px;
+            font-size: 0.875rem;
             font-weight: 500;
-            font-size: 0.95rem;
-            border-radius: var(--radius-pill);
-            position: relative;
-            z-index: 1;
-            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            border-radius: var(--radius-full);
+            transition: var(--transition);
         }
 
         .main-nav-link:hover {
-            color: var(--accent-color);
-            background-color: rgba(59, 130, 246, 0.05);
+            color: var(--text-primary);
         }
 
         .main-nav-link.active {
-            color: var(--accent-color);
-            font-weight: 700;
+            background-color: #ffffff;
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
         }
 
-        .main-nav::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-color), #60a5fa);
-            left: var(--underline-left, 0);
-            width: var(--underline-width, 0);
-            transition: left 0.4s ease, width 0.4s ease;
-        }
-
-        /* User Auth */
         .user-auth-section {
             display: flex;
             align-items: center;
-            gap: 24px;
+            justify-content: flex-end;
+            gap: 12px;
+            min-width: 140px; /* 保持左右視覺平衡 */
         }
 
-        .user-auth-section .welcome-text {
+        .welcome-text {
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            font-size: 0.95rem;
         }
 
-        .user-auth-section .welcome-text strong {
-            color: var(--primary-dark);
+        .welcome-text strong {
+            color: var(--text-primary);
+            font-weight: 600;
         }
 
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            font-size: 1.25rem;
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background-color: var(--surface-subtle);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .btn-minimal {
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
             cursor: pointer;
-            padding: 4px;
-            transition: var(--transition-fast);
-        }
-
-        .logout-btn:hover {
-            color: #ef4444;
-        }
-
-        .btn-base {
-            padding: 8px 24px;
-            border-radius: var(--radius-pill);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: var(--transition-fast);
-            cursor: pointer;
-        }
-
-        .login-btn {
-            color: var(--primary-main);
-            border: 1px solid #cbd5e1;
-            background: transparent;
-        }
-
-        .login-btn:hover {
-            background-color: #fff;
-            border-color: var(--primary-main);
-        }
-
-        .signup-btn {
-            background-color: var(--primary-dark);
-            color: white;
-            border: 1px solid var(--primary-dark);
-        }
-
-        .signup-btn:hover {
-            background-color: #000;
-            transform: translateY(-1px);
-        }
-
-        .admin-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 14px;
-            background-color: #fff7ed;
-            color: #c2410c;
-            border: 1px solid #ffedd5;
-            border-radius: var(--radius-pill);
-            font-size: 0.85rem;
-            margin-left: 10px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            background: var(--surface-subtle);
+        }
+
+        .btn-solid {
+            background: var(--text-primary);
+            color: #ffffff;
+            border: 1px solid var(--text-primary);
+        }
+
+        .btn-solid:hover {
+            background: #1e293b;
+        }
+
+        .logout-icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 1.15rem;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .logout-icon-btn:hover {
+            color: #dc2626;
+            background-color: rgba(220, 38, 38, 0.08);
         }
 
         /* ==========================================================
-           4. 主內容 (Main Layout)
+           4. 主頁版面 (Main Layout)
            ========================================================== */
         .container {
             width: 100%;
-            max-width: 1280px;
+            max-width: 1320px;
             margin: 0 auto;
-            padding: 40px 24px;
+            padding: 40px 24px 60px;
             flex-grow: 1;
-            box-sizing: border-box;
         }
 
-        .main-container {
+        /* 標題簡介區塊 */
+        .page-header {
+            margin-bottom: 36px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .page-header p {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: #fff;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        .main-grid {
             display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 40px;
+            grid-template-columns: 360px 1fr;
+            gap: 32px;
             align-items: start;
         }
 
-        /* 左側卡片 */
-        .left-panel {
+        /* 左側工具選單 */
+        .sidebar-tools {
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 24px;
         }
 
-        .tool-group-title {
-            font-size: 0.85rem;
+        .tool-category {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .category-title {
+            font-size: 0.72rem;
             font-weight: 700;
-            color: var(--text-light);
+            color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            padding-left: 8px;
+            letter-spacing: 0.08em;
+            padding: 0 10px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
+            gap: 6px;
         }
 
-        .tool-group-title::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-            margin-right: 8px;
+        .category-title i {
+            font-size: 0.85rem;
         }
 
-        .tool-group a {
+        .tool-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 20px;
-            background-color: var(--bg-card);
-            color: var(--text-main);
+            padding: 13px 16px;
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
-            margin-bottom: 12px;
-            font-size: 1rem;
+            font-size: 0.92rem;
             font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-subtle);
+            transition: var(--transition);
             position: relative;
-            overflow: hidden;
+            cursor: pointer;
         }
 
-        .tool-group a:hover, .tool-group a.active {
-            background-color: #fff;
-            color: var(--accent-color);
-            border-color: rgba(59, 130, 246, 0.2);
-            box-shadow: var(--shadow-blue);
-            transform: translateY(-2px) translateX(4px);
+        .tool-item .item-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .tool-group a::before {
+        .tool-item .item-icon {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .tool-item:hover, .tool-item.active {
+            background-color: #ffffff;
+            border-color: var(--text-primary);
+            box-shadow: var(--shadow-card);
+            transform: translateX(4px);
+        }
+
+        .tool-item:hover .item-icon, .tool-item.active .item-icon {
+            color: var(--text-primary);
+        }
+
+        .tool-item.active::after {
             content: '';
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: var(--accent-color);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
+            right: -1px;
+            top: 25%;
+            bottom: 25%;
+            width: 3px;
+            background-color: var(--text-primary);
+            border-radius: 2px 0 0 2px;
         }
 
-        .tool-group a.active::before {
-            transform: scaleY(1);
-        }
-
-        .tool-group a.disabled-link {
-            background-color: rgba(255, 255, 255, 0.4);
-            color: var(--text-light);
-            box-shadow: none;
-            border: 1px dashed #cbd5e1;
+        .tool-item.disabled {
+            background: rgba(248, 250, 252, 0.6);
+            border-style: dashed;
+            color: var(--text-tertiary);
             cursor: not-allowed;
-        }
-
-        .tool-group a.disabled-link:hover {
-            transform: none;
             box-shadow: none;
         }
 
-        .badge {
-            font-size: 0.7em;
-            background-color: #f1f5f9;
-            color: #64748b;
+        .tool-item.disabled:hover {
+            transform: none;
+            border-color: var(--border-subtle);
+        }
+
+        .tool-item.disabled .item-icon {
+            color: var(--text-tertiary);
+        }
+
+        .tag-pill {
+            font-size: 0.68rem;
+            font-weight: 600;
             padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            border-radius: var(--radius-full);
+            background: var(--surface-subtle);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
         }
 
         /* 右側面板 */
-        .right-panel {
-            background-color: var(--bg-card);
+        .display-panel {
+            background: #ffffff;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            padding: 50px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-card);
+            padding: 44px;
+            min-height: 540px;
             position: sticky;
-            top: 100px;
-            min-height: 500px;
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            top: 96px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .right-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--accent-color), #60a5fa);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        }
-
-        #description-title {
-            font-size: 2.2rem;
-            color: var(--primary-dark);
-            margin: 0 0 24px 0;
-            font-weight: 700;
-        }
-
-        #description-text {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            margin-bottom: 30px;
-        }
-
-        .description-meta {
+        .panel-header-badge {
             display: inline-flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 30px;
-            padding: 12px 20px;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-        }
-
-        .meta-item i {
-            color: var(--accent-color);
-            margin-right: 6px;
-        }
-
-        /* Changelog */
-        .changelog-container {
-            margin-top: 40px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 30px;
-        }
-
-        .changelog-container details {
-            background-color: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .changelog-container summary {
-            padding: 16px 20px;
-            background-color: #f8fafc;
-            cursor: pointer;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: var(--primary-main);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--brand-accent);
+            background: var(--brand-accent-glow);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            margin-bottom: 18px;
+            width: fit-content;
+        }
+
+        .panel-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            line-height: 1.25;
+        }
+
+        .panel-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 18px;
+            background: var(--surface-subtle);
+            border-radius: var(--radius-md);
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .panel-meta-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
         }
 
-        .changelog-list {
-            padding: 24px;
-            margin: 0;
-            list-style: none;
+        .panel-meta-item i {
+            color: var(--text-primary);
         }
 
-        .changelog-version {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            margin-top: 24px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f1f5f9;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .changelog-details li {
-            position: relative;
-            padding: 8px 0 8px 28px;
-            font-size: 0.95rem;
+        .panel-desc {
+            font-size: 0.98rem;
             color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 36px;
         }
 
-        .changelog-details li::before {
-            content: '\ec5c';
-            font-family: 'remixicon';
+        /* 時間軸更新日誌 */
+        .timeline-section {
+            margin-top: auto;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
+        }
+
+        .timeline-summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            user-select: none;
+            padding: 8px 0;
+        }
+
+        .timeline-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .timeline-summary i {
+            transition: transform 0.2s ease;
+        }
+
+        details[open] .timeline-summary i {
+            transform: rotate(180deg);
+        }
+
+        .timeline-box {
+            margin-top: 16px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border-strong);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .timeline-block {
+            position: relative;
+        }
+
+        .timeline-block::before {
+            content: '';
+            position: absolute;
+            left: -17px;
+            top: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            border: 2px solid #ffffff;
+        }
+
+        .timeline-version-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-version-title .date {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+        }
+
+        .timeline-notes {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .timeline-notes li {
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            padding-left: 14px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .timeline-notes li::before {
+            content: '–';
             position: absolute;
             left: 0;
-            top: 10px;
-            color: #10b981;
+            color: var(--text-tertiary);
         }
 
-        /* Footer & Buttons */
-        .back-to-company-section {
-            text-align: center;
-            margin: 60px 0 40px;
+        /* 底部公司連結 */
+        .bottom-action {
+            margin: 60px 0 30px;
+            display: flex;
+            justify-content: center;
         }
 
-        .back-to-company-btn {
+        .btn-company {
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            padding: 16px 40px;
-            background-image: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-dark) 100%);
-            color: #ffffff;
-            border-radius: var(--radius-pill);
-            font-size: 1.1rem;
-            box-shadow: 0 10px 20px -5px rgba(30, 41, 59, 0.4);
+            gap: 10px;
+            padding: 12px 28px;
+            background-color: #ffffff;
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-full);
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-subtle);
+            transition: var(--transition);
         }
 
+        .btn-company:hover {
+            background-color: var(--text-primary);
+            color: #ffffff;
+            border-color: var(--text-primary);
+            box-shadow: var(--shadow-float);
+            transform: translateY(-1px);
+        }
+
+        /* 頁尾 */
         .footer {
-            text-align: center;
+            border-top: 1px solid var(--border-subtle);
+            background: #ffffff;
             padding: 30px;
-            font-size: 0.85rem;
-            color: var(--text-light);
-            background-color: var(--bg-card);
-            border-top: 1px solid #e2e8f0;
-            margin-top: auto;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            line-height: 1.7;
         }
 
         /* ==========================================================
-           5. 響應式與手機選單 (Responsive & Mobile Menu)
+           5. 響應式佈局 (Mobile & Tablet)
            ========================================================== */
-
-        /* 漢堡按鈕 - 預設隱藏 (桌機版) */
         .mobile-nav-toggle {
             display: none;
             background: none;
             border: none;
-            font-size: 24px;
-            color: var(--primary-dark);
+            font-size: 1.5rem;
+            color: var(--text-primary);
             cursor: pointer;
         }
 
-        /* 手機選單容器 - 預設隱藏 (桌機版) */
-        .mobile-nav {
-            display: none; /* 關鍵修正：桌機版完全隱藏 */
-        }
-
-        .mobile-nav-overlay {
+        .mobile-nav, .mobile-nav-overlay {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
         }
 
-        .mobile-nav-overlay.active {
-            opacity: 1;
-            visibility: visible;
-            display: block;
-        }
-
-        /* 當螢幕小於 992px 時，啟動 RWD 模式 */
         @media (max-width: 992px) {
-            .top-header {
-                padding: 0 20px;
-            }
-
-            /* 隱藏桌機版導覽 */
             .main-nav, .user-auth-section {
                 display: none;
             }
 
-            /* 顯示漢堡按鈕 */
             .mobile-nav-toggle {
-                display: block;
+                display: flex;
+                align-items: center;
             }
 
-            /* 切換佈局為單欄 */
-            .main-container {
+            .main-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 24px;
             }
 
-            .left-panel {
-                order: 1;
-            }
-
-            .right-panel {
-                order: 2;
-                padding: 30px;
+            .display-panel {
+                position: static;
+                padding: 28px 22px;
                 min-height: auto;
             }
 
-            /* === 手機選單 CSS (關鍵修正區) === */
+            /* 手機側邊選單 */
+            .mobile-nav-overlay {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(15, 23, 42, 0.4);
+                backdrop-filter: blur(4px);
+                z-index: 1999;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.25s ease;
+            }
+
+            .mobile-nav-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
             .mobile-nav {
-                display: flex; /* 恢復顯示屬性 */
+                display: flex;
                 flex-direction: column;
-                position: fixed; /* 絕對定位，浮在最上層 */
+                position: fixed;
                 top: 0;
                 right: 0;
-                width: 280px;
-                max-width: 80%;
+                width: 300px;
                 height: 100vh;
-                background-color: #fff;
-                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+                background: #ffffff;
                 z-index: 2000;
                 padding: 24px;
-                box-sizing: border-box;
-                transform: translateX(100%); /* 預設藏在右側 */
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transform: translateX(100%);
+                transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                box-shadow: -10px 0 25px rgba(0, 0, 0, 0.05);
             }
 
             .mobile-nav.active {
-                transform: translateX(0); /* 滑入 */
+                transform: translateX(0);
             }
 
             .mobile-nav-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 30px;
-                border-bottom: 1px solid #f1f5f9;
-                padding-bottom: 15px;
-            }
-
-            .mobile-nav-close {
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: var(--text-secondary);
-            }
-
-            .mobile-user-info {
-                background-color: #f8fafc;
-                border: 1px solid #e2e8f0;
-                padding: 20px;
-                border-radius: 8px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--border-subtle);
                 margin-bottom: 20px;
-                text-align: center;
             }
 
-            .mobile-welcome {
-                margin-bottom: 10px;
-                color: var(--primary-dark);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-            }
-
-            .mobile-auth-buttons {
-                display: flex;
-                gap: 10px;
-            }
-
-            .mobile-btn-login, .mobile-btn-signup {
-                flex: 1;
-                padding: 10px;
-                border-radius: 6px;
-                text-align: center;
-                font-weight: bold;
-                font-size: 0.9rem;
-            }
-
-            .mobile-btn-login {
-                border: 1px solid #cbd5e1;
-                color: var(--text-main);
-            }
-
-            .mobile-btn-signup {
-                background: var(--primary-dark);
-                color: #fff;
-            }
-
-            .mobile-nav-links {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .mobile-nav-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 15px;
-                color: var(--text-main);
-                border-radius: 8px;
-                transition: background 0.2s;
-                background: none;
-                border: none;
-                width: 100%;
-                text-align: left;
-                font-size: 1rem;
-            }
-
-            .mobile-nav-item:hover {
-                background-color: #f1f5f9;
-                color: var(--accent-color);
-            }
-
-            .mobile-nav-item.logout {
-                margin-top: 10px;
-                border-top: 1px solid #f1f5f9;
-                color: var(--text-secondary);
-            }
-
-            .mobile-nav-item i {
-                color: var(--accent-color);
-                font-size: 1.2rem;
-            }
-
-            .mobile-nav-item.disabled {
-                opacity: 0.5;
-            }
-        }
-
-        /* Mobile specific adjustments */
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px 16px;
-            }
-
-            #description-title {
-                font-size: 1.6rem;
+            .mobile-user-card {
+                padding: 14px;
+                background: var(--surface-subtle);
+                border-radius: var(--radius-md);
+                border: 1px solid var(--border-subtle);
+                margin-bottom: 20px;
             }
         }
     </style>
 </head>
 <body>
 
+<!-- 頂部導覽 -->
+<!-- 頂部導覽 -->
 <header class="top-header">
-    <a href="{% url 'homepage' %}" class="logo-container">
-        <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="logo-img">
-    </a>
+    <div class="header-inner">
+        <a href="{% url 'homepage' %}" class="logo-container">
+            <img src="{% static 'img/OLI_logo.png' %}" alt="OLI Logo" class="logo-img">
+        </a>
 
-    <nav class="main-nav">
-        <a href="{% url 'homepage' %}"
-           class="main-nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}">工具總覽</a>
-        {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}"
-               class="main-nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">會員中心</a>
-            <a href="{% url 'products:list' %}"
-               class="main-nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">購買/續訂</a>
-        {% else %}
-            <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">會員中心</span>
-            <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">購買/續訂</span>
-        {% endif %}
-    </nav>
+        <nav class="main-nav">
+            <a href="{% url 'homepage' %}"
+               class="main-nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}">工具總覽</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}"
+                   class="main-nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">會員中心</a>
+                <a href="{% url 'products:list' %}"
+                   class="main-nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">購買/續訂</a>
+            {% else %}
+                <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">會員中心</span>
+                <span class="main-nav-link nav-link-requires-auth" style="cursor: pointer;">購買/續訂</span>
+            {% endif %}
+        </nav>
 
-    <div class="user-auth-section">
-        {% if user.is_authenticated %}
-            <div class="welcome-msg">
+        <div class="user-auth-section">
+            {% if user.is_authenticated %}
                 <span class="welcome-text">
-                    Hello, <strong>{{ user.username }}</strong>
+                    {{ user.username }}
                 </span>
                 {% if user.is_superuser %}
-                    <a href="{% url 'admin:index' %}" class="admin-btn" title="後台管理">
-                        <i class="ri-settings-3-fill"></i>
-                        <span>Admin</span>
+                    <a href="{% url 'admin:index' %}" class="admin-badge">
+                        <i class="ri-shield-user-line"></i> Admin
                     </a>
                 {% endif %}
-            </div>
-            <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn" title="登出">
-                    <i class="ri-logout-box-r-line"></i>
-                </button>
-            </form>
-        {% else %}
-            <div class="user-auth-buttons-wrapper" style="display:flex; gap:10px;">
-                <a href="{% url 'login' %}" class="btn-base login-btn">登入</a>
-                <a href="{% url 'signup' %}" class="btn-base signup-btn">免費註冊</a>
-            </div>
-        {% endif %}
-    </div>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-icon-btn" title="登出">
+                        <i class="ri-logout-box-r-line"></i>
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-minimal btn-ghost">登入</a>
+                <a href="{% url 'signup' %}" class="btn-minimal btn-solid">免費註冊</a>
+            {% endif %}
+        </div>
 
-    <!-- 漢堡按鈕 (Mobile Only) -->
-    <button class="mobile-nav-toggle" id="mobile-nav-toggle">
-        <i class="ri-menu-line"></i>
-    </button>
+        <!-- 手機端漢堡選單按鈕 -->
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Menu">
+            <i class="ri-menu-4-line"></i>
+        </button>
+    </div>
 </header>
 
-<!-- Mobile Navigation Overlay & Menu -->
+<!-- 手機選單抽屜 -->
 <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
-<nav class="mobile-nav" id="mobile-nav">
+<div class="mobile-nav" id="mobile-nav">
     <div class="mobile-nav-header">
-        <span style="font-weight:800; color:var(--primary-dark); font-size:1.4em; letter-spacing: -0.5px;">OLI MENU</span>
-        <button class="mobile-nav-close" id="mobile-nav-close">
-            <i class="ri-close-large-line"></i>
+        <span style="font-weight:700; font-size:1.1rem; letter-spacing: -0.02em;">OLI 選單</span>
+        <button id="mobile-nav-close"
+                style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-secondary);">
+            <i class="ri-close-line"></i>
         </button>
     </div>
 
-    <div class="mobile-user-info">
+    <div class="mobile-user-card">
         {% if user.is_authenticated %}
-            <div class="mobile-welcome">
-                <i class="ri-user-smile-line" style="color:var(--accent-color); font-size:1.2em;"></i>
-                <span>嗨，<strong>{{ user.username }}</strong></span>
-            </div>
-
+            <div style="font-size:0.9rem; font-weight:600; margin-bottom:6px;">{{ user.username }}</div>
             {% if user.is_superuser %}
-                <a href="{% url 'admin:index' %}" class="mobile-nav-item special">
-                    <i class="ri-settings-3-line"></i> 後台管理
-                </a>
+                <a href="{% url 'admin:index' %}" style="font-size:0.8rem; color:var(--brand-accent);"><i
+                        class="ri-settings-3-line"></i> 系統後台</a>
             {% endif %}
         {% else %}
-            <div class="mobile-auth-buttons">
-                <a href="{% url 'login' %}" class="mobile-btn-login">登入</a>
-                <a href="{% url 'signup' %}" class="mobile-btn-signup">註冊</a>
+            <div style="display:flex; gap:8px;">
+                <a href="{% url 'login' %}" class="btn-minimal btn-ghost"
+                   style="flex:1; justify-content:center;">登入</a>
+                <a href="{% url 'signup' %}" class="btn-minimal btn-solid"
+                   style="flex:1; justify-content:center;">註冊</a>
             </div>
         {% endif %}
     </div>
 
-    <div class="mobile-nav-links">
-        <a href="{% url 'homepage' %}" class="mobile-nav-item">
-            <i class="ri-apps-line"></i> 工具總覽
+    <div style="display:flex; flex-direction:column; gap:6px;">
+        <a href="{% url 'homepage' %}" class="btn-minimal btn-ghost" style="justify-content:flex-start;">
+            <i class="ri-apps-2-line"></i> 工具總覽
         </a>
         {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}" class="mobile-nav-item">
-                <i class="ri-account-circle-line"></i> 會員中心
+            <a href="{% url 'profile' %}" class="btn-minimal btn-ghost" style="justify-content:flex-start;">
+                <i class="ri-user-line"></i> 會員中心
             </a>
-            <a href="{% url 'products:list' %}" class="mobile-nav-item">
+            <a href="{% url 'products:list' %}" class="btn-minimal btn-ghost" style="justify-content:flex-start;">
                 <i class="ri-vip-crown-line"></i> 購買/續訂
             </a>
-            <form method="post" action="{% url 'logout' %}" style="width: 100%;">
+            <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
                 {% csrf_token %}
-                <button type="submit" class="mobile-nav-item logout">
+                <button type="submit" class="btn-minimal btn-ghost"
+                        style="width:100%; justify-content:flex-start; color:#dc2626;">
                     <i class="ri-logout-box-r-line"></i> 登出
                 </button>
             </form>
-        {% else %}
-            <span class="mobile-nav-item disabled">
-                <i class="ri-account-circle-line"></i> 會員中心 (請先登入)
-            </span>
-            <span class="mobile-nav-item disabled">
-                <i class="ri-vip-crown-line"></i> 購買/續訂 (請先登入)
-            </span>
         {% endif %}
     </div>
-</nav>
+</div>
 
 <div class="container">
-    <div class="main-container" id="main-container">
-        <!-- 左側工具面板 -->
-        <aside class="left-panel">
-            <div class="tool-group">
-                <div class="tool-group-title">耐震設計規範</div>
+    <div class="page-header">
+        <div>
+            <h1>結構與大地工程計算模組</h1>
+            <p>嚴謹依照台灣規範設計，提供結構工程師高精準度、透明且敏捷的運算介面。</p>
+        </div>
+        <div class="system-status">
+            <span class="status-dot"></span>
+            <span>系統核心正常運行</span>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- 左側工具清單 -->
+        <aside class="sidebar-tools">
+            <!-- 耐震設計規範 -->
+            <div class="tool-category">
+                <div class="category-title"><i class="ri-pulse-line"></i> 耐震設計規範</div>
                 <a href="{% url 'EqStaticAnalysis_TW:EQ_calculator' %}"
-                   class="tool-link"
+                   class="tool-item"
                    data-title="建築物耐震設計 | 靜力分析"
-                   data-description="依據內政部營建署最新發布的「建築物耐震設計規範及解說」，提供靜態分析法所需的各項參數計算。本工具能協助工程師快速、準確地完成初步設計與檢核，確保結構安全符合法規要求。"
+                   data-category="耐震工程"
+                   data-description="依據內政部最新「建築物耐震設計規範及解說」，提供橫力分析各項參數精準計算。支援台灣各鄉鎮市區地盤分類、斷層效應自動校核及專屬反應譜生成。"
                    data-version="v1.1.251119"
                    data-updated="2025-11-19"
                    data-history='[
-                        {"version": "v1.1.251119", "date": "2025-11-19", "changes": ["新增「地盤分類」選項，Fa 及 Fv 值現在依據使用者選擇動態計算。", "簡化計算器結果頁面，聚焦於最終係數，版面更清晰。", "全面優化報告書排版引擎。", "為報告書新增完整的垂直地震力計算過程章節。"]},
-                        {"version": "v1.0.251028", "date": "2025-10-28", "changes": ["推出第一版靜力分析工具。", "整合全台灣鄉鎮市區地震參數。", "支援近斷層效應調整計算。", "支援臺北盆地專屬設計譜。"]}
+                        {"version": "v1.1.251119", "date": "2025-11-19", "changes": ["新增「地盤分類」選項，Fa 及 Fv 值動態精確計算。", "簡化結果呈現面板，專注於工程最終檢核係數。", "優化專用計算報告書輸出引擎。", "新增完整垂直地震力分配與檢核推導。"]},
+                        {"version": "v1.0.251028", "date": "2025-10-28", "changes": ["第一版靜力分析工具發布。", "完整整合全台行政區地震資料庫。", "支援近斷層效應修正因子。"]}
                    ]'>
-                    <span>靜力分析</span>
+                    <div class="item-label">
+                        <i class="ri-bar-chart-box-line item-icon"></i>
+                        <span>靜力分析 (橫力分配)</span>
+                    </div>
+                    <span class="tag-pill mono">v1.1</span>
                 </a>
             </div>
 
-            <div class="tool-group">
-                <div class="tool-group-title">耐風設計規範</div>
-                <a href="{% url 'wind_calculation_close' %}" class="tool-link"
+            <!-- 耐風設計規範 -->
+            <div class="tool-category">
+                <div class="category-title"><i class="ri-windy-line"></i> 耐風設計規範</div>
+                <a href="{% url 'wind_calculation_close' %}"
+                   class="tool-item"
                    data-title="耐風設計 | 封閉式建築"
-                   data-description="針對封閉式或部分封閉式建築，依據「建築物耐風設計規範及解說」及參考美國規範，以提供精確設計風壓，涵蓋各種地形、陣風反應因子等複雜參數，提供設計風力評估。"
+                   data-category="耐風工程"
+                   data-description="針對封閉與部分封閉式建築物，考量地形效應、順風向反應因子及局部披覆物設計外壓係數，嚴格依據我國耐風設計規範計算設計風載重。"
                    data-version="v1.0.251128"
                    data-updated="2025-11-28"
                    data-history='[
-                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["推出第一版封閉式或部分封閉式建築風力計算器。", "目前只提供山型(gable)屋頂建築物之風力計算。", "提供主結構及局部構材及披覆物之風力(壓)計算。", "依據規範支援山脊、山與懸崖之地形效應。", "山牆可以單一面積或是精細分割計算。"]}
+                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["正式發布封閉或部分封閉式建築風力計算工具。", "支援山型 (Gable) 屋頂建築風壓分佈。", "提供主結構及局部構材及披覆物精確風壓計算。", "支援地形效應（山脊、懸崖）放大係數校核。"]}
                    ]'>
-                    <span>封閉或部分封閉式建築</span>
+                    <div class="item-label">
+                        <i class="ri-home-line item-icon"></i>
+                        <span>封閉或部分封閉式建築</span>
+                    </div>
+                    <span class="tag-pill mono">v1.0</span>
                 </a>
 
-                <a class="tool-link disabled-link"
-                   data-title="耐風設計 | 開放式建築"
-                   data-description="專為桁架、招牌等開放式建築或獨立結構物設計的風力計算工具。此工具將依據我國「建築物耐風設計規範及解說」，提供精確設計風壓。"
-                   data-version="v0.0.0"
-                   data-updated="Coming Soon">
-                    <span>開放式建築</span>
-                    <span class="badge">Coming Soon</span>
-                </a>
+                <div class="tool-item disabled"
+                     data-title="耐風設計 | 開放式建築"
+                     data-category="耐風工程"
+                     data-description="專為桁架構件、看板及獨立開放式結構物打造之耐風計算核心，敬請期待後續功能更新。"
+                     data-version="v0.0.0"
+                     data-updated="開發中">
+                    <div class="item-label">
+                        <i class="ri-building-line item-icon"></i>
+                        <span>開放式建築與構架</span>
+                    </div>
+                    <span class="tag-pill">Coming Soon</span>
+                </div>
             </div>
 
-            <div class="tool-group">
-                <div class="tool-group-title">結構設計</div>
-                <a href="{% url 'section_index' %}" class="tool-link"
-                   data-title="結構設計 | 斷面性質計算"
-                   data-description="提供各類常見結構斷面（H型鋼、槽鋼、C型鋼、角鋼、T型鋼、Z型鋼、圓管、方管）之幾何性質計算工具。即時繪製斷面圖形，並自動計算斷面積、慣性矩、迴轉半徑、塑性斷面模數及翹曲常數等關鍵參數。"
+            <!-- 結構設計 -->
+            <div class="tool-category">
+                <div class="category-title"><i class="ri-pencil-ruler-2-line"></i> 結構構件設計</div>
+                <a href="{% url 'section_index' %}"
+                   class="tool-item"
+                   data-title="結構設計 | 斷面幾何性質計算"
+                   data-category="結構工程"
+                   data-description="提供各類常見結構斷面（H型鋼、槽鋼、C型鋼、角鋼、T型、Z型、方圓鋼管）之高精度幾何性質計算。即時向量圖形渲染，並產出塑性模數與翹曲常數。"
                    data-version="v1.0.251128"
                    data-updated="2025-11-28"
                    data-history='[
-                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["推出第一版斷面性質計算器。", "支援 8 種常見結構斷面。", "提供即時斷面繪圖與動態參數輸入介面。", "支援 mm 與 cm 單位即時切換顯示。", "包含塑性斷面模數 (Zx, Zy) 與翹曲常數 (Cw) 計算。"]}
+                        {"version": "v1.0.251128", "date": "2025-11-28", "changes": ["發布首版幾何斷面性質計算核心。", "支援 8 大類常見鋼結構截面形狀。", "支援 mm 與 cm 雙制單位無縫切換。", "提供精準塑性斷面模數 (Zx, Zy) 與翹曲常數 (Cw)。"]}
                    ]'>
-                    <span>斷面性質計算器</span>
+                    <div class="item-label">
+                        <i class="ri-shape-line item-icon"></i>
+                        <span>斷面性質計算器</span>
+                    </div>
+                    <span class="tag-pill mono">v1.0</span>
                 </a>
 
-                <a href="{% url 'bp_anchor_calculate_input' %}" class="tool-link"
-                   data-title="結構設計 | 基礎版與錨栓"
-                   data-description="提供鋼柱基礎版及錨栓的設計與檢核功能。使用者可輸入基礎版尺寸、錨栓排列方式、材料強度、載重等參數，工具將依據我國設計規範進行全面檢核，並生成計算報告。"
+                <a href="{% url 'bp_anchor_calculate_input' %}"
+                   class="tool-item"
+                   data-title="結構設計 | 鋼柱基礎版與錨栓"
+                   data-category="鋼結構基礎"
+                   data-description="依據 AISC 與 ACI 錨栓規範，完整檢核柱底版承壓應力、錨栓拉剪複合承載力、破壞錐破壞機制與鋼板彎矩應力，生成專業工程檢核計算書。"
                    data-version="v1.2.251120"
                    data-updated="2025-11-20"
                    data-history='[
-                        {"version": "v1.2.251120", "date": "2025-11-20", "changes": ["大幅優化運算核心，速度提升約 10 倍。", "全面升級繪圖引擎，採用 SVG 向量圖技術。", "優化報告書排版。", "新增錨栓群組剪力破壞錐 (Vcbg) 的精確幾何可視化功能。"]},
-                        {"version": "v1.1.251110", "date": "2025-11-10", "changes": ["新增 MKS (公制) 與 Imperial (英制) 單位即時切換功能。", "支援圓形與八邊形基礎版形狀。", "修正混凝土承壓強度計算邏輯。"]},
-                        {"version": "v1.0.251028", "date": "2025-10-28", "changes": ["推出第一版基礎版與錨栓分析工具。"]}
+                        {"version": "v1.2.251120", "date": "2025-11-20", "changes": ["核心運算速度大幅重構優化。", "全面導入 SVG 向量動態繪圖。", "新增錨栓群組剪力破壞錐 (Vcbg) 精確幾何疊合視覺化。"]},
+                        {"version": "v1.1.251110", "date": "2025-11-10", "changes": ["支援公制 (MKS) 與英制 (Imperial) 雙系統。", "支援多邊形與圓形底版檢核。"]}
                    ]'>
-                    <span>鋼柱基礎版及錨栓設計檢核</span>
+                    <div class="item-label">
+                        <i class="ri-layout-masonry-line item-icon"></i>
+                        <span>鋼柱基礎版及錨栓設計</span>
+                    </div>
+                    <span class="tag-pill mono">v1.2</span>
+                </a>
+            </div>
+
+            <!-- 大地與擋土工程 (依據 urls.py 新增連接到 rwall) -->
+            <div class="tool-category">
+                <div class="category-title"><i class="ri-earth-line"></i> 大地與擋土工程</div>
+                <a href="/OLi/rwall/"
+                   class="tool-item"
+                   data-title="大地工程 | 懸臂式擋土牆分析與設計"
+                   data-category="擋土結構工程"
+                   data-description="依據最新擋土結構設計規範，提供懸臂式 RC 擋土牆之穩定性檢核（抗傾覆、抗滑動、基底承載力）及牆身、底版之結構配筋應力分析，並可輸出詳細計算報表與工程示意斷面圖。"
+                   data-version="v1.0.260115"
+                   data-updated="2026-01-15"
+                   data-history='[
+                        {"version": "v1.0.260115", "date": "2026-01-15", "changes": ["發布懸臂式擋土牆 (Cantilever Retaining Wall) 專屬設計模組。", "提供靜止、主動土壓力（Rankine / Coulomb）自選分析功能。", "自動執行抗滑動、抗傾覆與基底最大壓應力安全係數檢核。", "支援牆身豎壁、趾版、踵版鋼筋應力配筋設計。"]}
+                   ]'>
+                    <div class="item-label">
+                        <i class="ri-split-cells-vertical item-icon"></i>
+                        <span>懸臂式擋土牆設計檢核</span>
+                    </div>
+                    <span class="tag-pill mono">NEW</span>
                 </a>
             </div>
         </aside>
 
-        <!-- 右側詳細說明面板 -->
-        <main class="right-panel">
-            <div class="description-content" id="description-content">
-                <h2 id="description-title">歡迎使用 OLi 平台</h2>
+        <!-- 右側技術資訊面板 -->
+        <main class="display-panel">
+            <div id="panel-badge" class="panel-header-badge">
+                <i class="ri-focus-3-line"></i> <span>模組總覽</span>
+            </div>
 
-                <div class="description-meta" id="description-meta" style="display: none;">
-                    <div class="meta-item">
-                        <i class="ri-price-tag-3-fill"></i>
-                        <span id="meta-version"></span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="ri-calendar-2-fill"></i>
-                        <span>最後更新: <span id="meta-updated"></span></span>
-                    </div>
+            <h2 id="description-title" class="panel-title">歡迎使用 OLi 工程介面</h2>
+
+            <div id="description-meta" class="panel-meta-row" style="display: none;">
+                <div class="panel-meta-item">
+                    <i class="ri-git-branch-line"></i>
+                    <span>版本: <strong id="meta-version" class="mono"></strong></span>
                 </div>
-
-                <p id="description-text">
-                    OLI (Optimal Lean Interface) 是一個專為結構工程師打造的線上輔助設計平台。<br><br>
-                    請將滑鼠移至左方的工具連結上，這裡將會即時顯示該工具的詳細功能說明、版本歷史與最新更動。
-                </p>
-
-                <div class="changelog-container" id="changelog-container" style="display: none;">
-                    <details>
-                        <summary id="changelog-summary">
-                            <i class="ri-git-repository-commits-line"></i>
-                            <span>版本更新日誌</span>
-                        </summary>
-                        <ul class="changelog-list" id="changelog-list"></ul>
-                    </details>
+                <div class="panel-meta-item">
+                    <i class="ri-calendar-check-line"></i>
+                    <span>最後發布: <strong id="meta-updated" class="mono"></strong></span>
                 </div>
+            </div>
+
+            <p id="description-text" class="panel-desc">
+                OLi (Optimal Lean Interface) 專注於將繁瑣的工程設計法規轉換為精煉、精準且高效的設計工具。<br><br>
+                將滑鼠懸停於左側任一計算模組，即可預覽該模組的工程檢核核心、功能說明及版本維護日誌。點擊即可直接進入設計工具。
+            </p>
+
+            <!-- 更新日誌折疊區塊 -->
+            <div class="timeline-section" id="changelog-container" style="display: none;">
+                <details open>
+                    <summary class="timeline-summary">
+                        <span>版本演進記錄</span>
+                        <i class="ri-arrow-down-s-line"></i>
+                    </summary>
+                    <div class="timeline-box" id="changelog-list"></div>
+                </details>
             </div>
         </main>
     </div>
 
-    <div class="back-to-company-section">
-        <a href="{% url 'CZ_homepage' %}" class="back-to-company-btn">
-            <i class="ri-building-4-line"></i>
-            <span>返回 勤築工程實業 主頁</span>
+    <!-- 企業關聯按鈕 -->
+    <div class="bottom-action">
+        <a href="{% url 'CZ_homepage' %}" class="btn-company">
+            <i class="ri-building-2-line"></i>
+            <span>返回勤築工程實業首頁</span>
         </a>
     </div>
 </div>
 
+<!-- 頁尾 -->
 <footer class="footer">
-    &copy; {% now "Y" %} OLi | Optimal Lean Interface. <br>Design with Logic, Build with Precision.
+    <div class="mono" style="margin-bottom: 4px;">&copy; {% now "Y" %} OLi | Optimal Lean Interface.</div>
+    <div>Design with Logic, Build with Precision. 勤築工程顧問實業版權所有</div>
 </footer>
 
+<!-- 邏輯腳本 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const toolLinks = document.querySelectorAll('.tool-link');
-        const descriptionContent = document.getElementById('description-content');
+        const toolItems = document.querySelectorAll('.tool-item');
+        const panelBadge = document.getElementById('panel-badge');
         const descriptionTitle = document.getElementById('description-title');
         const descriptionText = document.getElementById('description-text');
-        const metaContainer = document.getElementById('description-meta');
+        const metaRow = document.getElementById('description-meta');
         const metaVersion = document.getElementById('meta-version');
         const metaUpdated = document.getElementById('meta-updated');
         const changelogContainer = document.getElementById('changelog-container');
         const changelogList = document.getElementById('changelog-list');
-        const defaultTitle = descriptionTitle.innerHTML;
-        const defaultText = descriptionText.innerHTML;
 
+        // 移動端選單切換
         const toggleButton = document.getElementById('mobile-nav-toggle');
         const closeButton = document.getElementById('mobile-nav-close');
         const overlay = document.getElementById('mobile-nav-overlay');
         const mobileNav = document.getElementById('mobile-nav');
 
-        toolLinks.forEach(link => {
-            link.addEventListener('mouseover', function () {
-                if (this.classList.contains('disabled-link')) return;
+        function toggleMobileMenu(open) {
+            mobileNav.classList.toggle('active', open);
+            overlay.classList.toggle('active', open);
+            document.body.style.overflow = open ? 'hidden' : '';
+        }
 
-                toolLinks.forEach(l => l.classList.remove('active'));
+        toggleButton.addEventListener('click', () => toggleMobileMenu(true));
+        closeButton.addEventListener('click', () => toggleMobileMenu(false));
+        overlay.addEventListener('click', () => toggleMobileMenu(false));
+
+        // 工具懸停連動面板邏輯
+        toolItems.forEach(item => {
+            item.addEventListener('mouseenter', function () {
+                if (this.classList.contains('disabled')) return;
+
+                toolItems.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                const title = this.dataset.title;
-                const description = this.dataset.description;
-                const version = this.dataset.version;
-                const updated = this.dataset.updated;
+
+                const title = this.dataset.title || '';
+                const category = this.dataset.category || '工程計算模組';
+                const description = this.dataset.description || '';
+                const version = this.dataset.version || '';
+                const updated = this.dataset.updated || '';
                 const historyData = this.dataset.history;
 
-                descriptionContent.style.opacity = 0;
-                descriptionContent.style.transform = 'translateY(5px)';
-                descriptionContent.style.transition = 'opacity 0.2s, transform 0.2s';
+                // 面板平滑過渡
+                const displayPanel = document.querySelector('.display-panel');
+                displayPanel.style.opacity = '0.7';
 
                 setTimeout(() => {
-                    descriptionTitle.innerHTML = title;
+                    panelBadge.innerHTML = `<i class="ri-focus-3-line"></i> <span>${category}</span>`;
+                    descriptionTitle.textContent = title;
                     descriptionText.innerHTML = description.replace(/\n/g, '<br>');
-                    if (version && updated && version !== 'v0.0.0') {
+
+                    if (version && version !== 'v0.0.0') {
                         metaVersion.textContent = version;
                         metaUpdated.textContent = updated;
-                        metaContainer.style.display = 'inline-flex';
+                        metaRow.style.display = 'flex';
                     } else {
-                        metaContainer.style.display = 'none';
+                        metaRow.style.display = 'none';
                     }
 
                     if (historyData) {
@@ -944,99 +1059,47 @@
                             const history = JSON.parse(historyData);
                             changelogList.innerHTML = '';
                             history.forEach(entry => {
-                                const versionLi = document.createElement('li');
-                                versionLi.className = 'changelog-version';
-                                versionLi.innerHTML = `${entry.version} <span class="date">${entry.date}</span>`;
-                                changelogList.appendChild(versionLi);
+                                const block = document.createElement('div');
+                                block.className = 'timeline-block';
 
-                                const detailsUl = document.createElement('ul');
-                                detailsUl.className = 'changelog-details';
-                                entry.changes.forEach(changeText => {
-                                    const changeLi = document.createElement('li');
-                                    changeLi.textContent = changeText.trim();
-                                    detailsUl.appendChild(changeLi);
+                                const titleDiv = document.createElement('div');
+                                titleDiv.className = 'timeline-version-title mono';
+                                titleDiv.innerHTML = `${entry.version} <span class="date">${entry.date}</span>`;
+                                block.appendChild(titleDiv);
+
+                                const list = document.createElement('ul');
+                                list.className = 'timeline-notes';
+                                entry.changes.forEach(c => {
+                                    const li = document.createElement('li');
+                                    li.textContent = c;
+                                    list.appendChild(li);
                                 });
-                                changelogList.appendChild(detailsUl);
+                                block.appendChild(list);
+                                changelogList.appendChild(block);
                             });
                             changelogContainer.style.display = 'block';
                         } catch (e) {
-                            console.error("JSON Error", e);
                             changelogContainer.style.display = 'none';
                         }
                     } else {
                         changelogContainer.style.display = 'none';
                     }
 
-                    descriptionContent.style.opacity = 1;
-                    descriptionContent.style.transform = 'translateY(0)';
-                }, 200);
+                    displayPanel.style.opacity = '1';
+                }, 100);
             });
         });
 
-        const authRequiredLinks = document.querySelectorAll('.nav-link-requires-auth');
-        authRequiredLinks.forEach(link => {
-            link.addEventListener('click', function (event) {
-                event.preventDefault();
-                if (confirm("此功能需要登入會員才能使用。\n\n是否要立即前往登入或註冊？")) {
+        // 未登入攔截提示
+        const authLinks = document.querySelectorAll('.nav-link-requires-auth');
+        authLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                if (confirm("此功能需登入授權。是否立即前往登入頁面？")) {
                     window.location.href = "{% url 'login' %}";
                 }
             });
         });
-
-        // 導覽列底線動畫邏輯
-        const mainNav = document.querySelector('.main-nav');
-        const navLinks = mainNav.querySelectorAll('.main-nav-link');
-        const activeLink = mainNav.querySelector('.main-nav-link.active');
-
-        function moveUnderline(target) {
-            if (!target) {
-                mainNav.style.setProperty('--underline-width', '0');
-                return;
-            }
-            const targetLeft = target.offsetLeft;
-            const targetWidth = target.offsetWidth;
-            mainNav.style.setProperty('--underline-left', `${targetLeft}px`);
-            mainNav.style.setProperty('--underline-width', `${targetWidth}px`);
-        }
-
-        if (activeLink) {
-            setTimeout(() => {
-                moveUnderline(activeLink);
-            }, 100);
-        }
-
-        navLinks.forEach(link => {
-            link.addEventListener('mouseenter', () => {
-                moveUnderline(link);
-            });
-        });
-
-        mainNav.addEventListener('mouseleave', () => {
-            if (activeLink) {
-                moveUnderline(activeLink);
-            } else {
-                mainNav.style.setProperty('--underline-width', '0');
-            }
-        });
-
-        // 手機選單控制
-        function openMenu() {
-            mobileNav.classList.add('active');
-            overlay.classList.add('active');
-            // 防止背景滾動
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeMenu() {
-            mobileNav.classList.remove('active');
-            overlay.classList.remove('active');
-            // 恢復背景滾動
-            document.body.style.overflow = '';
-        }
-
-        toggleButton.addEventListener('click', openMenu);
-        closeButton.addEventListener('click', closeMenu);
-        overlay.addEventListener('click', closeMenu);
     });
 </script>
 

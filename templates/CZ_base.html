@@ -17,55 +17,60 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Roboto:wght@400;500;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet">
 
     <style>
         /* =========================================
-           1. 全域變數與重置
+           1. 全域變數與重置 (現代高質感冷調工程風)
            ========================================= */
         :root {
-            --primary-dark: #0f172a;
-            --primary-main: #1d3557;
-            --primary-light: #457b9d;
-            --accent-color: #e63946;
+            --primary-dark: #0a0f1d;
+            --primary-main: #0f172a;
+            --primary-light: #334155;
             --bg-body: #f8fafc;
-            --text-main: #334155;
+            --text-main: #1e293b;
             --text-light: #64748b;
+            --text-tertiary: #94a3b8;
 
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --radius-md: 8px;
-            --radius-pill: 50px;
-            --navbar-height: 80px;
+            --border-subtle: rgba(226, 232, 240, 0.8);
+            --border-dark: rgba(255, 255, 255, 0.08);
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-pill: 9999px;
+            --navbar-height: 76px;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* 【核心修正】強制禁止橫向捲軸 */
         html, body {
-            overflow-x: hidden; /* 這是關鍵：隱藏所有水平溢出的內容 */
-            width: 100%; /* 確保寬度不超過視窗 */
+            overflow-x: hidden;
+            width: 100%;
             margin: 0;
             padding: 0;
         }
 
         html {
             scroll-behavior: smooth;
-            overflow-y: scroll; /* 保持垂直捲軸 */
+            overflow-y: scroll;
         }
 
         body {
-            font-family: 'Noto Sans TC', 'Roboto', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
             line-height: 1.7;
             color: var(--text-main);
             background-color: var(--bg-body);
             -webkit-font-smoothing: antialiased;
-            position: relative; /* 確保子元素的絕對定位以此為基準 */
+            position: relative;
         }
 
         a {
             text-decoration: none;
             color: inherit;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         ul {
@@ -74,27 +79,18 @@
             margin: 0;
         }
 
-        /*
-           【核心修正 2】通用內容容器
-           這是給頁面內容(Main Content)使用的，子頁面可以隨意覆蓋它的寬度
-        */
         .container {
-            max-width: 1280px;
+            max-width: 1240px;
             margin: 0 auto;
             padding: 0 24px;
         }
 
-        /*
-           【核心修正 3】佈局專用容器 (Layout Container)
-           這是專門給 Navbar 和 Footer 使用的，寬度永遠固定為 1280px，
-           不受子頁面 extra_style 的影響。
-        */
         .layout-container {
-            max-width: 1280px;
+            max-width: 1240px;
             margin: 0 auto;
             padding: 0 24px;
-            width: 100%; /* 確保在小螢幕下佔滿 */
-            box-sizing: border-box; /* 防止 padding 撐大 */
+            width: 100%;
+            box-sizing: border-box;
         }
 
         main {
@@ -106,26 +102,25 @@
            2. 導覽列 (Navbar)
            ========================================= */
         .navbar {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             height: var(--navbar-height);
             display: flex;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 1000;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .navbar.scrolled {
-            height: 60px;
-            box-shadow: var(--shadow-md);
-            background-color: rgba(255, 255, 255, 0.98);
+            height: 64px;
+            box-shadow: var(--shadow-sm);
+            background-color: rgba(255, 255, 255, 0.96);
         }
 
-        /* 使用 .layout-container 替代 .container */
         .navbar .layout-container {
             display: flex;
             justify-content: space-between;
@@ -136,327 +131,269 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             font-weight: 700;
+            letter-spacing: -0.02em;
             color: var(--primary-main);
-            letter-spacing: 0.5px;
         }
 
         .navbar .logo img {
-            height: 42px;
+            height: 38px;
             width: auto;
             transition: height 0.3s ease;
         }
 
         .navbar.scrolled .logo img {
-            height: 36px;
+            height: 32px;
         }
-
-        /* =========================================
-           導覽列連結樣式 (方案一：優雅展開底線)
-           ========================================= */
 
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
 
         .nav-links li {
             position: relative;
         }
 
-        /* 1. 清除舊的 li::after 設定 (防止舊紅線出現) */
-        .nav-links li::after {
-            display: none;
-        }
-
-        /* 2. 連結基本設定 (a 標籤) */
         .nav-links a {
-            padding: 8px 14px; /* 稍微縮小左右間距，讓視覺更集中 */
-            color: var(--text-main);
+            padding: 8px 16px;
+            color: var(--text-light);
             font-weight: 500;
-            font-size: 1rem;
-            position: relative; /* 作為偽元素定位基準 */
-            transition: color 0.3s ease;
-            text-decoration: none;
+            font-size: 0.92rem;
+            position: relative;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
         }
 
-        /* 3. 定義新的動態底線 (a::after) */
+        /* 沉穩質感的底線（取代原有亮紅線） */
         .nav-links a::after {
             content: '';
             position: absolute;
-            bottom: 4px; /* 讓線條貼近文字底部，不再懸空 */
+            bottom: 2px;
             left: 50%;
-            transform: translateX(-50%); /* 保持水平居中 */
-            width: 0; /* 初始狀態：寬度為 0 (隱藏) */
-            height: 2px; /* 改細一點，提升精緻感 */
-            background-color: var(--accent-color); /* 您的品牌紅色 */
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: var(--primary-main);
             border-radius: 2px;
-            box-shadow: 0 1px 3px rgba(230, 57, 70, 0.3); /* 增加一點點光暈質感 */
-            /* 動畫設定：使用貝茲曲線讓展開動作更滑順 */
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none; /* 避免遮擋點擊 */
+            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
         }
 
-        /* 4. 觸發動畫：當滑鼠懸停 (Hover) 或 處於當前頁面 (Active) */
         .nav-links li:hover a::after,
         .nav-links li.active a::after {
-            width: 70%; /* 優雅展開至 70% 寬度 (不要全滿，留白更有設計感) */
+            width: 50%;
         }
 
-        /* 文字顏色變化 */
         .nav-links li:hover a,
         .nav-links li.active a {
-            color: var(--primary-main); /* 深藍色 */
+            color: var(--primary-main);
+            font-weight: 600;
         }
 
-        /* 5. 特殊處理：OLi 平台按鈕 (防止按鈕內出現紅線) */
+        /* =========================================
+           ✨ 高級 OLi 平台膠囊按鈕 (重點升級)
+           ========================================= */
         .nav-links .nav-btn-special {
-            margin-left: 10px;
+            margin-left: 16px;
         }
 
         .nav-links .nav-btn-special a {
-            background: linear-gradient(135deg, var(--primary-main), var(--primary-light));
-            color: #ffffff !important; /* 強制按鈕文字為白色 */
-            padding: 10px 24px;
+            background-color: var(--primary-main);
+            color: #ffffff !important;
+            padding: 9px 20px;
             border-radius: var(--radius-pill);
-            box-shadow: 0 4px 10px rgba(29, 53, 87, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.15), 0 1px 3px rgba(15, 23, 42, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
         }
 
-        /* 隱藏按鈕內的紅線 */
+        /* 消除按鈕底部的線 */
         .nav-links .nav-btn-special a::after {
-            display: none;
+            display: none !important;
         }
 
-        .nav-links .nav-btn-special a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(29, 53, 87, 0.4);
-            background: linear-gradient(135deg, var(--primary-main), var(--primary-light));
+        /* 按鈕內的微光科技點 (綠光點) */
+        .nav-btn-special .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+            transition: var(--transition);
+        }
+
+        .nav-btn-special a:hover {
+            background-color: #1e293b;
+            box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn-special a:hover .pulse-dot {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+        }
+
+        .nav-btn-special a i {
+            transition: transform 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .nav-btn-special a:hover i {
+            transform: translateX(3px);
         }
 
         .mobile-nav-toggle {
             display: none;
             background: none;
             border: none;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: var(--primary-main);
             cursor: pointer;
-            padding: 5px;
+            padding: 6px;
         }
 
         /* =========================================
-           3. 頁尾 (Footer)
+           3. 頁尾 (Footer - 移除醜波浪，改為現代極簡邊線)
            ========================================= */
         .footer {
             background-color: var(--primary-dark);
-            color: #94a3b8;
+            color: var(--text-tertiary);
             padding-top: 80px;
             padding-bottom: 0;
             position: relative;
-            overflow: hidden;
-            font-size: 0.95rem;
-        }
-
-        /* 背景裝飾：藍圖點陣紋理 */
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: radial-gradient(#334155 1px, transparent 1px);
-            background-size: 30px 30px;
-            opacity: 0.15;
-            pointer-events: none;
-        }
-
-        /* 頂部波浪造型 (SVG Divider) */
-        .footer-divider {
-            position: absolute;
-            top: -1px;
-            left: 0;
-            width: 100%;
-            overflow: hidden;
-            line-height: 0;
-            transform: rotate(180deg);
-        }
-
-        .footer-divider svg {
-            position: relative;
-            display: block;
-            width: calc(130% + 1.3px);
-            height: 60px;
-            fill: #ffffff; /* 需與上一區塊背景色相同，假設上方是白色 */
+            font-size: 0.92rem;
+            border-top: 1px solid var(--border-dark); /* 俐落直線 */
         }
 
         .footer-main {
             position: relative;
             z-index: 2;
             display: grid;
-            /* 改為 4 欄佈局：品牌 | 連結 | 服務 | 聯絡 */
             grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
-            gap: 40px;
+            gap: 50px;
             padding-bottom: 60px;
         }
 
-        /* 欄位標題 */
         .footer-col h3 {
             color: #ffffff;
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 24px;
             position: relative;
             display: inline-block;
-            letter-spacing: 1px;
         }
 
-        /* 標題裝飾線 */
-        .footer-col h3::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: -10px;
-            width: 40px;
-            height: 3px;
-            background-color: var(--accent-color); /* 品牌強調色 */
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
-
-        .footer-col:hover h3::after {
-            width: 60px; /* Hover 時線條變長 */
-        }
-
-        /* LOGO 區域 */
         .footer-logo-area .logo-img {
-            height: 55px;
+            height: 48px;
             margin-bottom: 20px;
-            /* 移除原本的 filter 設定，讓 Logo 顯示原色 */
-            opacity: 1;
-            /* 如果 Logo 太大或太小，可在此調整 height */
-            object-fit: contain; /* 保持圖片比例 */
+            object-fit: contain;
+            display: inline-block;
+
+            /* 【核心黑科技】如果 JPG 是黑底白字，這行會自動把黑底濾成 100% 透明 */
+            mix-blend-mode: screen;
+            opacity: 0.95;
         }
 
         .footer-logo-area .tagline {
             line-height: 1.8;
-            margin-bottom: 25px;
-            color: #cbd5e1;
+            margin-bottom: 24px;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
         }
 
-        /* 社群圖示 */
         .social-links {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .social-link {
             width: 36px;
             height: 36px;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-dark);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            color: #fff;
-            transition: all 0.3s ease;
-            text-decoration: none;
+            border-radius: var(--radius-sm);
+            color: #cbd5e1;
+            transition: var(--transition);
         }
 
         .social-link:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-3px);
+            background-color: #ffffff;
+            color: var(--primary-dark);
+            transform: translateY(-2px);
         }
 
-        /* 連結列表 */
         .footer-links li {
             margin-bottom: 12px;
         }
 
         .footer-links a {
-            color: #94a3b8;
+            color: var(--text-tertiary);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .footer-links a i {
-            font-size: 0.8em;
-            color: var(--primary-light);
-            transition: transform 0.3s ease;
+            gap: 6px;
+            font-size: 0.9rem;
+            transition: var(--transition);
         }
 
         .footer-links a:hover {
             color: #ffffff;
-            padding-left: 5px;
+            transform: translateX(4px);
         }
 
-        .footer-links a:hover i {
-            color: var(--accent-color);
-            transform: translateX(3px);
-        }
-
-        /* 聯絡資訊 */
         .footer-contact-info li {
             display: flex;
-            /* 【核心修正】從 flex-start 改為 center，讓圖示與文字垂直置中對齊 */
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
 
         .contact-icon-box {
             flex-shrink: 0;
-            width: 40px; /* 稍微加大一點點，讓視覺更平衡 */
-            height: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-color);
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-        }
-
-        /* 增加 Hover 效果 */
-        .footer-contact-info li:hover .contact-icon-box {
-            background: var(--accent-color);
-            color: #fff;
-            transform: scale(1.1);
-        }
-
-        .contact-text {
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* 確保文字區塊內部也居中 */
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            transition: var(--transition);
         }
 
         .contact-text h5 {
-            color: #fff;
-            font-size: 0.9rem;
-            margin: 0 0 2px 0; /* 縮小標題下邊距，讓整體更緊湊 */
-            font-weight: 600;
-            opacity: 0.8;
+            color: var(--text-tertiary);
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
         }
 
         .contact-text span {
-            font-size: 1rem; /*稍微加大內容字體 */
-            color: #cbd5e1;
-            line-height: 1.4;
+            font-size: 0.95rem;
+            color: #ffffff;
+            font-weight: 500;
         }
 
-        /* 版權區塊 */
         .copyright {
-            background-color: rgba(0, 0, 0, 0.2);
-            padding: 25px 0;
-            margin-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            position: relative;
-            z-index: 2;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 24px 0;
+            border-top: 1px solid var(--border-dark);
         }
 
         .copyright-content {
@@ -465,189 +402,84 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-        }
-
-        .copyright p {
-            font-size: 0.85rem;
-            color: #64748b;
+            font-size: 0.82rem;
+            color: var(--text-tertiary);
         }
 
         .legal-links a {
-            color: #64748b;
-            font-size: 0.85rem;
+            color: var(--text-tertiary);
             margin-left: 20px;
         }
 
         .legal-links a:hover {
-            color: #fff;
+            color: #ffffff;
         }
 
         /* =========================================
-        4. 響應式設計 (RWD) - 極致美化版
-        適用於 平板 (992px 以下) 及 手機 (768px 以下)
-        ========================================= */
+           4. 響應式微調 (RWD)
+           ========================================= */
         @media (max-width: 992px) {
-            /* 顯示漢堡按鈕 (固定在右上角，確保不被遮擋) */
             .mobile-nav-toggle {
                 display: block;
-                position: relative;
-                z-index: 1002;
-                font-size: 1.8rem;
-                padding: 5px;
-                transition: transform 0.3s ease;
             }
 
-            /* 當選單打開時，旋轉漢堡按鈕微互動 */
-            .navbar.nav-open .mobile-nav-toggle {
-                transform: rotate(90deg);
-                color: var(--primary-main);
-            }
-
-            /* 側邊欄容器 - APP 風格設計 */
             .navbar .nav-links {
                 position: fixed;
                 top: 0;
-                right: -100%; /* 初始隱藏 */
-                width: 320px; /* 寬度稍微加寬，更大氣 */
+                right: -100%;
+                width: 300px;
                 max-width: 85%;
                 height: 100vh;
                 background-color: #ffffff;
-                /* 增加多層次陰影，營造懸浮感 */
-                box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
-
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.08);
                 display: flex;
                 flex-direction: column;
-                padding: 100px 30px 40px 30px; /* 上方留白給 Logo 和關閉按鈕 */
-
-                transition: right 0.5s cubic-bezier(0.19, 1, 0.22, 1); /* iOS 風格的滑動曲線 */
+                padding: 90px 24px 30px;
+                transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 1001;
-                overflow-y: auto; /* 內容過長可滾動 */
             }
 
-            /* 選單開啟 */
             .navbar.nav-open .nav-links {
                 right: 0;
             }
 
-            /* 列表項目容器 */
             .navbar .nav-links li {
                 width: 100%;
-                text-align: left;
-                padding: 0;
-                margin-bottom: 12px;
-
-                /* 進場動畫初始狀態 */
-                opacity: 0;
-                transform: translateY(10px);
-                transition: all 0.4s ease;
+                margin-bottom: 8px;
             }
 
-            /* 連結樣式優化 */
             .navbar .nav-links a {
-                font-size: 1.2rem;
-                color: var(--text-light); /* 預設深灰色 */
-                font-weight: 500;
-                display: flex;
-                align-items: center;
-                padding: 14px 20px;
-                border-radius: 12px; /* 圓角矩形 */
-                transition: all 0.2s ease;
-                background-color: transparent;
-            }
-
-            /* 點擊/懸停效果 */
-            .navbar .nav-links a:active,
-            .navbar .nav-links a:hover {
-                background-color: #f1f5f9;
-                color: var(--primary-main);
-                transform: translateX(5px);
-            }
-
-            /* Active 狀態：膠囊型高亮 (最流行的設計) */
-            .nav-links li.active a {
-                background-color: rgba(29, 53, 87, 0.08); /* 品牌色淡背景 */
-                color: var(--primary-main);
-                font-weight: 700;
-                box-shadow: none;
-            }
-
-            /* 移除桌面版的偽元素 */
-            .nav-links li::after {
-                display: none !important;
+                font-size: 1.05rem;
+                padding: 12px 16px;
+                border-radius: var(--radius-sm);
+                width: 100%;
+                box-sizing: border-box;
             }
 
             .nav-links a::after {
                 display: none !important;
             }
 
-            /* 選單開啟時的依序進場動畫 (Staggered Animation) */
-            .navbar.nav-open .nav-links li {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            .navbar.nav-open .nav-links li:nth-child(1) {
-                transition-delay: 0.1s;
-            }
-
-            .navbar.nav-open .nav-links li:nth-child(2) {
-                transition-delay: 0.15s;
-            }
-
-            .navbar.nav-open .nav-links li:nth-child(3) {
-                transition-delay: 0.2s;
-            }
-
-            .navbar.nav-open .nav-links li:nth-child(4) {
-                transition-delay: 0.25s;
-            }
-
-            .navbar.nav-open .nav-links li:nth-child(5) {
-                transition-delay: 0.3s;
-            }
-
-            /* 手機版 CTA 按鈕 (OLi 平台) - 獨立設計 */
-            .navbar .nav-links .nav-btn-special {
-                /* 【核心修正】原本是 auto (推到底)，改為固定間距 */
-                margin-top: 30px;
-                margin-left: 0;
+            .nav-links .nav-btn-special {
+                margin: 20px 0 0 0;
                 width: 100%;
-                padding-top: 30px;
-                border-top: 1px solid #f1f5f9;
             }
 
-            .navbar .nav-links .nav-btn-special a {
+            .nav-links .nav-btn-special a {
+                width: 100%;
                 justify-content: center;
-                text-align: center;
-                /* 漸層背景 */
-                background: linear-gradient(135deg, var(--primary-main), var(--primary-light));
-                color: #fff !important;
-                padding: 16px;
-                border-radius: 50px; /* 圓潤按鈕 */
-                font-size: 1.1rem;
-                font-weight: 700;
-                box-shadow: 0 10px 25px rgba(29, 53, 87, 0.25); /* 漂浮陰影 */
-                transform: none; /* 重置 hover 位移，改由下面定義 */
+                padding: 14px;
             }
 
-            .navbar .nav-links .nav-btn-special a:active {
-                transform: scale(0.98); /* 點擊縮放感 */
-                box-shadow: 0 5px 15px rgba(29, 53, 87, 0.2);
-            }
-
-            /* 高質感遮罩層 */
             .overlay {
                 position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(15, 23, 42, 0.4); /* 深藍色半透明 */
-                backdrop-filter: blur(6px); /* 毛玻璃模糊效果 */
+                inset: 0;
+                background: rgba(10, 15, 29, 0.4);
+                backdrop-filter: blur(4px);
                 z-index: 999;
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity 0.4s ease;
+                transition: opacity 0.3s ease;
             }
 
             .navbar.nav-open + .overlay {
@@ -656,15 +488,14 @@
             }
 
             .footer-main {
-                grid-template-columns: 1fr 1fr; /* 平板變兩欄 */
+                grid-template-columns: 1fr 1fr;
                 gap: 40px 30px;
             }
-
         }
 
-        @media (max-width: 576px) {
+        @media (max-width: 640px) {
             .footer-main {
-                grid-template-columns: 1fr; /* 手機變單欄 */
+                grid-template-columns: 1fr;
             }
 
             .copyright-content {
@@ -682,12 +513,11 @@
 </head>
 <body>
 
-<!-- 導覽列：使用 .layout-container 取代 .container -->
 <nav class="navbar" id="navbar">
     <div class="layout-container">
         <a href="{% url 'CZ_homepage' %}" class="logo">
             <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo">
-            <span class="logo-text">勤築工程</span>
+            <span>勤築工程</span>
         </a>
 
         <ul class="nav-links" id="nav-links">
@@ -703,9 +533,13 @@
             <li class="{% if request.resolver_match.url_name == 'CZ_contact' %}active{% endif %}">
                 <a href="{% url 'CZ_contact' %}">聯絡我們</a>
             </li>
-            <li class="nav-btn-special {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}">
-                <a href="{% url 'homepage' %}">OLi 平台 <i class="ri-arrow-right-line"
-                                                           style="vertical-align: middle; margin-left:4px;"></i></a>
+            <!-- 高質感 OLi 平台按鈕 -->
+            <li class="nav-btn-special">
+                <a href="{% url 'homepage' %}">
+                    <span class="pulse-dot"></span>
+                    <span>OLi 平台</span>
+                    <i class="ri-arrow-right-line"></i>
+                </a>
             </li>
         </ul>
 
@@ -721,23 +555,16 @@
     {% block content %}{% endblock %}
 </main>
 
-<!-- 頁尾：使用 .layout-container 取代 .container -->
+<!-- 頁尾 (乾淨簡約，無波浪) -->
 <footer class="footer">
-    <!-- 頂部波浪裝飾 -->
-    <div class="footer-divider">
-        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
-                  class="shape-fill"></path>
-        </svg>
-    </div>
-
     <div class="layout-container">
         <div class="footer-main">
             <!-- 1. 品牌與介紹 -->
             <div class="footer-col footer-logo-area">
-                <img src="{% static 'img/CZ_logo.png' %}" alt="勤築工程實業有限公司 Logo" class="logo-img">
+                <img src="{% static 'img/CZ_logo_white.jpg' %}" alt="勤築工程實業有限公司 Logo" class="logo-img">
                 <p class="tagline">
-                    我們以精湛的技術與誠信的態度，致力於提供最專業的工程規劃與顧問服務，將您的願景化為可行的卓越方案。</p>
+                    我們以精湛的技術與誠信的態度，致力於提供最專業的工程規劃與顧問服務，將您的願景化為可行的卓越方案。
+                </p>
                 <div class="social-links">
                     <a href="#" class="social-link" title="Facebook"><i class="ri-facebook-fill"></i></a>
                     <a href="#" class="social-link" title="Line"><i class="ri-line-fill"></i></a>
@@ -749,25 +576,21 @@
             <div class="footer-col">
                 <h3>快速導覽</h3>
                 <ul class="footer-links">
-                    <li><a href="{% url 'CZ_homepage' %}"><i class="ri-arrow-right-s-line"></i> 首頁</a></li>
-                    <li><a href="{% url 'CZ_about' %}"><i class="ri-arrow-right-s-line"></i> 關於我們</a></li>
-                    <li><a href="{% url 'CZ_services' %}"><i class="ri-arrow-right-s-line"></i> 服務流程</a></li>
-                    <li><a href="{% url 'homepage' %}"><i class="ri-arrow-right-s-line"></i> OLi 平台</a></li>
+                    <li><a href="{% url 'CZ_homepage' %}">首頁</a></li>
+                    <li><a href="{% url 'CZ_about' %}">關於我們</a></li>
+                    <li><a href="{% url 'CZ_services' %}">服務流程</a></li>
+                    <li><a href="{% url 'homepage' %}">OLi 平台</a></li>
                 </ul>
             </div>
 
-            <!-- 3. 專業服務 (新增欄位，讓 Footer 更豐富) -->
+            <!-- 3. 專業服務 -->
             <div class="footer-col">
                 <h3>專業服務</h3>
                 <ul class="footer-links">
-                    <li><a href="{% url 'CZ_services' %}"><i class="ri-checkbox-blank-circle-fill"
-                                                             style="font-size: 6px;"></i> 鋼結構設計</a></li>
-                    <li><a href="{% url 'CZ_services' %}"><i class="ri-checkbox-blank-circle-fill"
-                                                             style="font-size: 6px;"></i> 結構安全鑑定</a></li>
-                    <li><a href="{% url 'CZ_services' %}"><i class="ri-checkbox-blank-circle-fill"
-                                                             style="font-size: 6px;"></i> 耐震評估補強</a></li>
-                    <li><a href="{% url 'CZ_services' %}"><i class="ri-checkbox-blank-circle-fill"
-                                                             style="font-size: 6px;"></i> 水利設施申請</a></li>
+                    <li><a href="{% url 'CZ_services' %}">鋼結構設計</a></li>
+                    <li><a href="{% url 'CZ_services' %}">結構安全鑑定</a></li>
+                    <li><a href="{% url 'CZ_services' %}">耐震評估補強</a></li>
+                    <li><a href="{% url 'CZ_services' %}">水利設施申請</a></li>
                 </ul>
             </div>
 
@@ -776,29 +599,19 @@
                 <h3>聯絡我們</h3>
                 <ul class="footer-contact-info">
                     <li>
-                        <div class="contact-icon-box"><i class="ri-map-pin-2-fill"></i></div>
+                        <div class="contact-icon-box"><i class="ri-map-pin-2-line"></i></div>
                         <div class="contact-text">
                             <h5>公司地址</h5>
                             <span>桃園市桃園區力行路317號13樓</span>
                         </div>
                     </li>
                     <li>
-                        <div class="contact-icon-box"><i class="ri-mail-send-fill"></i></div>
+                        <div class="contact-icon-box"><i class="ri-mail-line"></i></div>
                         <div class="contact-text">
                             <h5>電子信箱</h5>
                             <span>chinzhu0524@gmail.com</span>
                         </div>
                     </li>
-                    <!-- 如有電話可取消註解 -->
-                    <!--
-                    <li>
-                        <div class="contact-icon-box"><i class="ri-phone-fill"></i></div>
-                        <div class="contact-text">
-                            <h5>聯絡電話</h5>
-                            <span>03-1234-5678</span>
-                        </div>
-                    </li>
-                    -->
                 </ul>
             </div>
         </div>
@@ -823,16 +636,16 @@
         const navOverlay = document.getElementById('nav-overlay');
         const navLinks = document.getElementById('nav-links');
 
-        // 1. 滾動偵測
+        // 滾動微位移偵測
         window.addEventListener('scroll', function () {
-            if (window.scrollY > 50) {
+            if (window.scrollY > 30) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
             }
         });
 
-        // 2. 手機版選單切換
+        // 行動端選單切換
         function toggleMenu() {
             navbar.classList.toggle('nav-open');
             const icon = navToggle.querySelector('i');
